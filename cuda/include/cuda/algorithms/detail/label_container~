@@ -1,0 +1,35 @@
+namespace traccc {
+namespace cuda{
+namespace detail{
+
+// Label container that stores the sparse ccl information
+    template< template< typename > class vector_t,
+              template< typename > class jagged_vector_t >
+    class label_container {
+
+        /// @name Type definitions
+        /// @{
+
+        /// Vector type used by the cell container
+        template< typename T >
+        using vector_type = vector_t< T >;
+        /// Jagged vector type used by the cell container
+        template< typename T >
+        using jagged_vector_type = jagged_vector_t< T >;
+
+        /// The cell module vector type
+        using ccl_label = vector_type< int >;
+        /// The cell vector type
+        using ccl_label_vector = jagged_vector_type< int >;
+
+        /// @}
+
+        /// Headers for all of the modules (holding cells) in the event
+	ccl_label num_label;
+        /// All of the cells in the event
+        ccl_label_vector labels;
+	
+    };
+
+    using host_label_container =
+        label_container< vecmem::vector, vecmem::jagged_vector >;    
