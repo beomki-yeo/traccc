@@ -8,13 +8,14 @@
 #pragma once
 
 #include "edm/cell.hpp"
-#include "detail/label_container.hpp"
+#include "detail/label.hpp"
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
 
 namespace traccc {
 namespace cuda{
     void component_connection(host_cell_container& cells_per_event,
-			      detail::host_label_container& labels_per_event);
+			      detail::host_label_container& labels_per_event,
+			      vecmem::memory_resource* resource);
 }
 }

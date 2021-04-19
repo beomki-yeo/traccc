@@ -14,7 +14,8 @@
 
 namespace traccc {
 namespace cuda{
-    void sparse_ccl(traccc::host_cell_container& cells_per_event,
-		    traccc::host_label_container& labels_per_event);
+    void component_connection(host_cell_container& cells_per_event,
+			      detail::host_label_container& labels_per_event,
+			      vecmem::memory_resource* resource);
 }
 }

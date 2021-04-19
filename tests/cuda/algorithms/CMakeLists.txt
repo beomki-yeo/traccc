@@ -1,0 +1,1 @@
+add_traccc_test(component_connection_cuda component_connection_cuda_tests.cpp vecmem::core)

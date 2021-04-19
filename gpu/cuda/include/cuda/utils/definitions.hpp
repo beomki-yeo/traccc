@@ -10,6 +10,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#define WARP_SIZE 32
+
 #define CUDA_ERROR_CHECK(ans) \
   { cudaAssert((ans), __FILE__, __LINE__); }
 inline void cudaAssert(cudaError_t code, const char *file, int line,

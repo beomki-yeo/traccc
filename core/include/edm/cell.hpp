@@ -158,9 +158,9 @@ namespace traccc {
     }; // struct cell_container_view
 
     /// Helper function for making a "simple" object out of the cell container
-    cell_container_data get_data( host_cell_container& cc ) {
+    cell_container_data get_data( host_cell_container& cc, vecmem::memory_resource* resource = nullptr ) {
         return { { vecmem::get_data( cc.modules ) },
-                 { vecmem::get_data( cc.cells ) } };
+                 { vecmem::get_data( cc.cells, resource ) } };
     }
 
     /// @}

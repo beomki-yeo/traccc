@@ -42,5 +42,9 @@ add_subdirectory(tests)
 # Set GPU-related options
 if ( TRACCC_BUILD_CUDA )
   include ( traccc-compiler-options-cuda )
-  add_subdirectory(cuda)
+  set ( TRACCC_BUILD_GPU ON )
+endif()
+
+if ( TRACCC_BUILD_GPU )
+  add_subdirectory(gpu)
 endif()
