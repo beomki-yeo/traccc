@@ -68,7 +68,7 @@ unsigned int sparse_ccl(const vecmem::device_vector< traccc::cell > cells,
 	    ++labels;
 	    l = labels; 
 	} else {
-      l = L[L[i]];
+	    l = L[L[i]];
 	}
 	L[i] = l;
     }

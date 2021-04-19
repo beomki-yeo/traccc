@@ -55,7 +55,7 @@ TEST(algorithms, component_connection){
     
     mng_cells.cells.push_back(host_cells);
     mng_cells.modules.push_back(module);    
-
+    
     auto mng_labels = traccc::cuda::detail::get_label_from_cell(mng_cells, &mng_mr);
 
     // cuda - component connection algorithm
