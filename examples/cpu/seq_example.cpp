@@ -110,7 +110,6 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
                 const auto& pos = spacepoint.global;
                 spwriter.append({ module, pos[0], pos[1], pos[2], 0., 0., 0.});
             }
-
         }
 
     }
