@@ -32,7 +32,7 @@ namespace detail{
         using ccl_label = vector_type< unsigned int >;
         /// The label vector type
         using ccl_label_vector = jagged_vector_type< unsigned int >;
-
+	
         /// @}
 
         /// number of labels per module

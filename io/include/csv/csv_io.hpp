@@ -111,10 +111,11 @@ namespace traccc {
   /// @param resource The memory resource to use for the return value
   /// @param tfmap the (optional) transform map
   /// @param max_cells the (optional) maximum number of cells to be read in
-  host_cell_container read_cells(cell_reader& creader,
-            vecmem::memory_resource& resource,
+  host_cell_container read_cells(
+	    cell_reader& creader,
+	    vecmem::memory_resource& resource,
             const std::map<geometry_id, transform3>& tfmap ={},
-            unsigned int max_cells = std::numeric_limits<unsigned int>::max()){
+	    unsigned int max_cells = std::numeric_limits<unsigned int>::max()){
 
     uint64_t reference_id = 0;
     host_cell_container result = {
@@ -162,8 +163,10 @@ namespace traccc {
     // Clean up after loop
     // Sort in column major order
     std::sort(cells.begin(), cells.end(), [](const auto& a, const auto& b){ return a.channel1 < b.channel1; } );
+
     result.modules.push_back(module);
     result.cells.push_back(cells);
+    
     assert( result.cells.size() == result.modules.size() );
 
     return result;
