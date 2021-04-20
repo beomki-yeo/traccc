@@ -57,8 +57,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
     vecmem::cuda::managed_memory_resource mng_mr;
 
     // Elapsed time
-    float read_cpu(0), ccl_cpu(0), mcsf_cpu(0), total_cpu(0);
-    float read_cuda(0), ccl_cuda(0), mcsf_cuda(0), total_cuda(0);
+    float read_cpu(0), ccl_cpu(0), total_cpu(0);
+    float read_cuda(0), ccl_cuda(0), total_cuda(0);
     
     // Loop over events
     for (unsigned int event = 0; event < events; ++event){
@@ -130,12 +130,6 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	/**/ auto end_ccl_cuda = std::chrono::system_clock::now();
 	/**/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
 	/**/ ccl_cuda += time_ccl_cuda.count();
-
-	// cuda - count measurements
-
-	//traccc::cuda::measurement_creation(mng_cells, mng_labels, mng_meas, &mng_mr);
-	
-	// cuda - measurement creation & spacepoint formation
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
         for (const auto& measurements_per_module : measurements_per_event){
