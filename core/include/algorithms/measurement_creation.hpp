@@ -29,11 +29,9 @@ namespace traccc
         /// C++20 piping interface
         ///
         /// @return a measurement collection - usually same size or sometime slightly smaller than the input
-        measurement_collection operator()(const cluster_collection &clusters) const
+        host_measurement_collection operator()(const cluster_collection &clusters) const
         {
-
-            measurement_collection measurements;
-            measurements.placement = clusters.placement;
+            host_measurement_collection measurements;
             this->operator()(clusters, measurements);
             return measurements;
         }
@@ -46,12 +44,10 @@ namespace traccc
         /// void interface
         ///
         /// @return a measurement collection - usually same size or sometime slightly smaller than the input
-        void operator()(const cluster_collection &clusters, measurement_collection &measurements) const
+        void operator()(const cluster_collection &clusters, host_measurement_collection &measurements) const
         {
-            // Assign the module id
-            measurements.module = clusters.module;
             // Run the algorithm
-            measurements.items.reserve(clusters.items.size());
+            measurements.reserve(clusters.items.size());
             for (const auto &cluster : clusters.items)
             {
                 point2 p = {0., 0.};
@@ -77,7 +73,7 @@ namespace traccc
                     measurement m;
                     m.local = 1. / totalWeight * p;
                     // @todo add variance estimation
-                    measurements.items.push_back(std::move(m));
+                    measurements.push_back(std::move(m));
                 }
             }
         }

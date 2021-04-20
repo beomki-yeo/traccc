@@ -37,14 +37,14 @@ int main(){
 
   traccc::cell_module module;
   module.module = 0;
-
+  module.placement = traccc::transform3{};
+  
   traccc::cluster_collection clusters;
   clusters.position_from_cell = traccc::pixel_segmentation{0.,0.,1.,1.};
 
-  traccc::measurement_collection measurements;
-  measurements.placement = traccc::transform3{};
+  traccc::host_measurement_collection measurements;
 
-  traccc::spacepoint_collection spacepoints;
+  traccc::host_spacepoint_collection spacepoints;
 
   traccc::component_connection cc;
   traccc::measurement_creation mt;
@@ -53,7 +53,7 @@ int main(){
   // Algorithmic code: start
   clusters = cc(cells, module);
   measurements= mt(clusters);
-  spacepoints = sp(measurements);
+  spacepoints = sp(module,measurements);
 
   return 0;
 }
