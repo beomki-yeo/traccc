@@ -108,12 +108,12 @@ namespace cuda{
 	if (gid>=cell_data.cells.m_size) return;
 
 	device_cell_container cells_device({cell_data.modules, cell_data.cells});
-	detail::device_label_container labels_device({label_data.num_label, label_data.labels});
-	auto num_label = labels_device.num_label;
+	detail::device_label_container labels_device({label_data.counts, label_data.labels});
+	auto counts = labels_device.counts;
 	auto cells_per_module = cells_device.cells.at(gid);
 	auto labels_per_module = labels_device.labels.at(gid);
 		
-	num_label[gid] = sparse_ccl(cells_per_module, labels_per_module);
+	counts[gid] = sparse_ccl(cells_per_module, labels_per_module);
 	return;	
     }
 }

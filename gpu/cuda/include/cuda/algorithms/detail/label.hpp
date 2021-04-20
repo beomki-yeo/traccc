@@ -36,7 +36,7 @@ namespace detail{
         /// @}
 
         /// number of labels per module
-	ccl_label num_label;
+	ccl_label counts;
         /// All of the labels in the event
         ccl_label_vector labels;
 
@@ -50,7 +50,7 @@ namespace detail{
 
     /// Structure holding (some of the) data about the labels in host code
     struct label_container_data {
-        vecmem::data::vector_view< unsigned int > num_label;
+        vecmem::data::vector_view< unsigned int > counts;
         vecmem::data::jagged_vector_data< unsigned int > labels;
     }; 
 
@@ -58,10 +58,10 @@ namespace detail{
 
         /// Constructor from a @c label_container_data object
         label_container_view( const label_container_data& data )
-        : num_label( data.num_label ), labels( data.labels ) {}
+        : counts( data.counts ), labels( data.labels ) {}
 
 	/// View of the data describing the headers of the label holding modules
-        vecmem::data::vector_view< unsigned int > num_label;
+        vecmem::data::vector_view< unsigned int > counts;
         /// View of the data describing all of the labels
         vecmem::data::jagged_vector_view< unsigned int > labels;
 
@@ -69,20 +69,10 @@ namespace detail{
     
     /// Helper function for making a "simple" object out of the label container
     label_container_data get_data( host_label_container& lc, vecmem::memory_resource* resource = nullptr  ) {
-        return { { vecmem::get_data( lc.num_label ) },
+        return { { vecmem::get_data( lc.counts ) },
                  { vecmem::get_data( lc.labels, resource ) } };
     }
 
-    /// Helper function to create label container based on cell information
-    host_label_container get_label_from_cell(const host_cell_container& cc, vecmem::memory_resource* resource = nullptr){
-	host_label_container lc{
-	     vecmem::vector< unsigned int>(cc.cells.size(), 0,resource),
-	     vecmem::jagged_vector< unsigned int >(cc.cells.size(), resource)};
-	for (int i=0; i<cc.cells.size(); ++i){
-	    lc.labels[i] = vecmem::vector< unsigned int >( cc.cells[i].size(), 0);
-	}
-	return lc;
-    }
 }
 }
 }
