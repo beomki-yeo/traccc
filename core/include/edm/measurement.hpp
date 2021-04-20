@@ -63,10 +63,6 @@ namespace traccc {
         /// All of the measurements in the event
         measurement_vector measurements;
 
-	/// reserve
-	void reserve(size_t val){
-	    modules.reserve(val);
-	}
     }; // class measurement_container
 
     /// Convenience declaration for the measurement container type to use in host code

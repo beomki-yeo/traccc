@@ -62,11 +62,6 @@ namespace traccc {
         /// All of the spacepoints in the event
         spacepoint_vector spacepoints;
 
-	/// Reserve
-	void reserve(size_t val){
-	    modules.reserve(val);
-	    spacepoints.reserve(val);
-	}
     }; // class spacepoint_container
 
     /// Convenience declaration for the spacepoint container type to use in host code

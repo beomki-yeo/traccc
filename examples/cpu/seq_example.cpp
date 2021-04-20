@@ -64,8 +64,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
         // Output containers
         traccc::host_measurement_container measurements_per_event;
         traccc::host_spacepoint_container spacepoints_per_event;
-        measurements_per_event.reserve(cells_per_event.modules.size());
-        spacepoints_per_event.reserve(cells_per_event.modules.size());
+        measurements_per_event.modules.reserve(cells_per_event.modules.size());
+	measurements_per_event.measurements.reserve(cells_per_event.modules.size());
+        spacepoints_per_event.modules.reserve(cells_per_event.modules.size());
+	spacepoints_per_event.spacepoints.reserve(cells_per_event.modules.size()); 
 
         for (std::size_t i = 0; i < cells_per_event.cells.size(); ++i )
         {
