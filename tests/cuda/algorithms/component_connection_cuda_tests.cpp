@@ -55,13 +55,17 @@ TEST(algorithms, component_connection){
     
     mng_cells.cells.push_back(host_cells);
     mng_cells.modules.push_back(module);    
-    
-    auto mng_labels = traccc::cuda::detail::get_label_from_cell(mng_cells, &mng_mr);
+
+    traccc::cuda::detail::host_label_container mng_labels={
+	vecmem::vector<unsigned int>(1,&mng_mr),
+	vecmem::jagged_vector<unsigned int>(1,&mng_mr)
+    };
+    mng_labels.labels[0] = vecmem::vector< unsigned int >(mng_cells.cells[0].size(),0);
 
     // cuda - component connection algorithm
     traccc::cuda::component_connection(mng_cells, mng_labels, &mng_mr);
 
-    ASSERT_EQ(mng_labels.num_label[0], 4u); // num_label = number of clusters per module
+    ASSERT_EQ(mng_labels.counts[0], 4u); 
 }
 
 // Google Test can be run manually from the main() function

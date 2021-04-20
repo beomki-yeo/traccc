@@ -111,21 +111,31 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
             spacepoints_per_event.push_back(std::move(spacepoints_per_module));
         }
 
-	// cuda - read cell data with managed memory resource
+	//// cuda - read cell data with managed memory resource
 	/**/ auto start_read_cuda = std::chrono::system_clock::now();
 	
 	traccc::cell_reader creader_for_cuda(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});
         traccc::host_cell_container mng_cells = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
-	auto mng_labels = traccc::cuda::detail::get_label_from_cell(mng_cells, &mng_mr);
+
+	// prepare ccl label vector
+	int n_modules = mng_cells.cells.size();
+	traccc::cuda::detail::host_label_container ccl_labels = {
+	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
+	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
+	};
+	for (int i=0; i<n_modules; ++i){
+	    ccl_labels.labels[i]=vecmem::vector<unsigned int>(mng_cells.cells[i].size(),0);
+	}
+	
 	/**/ auto end_read_cuda = std::chrono::system_clock::now();
 	/**/ std::chrono::duration<double> time_read_cuda = end_read_cuda - start_read_cuda; 
 	/**/ read_cuda += time_read_cuda.count();
 
-	// cuda - component connection algorithm
+	//// cuda - component connection algorithm
 	
 	/**/ auto start_ccl_cuda = std::chrono::system_clock::now();
 
-	traccc::cuda::component_connection(mng_cells, mng_labels, &mng_mr);
+	traccc::cuda::component_connection(mng_cells, ccl_labels, &mng_mr);
 
 	/**/ auto end_ccl_cuda = std::chrono::system_clock::now();
 	/**/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
