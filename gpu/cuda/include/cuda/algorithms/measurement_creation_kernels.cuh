@@ -10,6 +10,7 @@
 #include "edm/cell.hpp"
 #include "edm/measurement.hpp"
 #include "detail/label.hpp"
+#include "geometry/pixel_segmentation.hpp"
 
 namespace traccc {
 namespace cuda{
