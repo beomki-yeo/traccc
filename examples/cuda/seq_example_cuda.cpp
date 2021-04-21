@@ -17,6 +17,7 @@
 
 // cuda include
 #include "cuda/algorithms/component_connection_kernels.cuh"
+#include "cuda/algorithms/measurement_creation_kernels.cuh"
 
 // vecmem include
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -70,13 +71,13 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 
         std::string io_cells_file = data_directory+cells_dir+std::string("/event")+event_string+std::string("-cells.csv");
 
-	/**/ auto start_read_cpu = std::chrono::system_clock::now();
+	/*time*/ auto start_read_cpu = std::chrono::system_clock::now();
         traccc::cell_reader creader(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});	
         traccc::host_cell_container cells_per_event = traccc::read_cells(creader, host_mr, surface_transforms);
 
-	/**/ auto end_read_cpu = std::chrono::system_clock::now();
-	/**/ std::chrono::duration<double> time_read_cpu = end_read_cpu - start_read_cpu; 
-	/**/ read_cpu += time_read_cpu.count();
+	/*time*/ auto end_read_cpu = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_read_cpu = end_read_cpu - start_read_cpu; 
+	/*time*/ read_cpu += time_read_cpu.count();
 	
         m_modules += cells_per_event.modules.size();
 
@@ -91,15 +92,15 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
         for (std::size_t i = 0; i < cells_per_event.cells.size(); ++i )
         {
             // The algorithmic code part: start
-	    /**/ auto start_ccl_cpu = std::chrono::system_clock::now();
+	    /*time*/ auto start_ccl_cpu = std::chrono::system_clock::now();
 	    
 	    auto& module = cells_per_event.modules[i];
             // The algorithmic code part: start
             traccc::cluster_collection clusters_per_module = cc(cells_per_event.cells[i], cells_per_event.modules[i]);
 
-	    /**/ auto end_ccl_cpu = std::chrono::system_clock::now();
-	    /**/ std::chrono::duration<double> time_ccl_cpu = end_ccl_cpu - start_ccl_cpu; 
-	    /**/ ccl_cpu += time_ccl_cpu.count();
+	    /*time*/ auto end_ccl_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_ccl_cpu = end_ccl_cpu - start_ccl_cpu; 
+	    /*time*/ ccl_cpu += time_ccl_cpu.count();
 	    
             clusters_per_module.position_from_cell = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
             traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module);
@@ -119,34 +120,45 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
         }
 
 	//// cuda - read cell data with managed memory resource
-	/**/ auto start_read_cuda = std::chrono::system_clock::now();
+	/*time*/ auto start_read_cuda = std::chrono::system_clock::now();
 	
 	traccc::cell_reader creader_for_cuda(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});
-        traccc::host_cell_container mng_cells = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
+        traccc::host_cell_container cells = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
 
 	// prepare ccl label vector
-	int n_modules = mng_cells.cells.size();
-	traccc::cuda::detail::host_label_container ccl_labels = {
+	int n_modules = cells.cells.size();
+	traccc::cuda::detail::host_label_container cc_labels = {
 	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
 	};
 	for (int i=0; i<n_modules; ++i){
-	    ccl_labels.labels[i]=vecmem::vector<unsigned int>(mng_cells.cells[i].size(),0);
+	    cc_labels.labels[i]=vecmem::vector<unsigned int>(cells.cells[i].size(),0);
 	}
 	
-	/**/ auto end_read_cuda = std::chrono::system_clock::now();
-	/**/ std::chrono::duration<double> time_read_cuda = end_read_cuda - start_read_cuda; 
-	/**/ read_cuda += time_read_cuda.count();
+	/*time*/ auto end_read_cuda = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_read_cuda = end_read_cuda - start_read_cuda; 
+	/*time*/ read_cuda += time_read_cuda.count();
 
 	//// cuda - component connection algorithm
 	
-	/**/ auto start_ccl_cuda = std::chrono::system_clock::now();
+	/*time*/ auto start_ccl_cuda = std::chrono::system_clock::now();
 
-	traccc::cuda::component_connection(mng_cells, ccl_labels, &mng_mr);
+	traccc::cuda::component_connection(cells, cc_labels, &mng_mr);
 
-	/**/ auto end_ccl_cuda = std::chrono::system_clock::now();
-	/**/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
-	/**/ ccl_cuda += time_ccl_cuda.count();
+	/*time*/ auto end_ccl_cuda = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
+	/*time*/ ccl_cuda += time_ccl_cuda.count();
+
+	//// cuda - count measurements	
+	traccc::cuda::detail::host_label_container ms_labels = {
+	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
+	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
+	};
+	for (int i=0; i<n_modules; ++i){
+	    ms_labels.labels[i]=vecmem::vector<unsigned int>(cc_labels.labels[i].size(),0);
+	}
+
+	traccc::cuda::count_measurements(cells, cc_labels, ms_labels, &mng_mr);
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (int i=0; i<measurements_per_event.measurements.size(); ++i){
@@ -156,8 +168,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
                 const auto& local = measurement.local;
                 mwriter.append({ module.module, local[0], local[1], 0., 0.});
             }
-        }
-
+        }	
+	
         traccc::spacepoint_writer spwriter{std::string("event")+event_number+"-spacepoints.csv"};
 	for (int i=0; i<spacepoints_per_event.spacepoints.size(); ++i){
 	    auto spacepoints_per_module = spacepoints_per_event.spacepoints[i];

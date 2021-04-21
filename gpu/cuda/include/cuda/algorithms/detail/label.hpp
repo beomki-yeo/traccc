@@ -5,8 +5,9 @@
  * Mozilla Public License Version 2.0
  */
 
+#pragma once
+
 #include "vecmem/memory/cuda/managed_memory_resource.hpp"
-#include "edm/cell.hpp"
 
 namespace traccc {
 namespace cuda{
@@ -68,6 +69,7 @@ namespace detail{
     };
     
     /// Helper function for making a "simple" object out of the label container
+    __inline__
     label_container_data get_data( host_label_container& lc, vecmem::memory_resource* resource = nullptr  ) {
         return { { vecmem::get_data( lc.counts ) },
                  { vecmem::get_data( lc.labels, resource ) } };

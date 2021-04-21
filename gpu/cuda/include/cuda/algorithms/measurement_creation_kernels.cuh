@@ -13,9 +13,10 @@
 namespace traccc {
 namespace cuda{
     
-    void component_connection(host_cell_container& cells_per_event,
-			      detail::host_label_container& labels_per_event,
-			      vecmem::memory_resource* resource);
+    void count_measurements(host_cell_container& cells,
+			    detail::host_label_container& cc_labels,
+			    detail::host_label_container& ms_labels,
+			    vecmem::memory_resource* resource);
 
 }
 }

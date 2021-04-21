@@ -17,41 +17,49 @@
 namespace traccc
 {
 
+    __inline__
     std::array<scalar, 2> operator*(const std::array<scalar, 2> &a, scalar s)
     {
         return {a[0] * s, a[1] * s};
     }
-
+    
+    __inline__
     std::array<scalar, 2> operator*(scalar s, const std::array<scalar, 2> &a)
     {
         return {s * a[0], s * a[1]};
     }
 
+    __inline__
     std::array<scalar, 2> operator-(const std::array<scalar, 2> &a, const std::array<scalar, 2> &b)
     {
         return {a[0] - b[0], a[1] - b[1]};
     }
 
+    __inline__
     std::array<scalar, 2> operator+(const std::array<scalar, 2> &a, const std::array<scalar, 2> &b)
     {
         return {a[0] + b[0], a[1] + b[1]};
     }
 
+    __inline__
     std::array<scalar, 3> operator*(const std::array<scalar, 3> &a, scalar s)
     {
         return {a[0] * s, a[1] * s, a[2] * s};
     }
 
+    __inline__
     std::array<scalar, 3> operator*(scalar s, const std::array<scalar, 3> &a)
     {
         return {s * a[0], s * a[1], s * a[2]};
     }
 
+    __inline__
     std::array<scalar, 3> operator-(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b)
     {
         return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
     }
 
+    __inline__
     std::array<scalar, 3> operator+(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b)
     {
         return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
@@ -70,6 +78,7 @@ namespace traccc
          * 
          * @return a vector (expression) representing the cross product
          **/
+	__inline__
         std::array<scalar, 3> cross(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b)
         {
             return {a[1] * b[2] - b[1] * a[2], a[2] * b[0] - b[2] * a[0], a[0] * b[1] - b[0] * a[1]};
@@ -84,6 +93,7 @@ namespace traccc
          * @param v the input vector 
          **/
         template <typename vector_type>
+	__inline__
         auto phi(const vector_type &v) noexcept
         {
             return std::atan2(v[1], v[0]);
@@ -94,6 +104,7 @@ namespace traccc
          * @param v the input vector 
          **/
         template <typename vector_type>
+	__inline__	
         auto theta(const vector_type &v) noexcept
         {
             return std::atan2(std::sqrt(v[0] * v[0] + v[1] * v[1]), v[2]);
@@ -104,6 +115,7 @@ namespace traccc
          * @param v the input vector 
          **/
         template <typename vector_type>
+	__inline__	
         auto perp(const vector_type &v) noexcept
         {
             return std::sqrt(v[0] * v[0] + v[1] * v[1]);
@@ -113,6 +125,7 @@ namespace traccc
          * 
          * @param v the input vector 
          **/
+	__inline__
         auto norm(const std::array<scalar, 2> &v)
         {
             return perp(v);
@@ -122,6 +135,7 @@ namespace traccc
          * 
          * @param v the input vector 
          **/
+	__inline__
         auto norm(const std::array<scalar, 3> &v)
         {
             return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -132,6 +146,7 @@ namespace traccc
          * @param v the input vector 
          **/
         template <typename vector_type>
+	__inline__	
         auto eta(const vector_type &v) noexcept
         {
             return std::atanh(v[2] / norm(v));
@@ -142,6 +157,7 @@ namespace traccc
          * @param m the input matrix 
          **/
         template <unsigned int kROWS, typename matrix_type>
+	__inline__	
         auto vector(const matrix_type &m, unsigned int row, unsigned int col) noexcept
         {
             std::array<scalar, kROWS> subvector;
@@ -157,6 +173,7 @@ namespace traccc
          * @param m the input matrix 
          **/
         template <unsigned int kROWS, unsigned int kCOLS, typename matrix_type>
+	__inline__	
         auto block(const matrix_type &m, unsigned int row, unsigned int col) noexcept
         {
             std::array<std::array<scalar, kROWS>, kCOLS> submatrix;
@@ -436,6 +453,7 @@ namespace traccc
          * 
          * @return the scalar dot product value 
          **/
+	__inline__	
         scalar dot(const std::array<scalar, 2> &a, const std::array<scalar, 2> &b)
         {
             return a[0] * b[0] + a[1] * b[1];
@@ -445,6 +463,7 @@ namespace traccc
          * 
          * @param v the input vector
          **/
+	__inline__
         std::array<scalar, 3> normalize(const std::array<scalar, 2> &v)
         {
             scalar oon = 1. / std::sqrt(dot(v, v));
@@ -458,6 +477,7 @@ namespace traccc
          * 
          * @return the scalar dot product value 
          **/
+	__inline__	
         scalar dot(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b)
         {
             return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -467,6 +487,7 @@ namespace traccc
          * 
          * @param v the input vector
          **/
+	__inline__
         std::array<scalar, 3> normalize(const std::array<scalar, 3> &v)
         {
             scalar oon = 1. / std::sqrt(dot(v, v));

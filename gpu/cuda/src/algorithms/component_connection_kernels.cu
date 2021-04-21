@@ -92,7 +92,7 @@ namespace cuda{
 	cell_container_view cell_view(cell_data);
 	detail::label_container_view label_view(label_data);
 
-	unsigned int num_threads = WARP_SIZE * 2; 
+	unsigned int num_threads = WARP_SIZE*2; 
 	unsigned int num_blocks = cell_data.modules.m_size/num_threads + 1;
 
 	cc_kernel<<< num_blocks, num_threads >>>(cell_view, label_view);
@@ -104,6 +104,7 @@ namespace cuda{
     __global__
     void cc_kernel(cell_container_view cell_data,
 		   detail::label_container_view label_data){
+
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
 	if (gid>=cell_data.cells.m_size) return;
 
@@ -112,7 +113,7 @@ namespace cuda{
 	auto counts = labels_device.counts;
 	auto cells_per_module = cells_device.cells.at(gid);
 	auto labels_per_module = labels_device.labels.at(gid);
-		
+	
 	counts[gid] = sparse_ccl(cells_per_module, labels_per_module);
 	return;	
     }
