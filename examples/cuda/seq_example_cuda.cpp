@@ -123,16 +123,16 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	/*time*/ auto start_read_cuda = std::chrono::system_clock::now();
 	
 	traccc::cell_reader creader_for_cuda(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});
-        traccc::host_cell_container cells = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
+        traccc::host_cell_container ce_container = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
 
 	// prepare ccl label vector
-	int n_modules = cells.cells.size();
+	int n_modules = ce_container.cells.size();
 	traccc::cuda::detail::host_label_container cc_labels = {
 	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
 	};
 	for (int i=0; i<n_modules; ++i){
-	    cc_labels.labels[i]=vecmem::vector<unsigned int>(cells.cells[i].size(),0);
+	    cc_labels.labels[i]=vecmem::vector<unsigned int>(ce_container.cells[i].size(),0);
 	}
 	
 	/*time*/ auto end_read_cuda = std::chrono::system_clock::now();
@@ -143,7 +143,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	
 	/*time*/ auto start_ccl_cuda = std::chrono::system_clock::now();
 
-	traccc::cuda::component_connection(cells, cc_labels, &mng_mr);
+	traccc::cuda::component_connection(ce_container,
+					   cc_labels,
+					   &mng_mr);
 
 	/*time*/ auto end_ccl_cuda = std::chrono::system_clock::now();
 	/*time*/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
@@ -155,10 +157,26 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
 	};
 	for (int i=0; i<n_modules; ++i){
-	    ms_labels.labels[i]=vecmem::vector<unsigned int>(cc_labels.labels[i].size(),0);
+	    ms_labels.labels[i] = vecmem::vector< unsigned int >(cc_labels.labels[i].size(),0);
 	}
 
-	traccc::cuda::count_measurements(cells, cc_labels, ms_labels, &mng_mr);
+	traccc::cuda::count_measurements(ce_container, cc_labels,
+					 ms_labels, &mng_mr);
+
+	//// cuda - mesaurements creation
+	traccc::host_measurement_container ms_container = {
+	     traccc::host_measurement_container::cell_module_vector( n_modules, &mng_mr ),	     
+	     traccc::host_measurement_container::measurement_vector( n_modules, &mng_mr ) 
+	};	
+	for ( int i=0; i< n_modules; ++i ){	    
+	    ms_container.measurements[i] =
+		vecmem::vector< traccc::measurement >(ms_labels.counts[i]);
+	}
+		
+	traccc::cuda::measurement_creation(cells,
+					   cc_labels,
+					   ms_labels,
+					   ms_container);
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (int i=0; i<measurements_per_event.measurements.size(); ++i){

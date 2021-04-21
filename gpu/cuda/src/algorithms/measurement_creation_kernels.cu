@@ -40,6 +40,15 @@ namespace cuda{
 	
     }
 
+    void measurement_creation(host_cell_container& ce_container,
+			      detail::host_label_container& cc_labels,
+			      detail::host_label_container& ms_labels,
+			      host_measurement_container& ms_container,
+			      vecmem::memory_resource* resource){
+
+
+    }
+    
     __global__
     void count_measurements_kernel(cell_container_view cell_view,
 				   detail::label_container_view cc_label_view,
