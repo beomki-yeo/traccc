@@ -173,10 +173,11 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 		vecmem::vector< traccc::measurement >(ms_labels.counts[i]);
 	}
 		
-	traccc::cuda::measurement_creation(cells,
+	traccc::cuda::measurement_creation(ce_container,
 					   cc_labels,
 					   ms_labels,
-					   ms_container);
+					   ms_container,
+					   &mng_mr);
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (int i=0; i<measurements_per_event.measurements.size(); ++i){
