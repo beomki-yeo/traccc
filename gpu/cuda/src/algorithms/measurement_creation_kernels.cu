@@ -86,12 +86,10 @@ namespace cuda{
 	detail::device_label_container ms_label_data({ms_label_view.counts, ms_label_view.labels});
 	
 	auto cells_per_module = cells_data.cells.at(gid);
-	auto cc_counts_per_module = cc_label_data.counts.at(gid);
 	auto cc_labels_per_module = cc_label_data.labels.at(gid);	
-	auto ms_counts_per_module = ms_label_data.counts.at(gid);	
 	auto ms_labels_per_module = ms_label_data.labels.at(gid);
 	
-	for(int i=1; i<=cc_counts_per_module; ++i){
+	for(int i=1; i<=cc_label_data.counts.at(gid); ++i){
 	    scalar weight = 0;
 	    for(int j=0; j<cc_labels_per_module.size(); ++j){
 		auto& label = cc_labels_per_module[j];
@@ -101,8 +99,8 @@ namespace cuda{
 		}
 	    }
 	    if (weight > 0){ // need to pass threshold later
-		ms_labels_per_module[ms_counts_per_module] = i;
-		ms_counts_per_module++;
+		ms_labels_per_module[ms_label_data.counts.at(gid)] = i;
+		ms_label_data.counts.at(gid)++;
 	    }	    
 	}
     }
@@ -135,14 +133,17 @@ namespace cuda{
 	
 	for(int i=0; i<ms_counts; ++i){
 	    auto clabel = ms_labels_per_module[i];
+	    scalar total_weight = 0;
 	    for (int j=0; j<cc_counts; ++j){
 		if ( clabel == cc_labels_per_module[j] ){
 		    auto& cell = cells_per_module[j];
 		    scalar weight = cell.activation;
-		    //auto cell_position = pix(cell.channel0, cell.channel1);
-		    //ms_per_module[clabel-1].local += weight * cell_position;	 
+		    total_weight+=weight;
+		    auto cell_position = pix(cell.channel0, cell.channel1);
+		    ms_per_module[clabel-1].local = ms_per_module[clabel-1].local + weight * cell_position;	 
 		}
-	    }	    
+	    }
+	    ms_per_module[clabel-1].local = 1./total_weight * ms_per_module[clabel-1].local;
 	}
     }
 }

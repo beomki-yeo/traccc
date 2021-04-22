@@ -168,7 +168,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	     traccc::host_measurement_container::cell_module_vector( n_modules, &mng_mr ),	     
 	     traccc::host_measurement_container::measurement_vector( n_modules, &mng_mr ) 
 	};	
-	for ( int i=0; i< n_modules; ++i ){	    
+	for ( int i=0; i< n_modules; ++i ){
 	    ms_container.measurements[i] =
 		vecmem::vector< traccc::measurement >(ms_labels.counts[i]);
 	}
@@ -178,6 +178,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 					   ms_labels,
 					   ms_container,
 					   &mng_mr);
+
+
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (int i=0; i<measurements_per_event.measurements.size(); ++i){

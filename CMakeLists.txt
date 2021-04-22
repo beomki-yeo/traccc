@@ -24,10 +24,17 @@ set( CMAKE_LIBRARY_OUTPUT_DIRECTORY
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY
    "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH
    "Directory for the built static libraries" )
- 
+  
 # Include the traccc CMake code.
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( traccc-compiler-options )
+
+# Set GPU-related options
+foreach( arch CUDA SYCL HIP )
+  if( TRACCC_BUILD_${arch} )
+    include ( traccc-compiler-options-${arch} )
+  endif()
+endforeach()
 
 # Build the necessary externals.
 add_subdirectory(extern)
@@ -38,11 +45,5 @@ add_subdirectory(core)
 add_subdirectory(io)
 add_subdirectory(examples)
 add_subdirectory(tests)
+add_subdirectory(cpu)
 add_subdirectory(gpu)
-
-# Set GPU-related options
-foreach( arch cuda sycl hip )
-  if( TRACCC_BUILD_${arch} )
-    include ( traccc-compiler-options-${arch} )    
-  endif()
-endforeach()

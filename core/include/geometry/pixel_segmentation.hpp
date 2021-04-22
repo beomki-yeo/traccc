@@ -8,6 +8,7 @@
 #pragma once
 
 #include "definitions/primitives.hpp"
+#include "definitions/arch_qualifiers.hpp"
 
 namespace traccc {
 
@@ -16,20 +17,21 @@ namespace traccc {
     ///
     /// No checking on out of bounds done
     struct pixel_segmentation {
-
-      scalar min_center_x;
-      scalar min_center_y;
-      scalar pitch_x;
-      scalar pitch_y;
-
-      /// Translate @param ch0, @param ch1 
-      /// into a vector2 at @return for a pixel segemntation
-      vector2 operator()(channel_id ch0,channel_id ch1) 
-      { 
-          return { min_center_x + ch0 * pitch_x, min_center_y + ch1 * pitch_y };
-      };
-
+	
+	scalar min_center_x;
+	scalar min_center_y;
+	scalar pitch_x;
+	scalar pitch_y;
+	
+	/// Translate @param ch0, @param ch1 
+	/// into a vector2 at @return for a pixel segemntation
+	__CUDA_QUALIFIER__
+	vector2 operator()(channel_id ch0, channel_id ch1) 
+	{ 
+	    return { min_center_x + ch0 * pitch_x, min_center_y + ch1 * pitch_y };
+	};
+	
     };
-
+    
 }
 
