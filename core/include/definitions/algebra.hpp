@@ -333,6 +333,7 @@ namespace traccc
              *
              * @return a sacalar determinant - no checking done 
              */
+	    __CUDA_QUALIFIER__	    
             static scalar determinant(const matrix44 &m)
             {
                 return m[3][0] * m[2][1] * m[1][2] * m[0][3] - m[2][0] * m[3][1] * m[1][2] * m[0][3] - m[3][0] * m[1][1] * m[2][2] * m[0][3] + m[1][0] * m[3][1] * m[2][2] * m[0][3] +
@@ -349,6 +350,7 @@ namespace traccc
              *
              * @return an inverse matrix 
              */
+	    __CUDA_QUALIFIER__	    
             static matrix44 invert(const matrix44 &m)
             {
                 matrix44 i;
@@ -384,6 +386,7 @@ namespace traccc
              * @param m is the rotation matrix
              * @param v is the vector to be rotated
              */
+	    __CUDA_QUALIFIER__	    
             static vector3 rotate(const matrix44 &m, const vector3 &v)
             {
 
@@ -393,18 +396,21 @@ namespace traccc
             }
 
             /** This method retrieves the rotation of a transform */
+	    __CUDA_QUALIFIER__	    
             auto rotation() const
             {
                 return getter::block<3, 3>(_data, 0, 0);
             }
 
             /** This method retrieves the translation of a transform */
+	    __CUDA_QUALIFIER__	    
             point3 translation() const
             {
                 return point3{_data[3][0], _data[3][1], _data[3][2]};
             }
 
             /** This method retrieves the 4x4 matrix of a transform */
+	    __CUDA_QUALIFIER__	    
             const matrix44 &matrix() const
             {
                 return _data;
@@ -412,6 +418,7 @@ namespace traccc
 
             /** This method transform from a point from the local 3D cartesian frame to the global 3D cartesian frame */
             template <typename point_type>
+	    __CUDA_QUALIFIER__	    
             const point_type point_to_global(const point_type &v) const
             {
                 vector3 rg = rotate(_data, v);
@@ -420,6 +427,7 @@ namespace traccc
 
             /** This method transform from a vector from the global 3D cartesian frame into the local 3D cartesian frame */
             template <typename point_type>
+	    __CUDA_QUALIFIER__	    	    
             const point_type point_to_local(const point_type &v) const
             {
                 vector3 rg = rotate(_data_inv, v);
@@ -428,6 +436,7 @@ namespace traccc
 
             /** This method transform from a vector from the local 3D cartesian frame to the global 3D cartesian frame */
             template <typename vector_type>
+	    __CUDA_QUALIFIER__	    	    
             const vector_type vector_to_global(const vector_type &v) const
             {
                 return rotate(_data, v);
@@ -435,6 +444,7 @@ namespace traccc
 
             /** This method transform from a vector from the global 3D cartesian frame into the local 3D cartesian frame */
             template <typename vector_type>
+	    __CUDA_QUALIFIER__	    	    
             const auto vector_to_local(const vector_type &v) const
             {
                 return rotate(_data_inv, v);

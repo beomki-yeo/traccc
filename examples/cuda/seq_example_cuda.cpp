@@ -18,6 +18,7 @@
 // cuda include
 #include "cuda/algorithms/component_connection_kernels.cuh"
 #include "cuda/algorithms/measurement_creation_kernels.cuh"
+#include "cuda/algorithms/spacepoint_formation_kernels.cuh"
 
 // vecmem include
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -58,12 +59,15 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
     vecmem::cuda::managed_memory_resource mng_mr;
 
     // Elapsed time
-    float read_cpu(0), ccl_cpu(0), total_cpu(0);
-    float read_cuda(0), ccl_cuda(0), total_cuda(0);
+    float read_cpu(0), ccl_cpu(0), ms_cpu(0), sp_cpu(0), total_cpu(0);
+    float read_cuda(0), ccl_cuda(0), ms_cuda(0), sp_cuda(0), total_cuda(0);
+
     
     // Loop over events
     for (unsigned int event = 0; event < events; ++event){
 
+	/*time*/ auto start_total_cpu = std::chrono::system_clock::now();
+	
         // Read the cells from the relevant event file
         std::string event_string = "000000000";
         std::string event_number = std::to_string(event);
@@ -88,14 +92,13 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	measurements_per_event.measurements.reserve(cells_per_event.modules.size());
         spacepoints_per_event.modules.reserve(cells_per_event.modules.size());
 	spacepoints_per_event.spacepoints.reserve(cells_per_event.modules.size()); 
-
+	
         for (std::size_t i = 0; i < cells_per_event.cells.size(); ++i )
         {
             // The algorithmic code part: start
 	    /*time*/ auto start_ccl_cpu = std::chrono::system_clock::now();
 	    
 	    auto& module = cells_per_event.modules[i];
-            // The algorithmic code part: start
             traccc::cluster_collection clusters_per_module = cc(cells_per_event.cells[i], cells_per_event.modules[i]);
 
 	    /*time*/ auto end_ccl_cpu = std::chrono::system_clock::now();
@@ -103,10 +106,24 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    /*time*/ ccl_cpu += time_ccl_cpu.count();
 	    
             clusters_per_module.position_from_cell = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
+
+
+	    /*time*/ auto start_ms_cpu = std::chrono::system_clock::now();
             traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module);
+
+	    /*time*/ auto end_ms_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_ms_cpu = end_ms_cpu - start_ms_cpu; 
+	    /*time*/ ms_cpu += time_ms_cpu.count();
+
+	    /*time*/ auto start_sp_cpu = std::chrono::system_clock::now();
+	    
             traccc::host_spacepoint_collection spacepoints_per_module = sp(module, measurements_per_module);
             // The algorithmnic code part: end
 
+	    /*time*/ auto end_sp_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_sp_cpu = end_sp_cpu - start_sp_cpu; 
+	    /*time*/ sp_cpu += time_sp_cpu.count();
+	    
             n_cells += cells_per_event.cells[i].size();
             n_clusters += clusters_per_module.items.size();
             n_measurements += measurements_per_module.size();
@@ -119,6 +136,16 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    spacepoints_per_event.modules.push_back(module.module);
         }
 
+	/*time*/ auto end_total_cpu = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_total_cpu = end_total_cpu - start_total_cpu; 
+	/*time*/ total_cpu += time_total_cpu.count();
+
+	/////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////
+
+	/*time*/ auto start_total_cuda = std::chrono::system_clock::now();	
+  
 	//// cuda - read cell data with managed memory resource
 	/*time*/ auto start_read_cuda = std::chrono::system_clock::now();
 	
@@ -151,7 +178,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	/*time*/ std::chrono::duration<double> time_ccl_cuda = end_ccl_cuda - start_ccl_cuda; 
 	/*time*/ ccl_cuda += time_ccl_cuda.count();
 
-	//// cuda - count measurements	
+	//// cuda - count measurements
+
+	/*time*/ auto start_ms_cuda = std::chrono::system_clock::now();
 	traccc::cuda::detail::host_label_container ms_labels = {
 	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
@@ -162,8 +191,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 
 	traccc::cuda::count_measurements(ce_container, cc_labels,
 					 ms_labels, &mng_mr);
-
+	
 	//// cuda - mesaurements creation
+	
 	traccc::host_measurement_container ms_container = {
 	     traccc::host_measurement_container::cell_module_vector( n_modules, &mng_mr ),	     
 	     traccc::host_measurement_container::measurement_vector( n_modules, &mng_mr ) 
@@ -171,15 +201,55 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	for ( int i=0; i< n_modules; ++i ){
 	    ms_container.measurements[i] =
 		vecmem::vector< traccc::measurement >(ms_labels.counts[i]);
-	}
-		
+	}	
+	
 	traccc::cuda::measurement_creation(ce_container,
 					   cc_labels,
 					   ms_labels,
 					   ms_container,
 					   &mng_mr);
 
+	/*time*/ auto end_ms_cuda = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_ms_cuda = end_ms_cuda - start_ms_cuda; 
+	/*time*/ ms_cuda += time_ms_cuda.count();
+	
+	//// cuda - spacepoint formation
 
+	/*time*/ auto start_sp_cuda = std::chrono::system_clock::now();
+	traccc::host_spacepoint_container sp_container = {
+	     traccc::host_spacepoint_container::module_vector( n_modules, &mng_mr ),	     
+	     traccc::host_spacepoint_container::spacepoint_vector( n_modules, &mng_mr ) 
+	};	
+	for ( int i=0; i< n_modules; ++i ){
+	    sp_container.spacepoints[i] =
+		vecmem::vector< traccc::spacepoint >(ms_labels.counts[i]);
+	}	
+
+	traccc::cuda::spacepoint_formation(ms_container,
+					   sp_container,
+					   &mng_mr);
+
+	/*time*/ auto end_sp_cuda = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_sp_cuda = end_sp_cuda - start_sp_cuda; 
+	/*time*/ sp_cuda += time_sp_cuda.count();
+
+	/*time*/ auto end_total_cuda = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_total_cuda = end_total_cuda - start_total_cuda; 
+	/*time*/ total_cuda += time_total_cuda.count();
+
+	
+	// assure we have same results for spacepoints	
+	for(int i=0; i<sp_container.spacepoints.size(); i++){
+	    for(int j=0; j<sp_container.spacepoints[i].size(); j++){
+		auto sp_cuda = sp_container.spacepoints[i][j];
+		auto sp_cpu = spacepoints_per_event.spacepoints[i][j];
+		if (sp_cuda.global[0] != sp_cpu.global[0] ||
+		    sp_cuda.global[1] != sp_cpu.global[1] ||
+		    sp_cuda.global[2] != sp_cpu.global[2]){
+		    std::cout << "WARNING: spacepoint mismatch detected" << std::endl;
+		}
+	    }
+	}
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (int i=0; i<measurements_per_event.measurements.size(); ++i){
@@ -212,6 +282,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
     std::cout << "==> Elapsed time ... " << std::endl;
     std::cout << "- reading time | " << " cpu: " << read_cpu << " |  cuda: " << read_cuda << std::endl;
     std::cout << "- ccl time     | " << " cpu: " << ccl_cpu << " |  cuda: " << ccl_cuda << std::endl;
+    std::cout << "- ms time      | " << " cpu: " << ms_cpu << " |  cuda: " << ms_cuda << std::endl;
+    std::cout << "- sp time      | " << " cpu: " << sp_cpu << " |  cuda: " << sp_cuda << std::endl;
+    std::cout << "- total time      | " << " cpu: " << total_cpu << " |  cuda: " << total_cuda << std::endl;
     
     return 0;
 }

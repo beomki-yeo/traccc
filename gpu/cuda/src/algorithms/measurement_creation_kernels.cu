@@ -131,20 +131,23 @@ namespace cuda{
 
 	auto pix = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
 	
-	for(int i=0; i<ms_counts; ++i){
-	    auto clabel = ms_labels_per_module[i];
+	for(int i=0; i<ms_counts; ++i){	    
+	    int clabel = ms_labels_per_module[i];
 	    scalar total_weight = 0;
-	    for (int j=0; j<cc_counts; ++j){
+
+	    for (int j=0; j<cc_labels_per_module.size(); ++j){
 		if ( clabel == cc_labels_per_module[j] ){
 		    auto& cell = cells_per_module[j];
 		    scalar weight = cell.activation;
 		    total_weight+=weight;
 		    auto cell_position = pix(cell.channel0, cell.channel1);
-		    ms_per_module[clabel-1].local = ms_per_module[clabel-1].local + weight * cell_position;	 
+		    ms_per_module[clabel-1].local = ms_per_module[clabel-1].local + weight * cell_position;
 		}
 	    }
 	    ms_per_module[clabel-1].local = 1./total_weight * ms_per_module[clabel-1].local;
 	}
+
+	ms_data.modules[gid] = cells_data.modules[gid];
     }
 }
 }

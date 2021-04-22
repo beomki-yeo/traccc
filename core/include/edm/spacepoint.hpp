@@ -118,6 +118,7 @@ namespace traccc {
     }; // struct spacepoint_container_view
 
     /// Helper function for making a "simple" object out of the spacepoint container
+    __inline__
     spacepoint_container_data get_data( host_spacepoint_container& cc, vecmem::memory_resource* resource = nullptr ) {
         return { { vecmem::get_data( cc.modules ) },
                  { vecmem::get_data( cc.spacepoints, resource ) } };

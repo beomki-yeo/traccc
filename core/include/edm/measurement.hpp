@@ -119,6 +119,7 @@ namespace traccc {
     }; // struct measurement_container_view
 
     /// Helper function for making a "simple" object out of the measurement container
+    __inline__
     measurement_container_data get_data( host_measurement_container& cc, vecmem::memory_resource* resource = nullptr ) {
         return { { vecmem::get_data( cc.modules ) },
                  { vecmem::get_data( cc.measurements, resource ) } };
