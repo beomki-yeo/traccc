@@ -27,6 +27,7 @@
 // std 
 #include <iostream>
 #include <chrono>
+#include <iomanip>
 
 int seq_run(const std::string& detector_file, const std::string& cells_dir, unsigned int events)
 {
@@ -280,11 +281,12 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
     std::cout << "- created " << n_space_points << " space points. " << std::endl;
 
     std::cout << "==> Elapsed time ... " << std::endl;
-    std::cout << "- reading time | " << " cpu: " << read_cpu << " |  cuda: " << read_cuda << std::endl;
-    std::cout << "- ccl time     | " << " cpu: " << ccl_cpu << " |  cuda: " << ccl_cuda << std::endl;
-    std::cout << "- ms time      | " << " cpu: " << ms_cpu << " |  cuda: " << ms_cuda << std::endl;
-    std::cout << "- sp time      | " << " cpu: " << sp_cpu << " |  cuda: " << sp_cuda << std::endl;
-    std::cout << "- total time      | " << " cpu: " << total_cpu << " |  cuda: " << total_cuda << std::endl;
+    std::cout << "                cpu      cuda " << std::endl;
+    std::cout << "reading_time  " << std::setw(10) << std::left << read_cpu  << "  " <<  read_cuda << std::endl;
+    std::cout << "ccl_time      " << std::setw(10) << std::left << ccl_cpu   << "  " << ccl_cuda << std::endl;
+    std::cout << "ms_time       " << std::setw(10) << std::left << ms_cpu    << "  " << ms_cuda << std::endl;
+    std::cout << "sp_time       " << std::setw(10) << std::left << sp_cpu    << "  " << sp_cuda << std::endl;
+    std::cout << "total_time    " << std::setw(10) << std::left << total_cpu << "  " <<  total_cuda << std::endl;
     
     return 0;
 }
