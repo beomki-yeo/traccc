@@ -9,7 +9,7 @@
 #ifdef __CUDACC__      
 #include <cuda.h>
 #include <cuda_runtime.h>
-#define __CUDA_QUALIFIER__ inline __device__ __host__
+#define __CUDA_DEVICE_HOST__ inline __device__ __host__
 #else
-#define __CUDA_QUALIFIER__
+#define __CUDA_DEVICE_HOST__
 #endif   
