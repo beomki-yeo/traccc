@@ -37,10 +37,11 @@ int main(){
 
   traccc::cell_module module;
   module.module = 0;
+  module.pixel = traccc::pixel_segmentation{0.,0.,1.,1.};
   module.placement = traccc::transform3{};
   
   traccc::cluster_collection clusters;
-  clusters.position_from_cell = traccc::pixel_segmentation{0.,0.,1.,1.};
+  clusters.position_from_cell = module.pixel;
 
   traccc::host_measurement_collection measurements;
 
@@ -52,7 +53,7 @@ int main(){
 
   // Algorithmic code: start
   clusters = cc(cells, module);
-  measurements= mt(clusters);
+  measurements= mt(clusters, module);
   spacepoints = sp(module,measurements);
 
   return 0;

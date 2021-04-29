@@ -30,7 +30,12 @@ namespace traccc {
 	{ 
 	    return { min_center_x + ch0 * pitch_x, min_center_y + ch1 * pitch_y };
 	};
-	
+
+	/// get width
+	__CUDA_DEVICE_HOST__
+	vector2 get_pitch() const {
+	    return { pitch_x, pitch_y };
+	};
     };
     
 }

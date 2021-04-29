@@ -10,6 +10,7 @@
 // traccc include(s).
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
+#include "geometry/pixel_segmentation.hpp"
 
 // VecMem include(s).
 #include <vecmem/containers/jagged_vector.hpp>
@@ -26,9 +27,6 @@ namespace traccc {
 
     /// @name Types to use in algorithmic code
     /// @{
-
-    /// Channel identifier type
-    using channel_id = unsigned int;
 
     /// A cell definition:
     ///
@@ -65,6 +63,8 @@ namespace traccc {
         channel_id range0[ 2 ] = { std::numeric_limits< channel_id >::max(), 0 };
         channel_id range1[ 2 ] = { std::numeric_limits< channel_id >::max(), 0 };
 
+	// TODO: can it be filled in data reading stage?
+	pixel_segmentation pixel; 
     }; // struct cell_module
 
     /// Container describing all of the cells in a given event

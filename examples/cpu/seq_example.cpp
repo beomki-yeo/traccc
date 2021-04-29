@@ -72,10 +72,13 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
         for (std::size_t i = 0; i < cells_per_event.cells.size(); ++i )
         {
 	    auto& module = cells_per_event.modules[i];
+	    module.pixel = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
+
             // The algorithmic code part: start
             traccc::cluster_collection clusters_per_module = cc(cells_per_event.cells[i], cells_per_event.modules[i]);
-            clusters_per_module.position_from_cell = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
-            traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module);
+            clusters_per_module.position_from_cell = module.pixel;
+
+            traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module, module);
             traccc::host_spacepoint_collection spacepoints_per_module = sp(module, measurements_per_module);
             // The algorithmnic code part: end
 

@@ -100,17 +100,17 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    /*time*/ auto start_ccl_cpu = std::chrono::system_clock::now();
 	    
 	    auto& module = cells_per_event.modules[i];
+	    module.pixel = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
+	    
             traccc::cluster_collection clusters_per_module = cc(cells_per_event.cells[i], cells_per_event.modules[i]);
-
+            clusters_per_module.position_from_cell = module.pixel;
+	    
 	    /*time*/ auto end_ccl_cpu = std::chrono::system_clock::now();
 	    /*time*/ std::chrono::duration<double> time_ccl_cpu = end_ccl_cpu - start_ccl_cpu; 
 	    /*time*/ ccl_cpu += time_ccl_cpu.count();
 	    
-            clusters_per_module.position_from_cell = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
-
-
 	    /*time*/ auto start_ms_cpu = std::chrono::system_clock::now();
-            traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module);
+            traccc::host_measurement_collection measurements_per_module = mt(clusters_per_module, module);
 
 	    /*time*/ auto end_ms_cpu = std::chrono::system_clock::now();
 	    /*time*/ std::chrono::duration<double> time_ms_cpu = end_ms_cpu - start_ms_cpu; 
@@ -141,17 +141,22 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	/*time*/ std::chrono::duration<double> time_total_cpu = end_total_cpu - start_total_cpu; 
 	/*time*/ total_cpu += time_total_cpu.count();
 
-	/////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////
+	/*---------------------------------------------------
+	  CUDA code begins here
+	 ----------------------------------------------------*/
 
 	/*time*/ auto start_total_cuda = std::chrono::system_clock::now();	
   
-	//// cuda - read cell data with managed memory resource
+	//--- CUDA: read cell data with managed memory resource 
+	    
 	/*time*/ auto start_read_cuda = std::chrono::system_clock::now();
 	
 	traccc::cell_reader creader_for_cuda(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});
         traccc::host_cell_container ce_container = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
+	//fill pixel segmentation to cell_module
+	for (auto& mod: ce_container.modules){
+	    mod.pixel =	traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
+	}
 
 	// prepare ccl label vector
 	int n_modules = ce_container.cells.size();

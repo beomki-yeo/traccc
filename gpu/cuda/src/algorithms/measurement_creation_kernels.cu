@@ -120,16 +120,14 @@ namespace cuda{
 	device_measurement_container ms_data({ms_view.modules, ms_view.measurements});
 	
 	auto cells_per_module = cells_data.cells.at(gid);
-	
+	auto module = cells_data.modules.at(gid);
 	auto cc_counts = cc_label_data.counts.at(gid);
-	auto cc_labels_per_module = cc_label_data.labels.at(gid);
-	
+	auto cc_labels_per_module = cc_label_data.labels.at(gid);	
 	auto ms_counts = ms_label_data.counts.at(gid);	
 	auto ms_labels_per_module = ms_label_data.labels.at(gid);
-
 	auto ms_per_module = ms_data.measurements.at(gid);
 
-	auto pix = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
+	auto pitch = module.pixel.get_pitch();
 	
 	for(int i=0; i<ms_counts; ++i){	    
 	    int clabel = ms_labels_per_module[i];
@@ -140,11 +138,28 @@ namespace cuda{
 		    auto& cell = cells_per_module[j];
 		    scalar weight = cell.activation;
 		    total_weight+=weight;
-		    auto cell_position = pix(cell.channel0, cell.channel1);
+		    auto cell_position = module.pixel(cell.channel0, cell.channel1);
+		    point2 square_pos = {powf(std::get<0>(cell_position),2),
+					 powf(std::get<1>(cell_position),2)};
+		    // weighted average of local position
 		    ms_per_module[clabel-1].local = ms_per_module[clabel-1].local + weight * cell_position;
+		    // weighted average of variance
+		    ms_per_module[clabel-1].variance = ms_per_module[clabel-1].variance + weight * square_pos;
 		}
 	    }
+	    // normalize the cell position
 	    ms_per_module[clabel-1].local = 1./total_weight * ms_per_module[clabel-1].local;
+	    // normalize the variance
+	    ms_per_module[clabel-1].variance = 1./total_weight * ms_per_module[clabel-1].variance;
+	    // plus pitch^2 / 12
+	    ms_per_module[clabel-1].variance = ms_per_module[clabel-1].variance +
+		point2{powf(std::get<0>(pitch),2)/12, powf(std::get<1>(pitch),2)/12};
+
+	    // minus <x>^2
+	    ms_per_module[clabel-1].variance = ms_per_module[clabel-1].variance -
+		point2{powf(std::get<0>(ms_per_module[clabel-1].local),2),
+		       powf(std::get<1>(ms_per_module[clabel-1].local),2)};
+
 	}
 
 	ms_data.modules[gid] = cells_data.modules[gid];
