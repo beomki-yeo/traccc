@@ -28,7 +28,7 @@ install(
   DIRECTORY include/algorithms
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-if (TRACCC_BUILD_CUDA)
+if (TRACCC_BUILD_cuda)
   find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
   target_include_directories(traccc_core
     PUBLIC

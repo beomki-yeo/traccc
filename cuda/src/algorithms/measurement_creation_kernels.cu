@@ -154,7 +154,6 @@ namespace cuda{
 	    // plus pitch^2 / 12
 	    ms_per_module[clabel-1].variance = ms_per_module[clabel-1].variance +
 		point2{powf(std::get<0>(pitch),2)/12, powf(std::get<1>(pitch),2)/12};
-
 	    // minus <x>^2
 	    ms_per_module[clabel-1].variance = ms_per_module[clabel-1].variance -
 		point2{powf(std::get<0>(ms_per_module[clabel-1].local),2),
