@@ -8,6 +8,7 @@
 #include "cuda/algorithms/component_connection_kernels.cuh"
 #include "cuda/utils/definitions.hpp"
 
+// TODO: share the same function defined in core library
 __device__
 unsigned int find_root(const vecmem::device_vector< unsigned int >& L, unsigned int e){
   unsigned int r = e;
@@ -17,6 +18,7 @@ unsigned int find_root(const vecmem::device_vector< unsigned int >& L, unsigned 
   return r;
 }
 
+// TODO: share the same function defined in core library
 __device__
 unsigned int make_union(vecmem::device_vector< unsigned int >& L, unsigned int e1, unsigned int e2){
   int e;
@@ -30,17 +32,20 @@ unsigned int make_union(vecmem::device_vector< unsigned int >& L, unsigned int e
   return e;
 }
 
+// TODO: share the same function defined in core library
 __device__
 bool is_adjacent(traccc::cell a, traccc::cell b){
   return (a.channel0 - b.channel0)*(a.channel0 - b.channel0) <= 1 
     and (a.channel1 - b.channel1)*(a.channel1 - b.channel1) <= 1; 
 }
 
+// TODO: share the same function defined in core library
 __device__
 bool is_far_enough(traccc::cell a, traccc::cell b){
   return (a.channel1 - b.channel1) > 1; 
 }
 
+// TODO: share the same function defined in core library
 __device__
 unsigned int sparse_ccl(const vecmem::device_vector< traccc::cell > cells,
 			vecmem::device_vector< unsigned int >& L){    
@@ -80,6 +85,7 @@ unsigned int sparse_ccl(const vecmem::device_vector< traccc::cell > cells,
 namespace traccc {
 namespace cuda{
 
+    // Declare kernel function for component connection per module
     __global__
     void cc_kernel(cell_container_view cell_data,
 		   detail::label_container_view label_data);
@@ -104,7 +110,7 @@ namespace cuda{
     __global__
     void cc_kernel(cell_container_view cell_data,
 		   detail::label_container_view label_data){
-
+	// global ID (gid) is for each module
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
 	if (gid>=cell_data.cells.m_size) return;
 
@@ -113,7 +119,8 @@ namespace cuda{
 	auto counts = labels_device.counts;
 	auto cells_per_module = cells_device.cells.at(gid);
 	auto labels_per_module = labels_device.labels.at(gid);
-	
+
+	// run the sparse ccl per module
 	counts[gid] = sparse_ccl(cells_per_module, labels_per_module);
 	return;	
     }

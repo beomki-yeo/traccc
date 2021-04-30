@@ -11,7 +11,8 @@
 
 namespace traccc {
 namespace cuda{
-
+    
+    // Declare kernel function for spacepoint formation per module
     __global__
     void spacepoint_formation_kernel(measurement_container_view ms_view,
 				     spacepoint_container_view sp_view);
@@ -55,8 +56,10 @@ namespace cuda{
 	    auto& sp = sp_per_module[i];
 	    point3 local_3d = {std::get<0>(ms.local), std::get<1>(ms.local), 0.};
 
+	    // transform the local position to global position
 	    sp.global= ms_data.modules[gid].placement.point_to_global(local_3d);
 
+	    // TODO: local error transformation to global one
 	}
 
 	sp_data.modules.at(gid) = ms_data.modules.at(gid).module;

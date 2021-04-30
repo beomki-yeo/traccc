@@ -13,7 +13,8 @@
 
 namespace traccc {
     
-    /// A measurement definition, fix to two-dimensional here
+    /// A measurement definition:
+    /// fix to two-dimensional here
     struct measurement {
         point2 local = {0., 0.};
         variance2 variance = { 0., 0.};
@@ -51,7 +52,7 @@ namespace traccc {
         template< typename T >
         using jagged_vector_type = jagged_vector_t< T >;
 
-        /// The measurement module vector type
+        /// The cell module vector type
         using cell_module_vector = vector_type< cell_module >;
         /// The measurement vector type
         using measurement_vector = jagged_vector_type< measurement >;

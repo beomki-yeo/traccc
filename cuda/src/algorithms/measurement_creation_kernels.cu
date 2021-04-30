@@ -11,11 +11,13 @@
 namespace traccc {
 namespace cuda{
 
+    // Declare kernel function for couting measurement per module
     __global__
     void count_measurements_kernel(cell_container_view cell_view,
 				   detail::label_container_view cc_label_view,
 				   detail::label_container_view ms_label_view);
-
+    
+    // Declare kernel function for measurement creation per module
     __global__
     void measurement_creation_kernel(cell_container_view cell_view,
 				     detail::label_container_view cc_label_view,
@@ -88,17 +90,23 @@ namespace cuda{
 	auto cells_per_module = cells_data.cells.at(gid);
 	auto cc_labels_per_module = cc_label_data.labels.at(gid);	
 	auto ms_labels_per_module = ms_label_data.labels.at(gid);
-	
+
+	// Loop over unique labels
 	for(int i=1; i<=cc_label_data.counts.at(gid); ++i){
 	    scalar weight = 0;
+	    // Loop over the labels of cells
 	    for(int j=0; j<cc_labels_per_module.size(); ++j){
 		auto& label = cc_labels_per_module[j];
 		auto& cell  = cells_per_module[j];
+		// if the label of a cell (label) matches with unique label (i),
+		// sum the weight
 		if ( i == label ){
 		    weight += cell.activation;
 		}
 	    }
-	    if (weight > 0){ // need to pass threshold later
+	    if (weight > 0){ // TODO: pass the threshold from argument
+		// if the total weight is larger than threshold,
+		// record the unique label (i) as valid label
 		ms_labels_per_module[ms_label_data.counts.at(gid)] = i;
 		ms_label_data.counts.at(gid)++;
 	    }	    
@@ -127,13 +135,19 @@ namespace cuda{
 	auto ms_labels_per_module = ms_label_data.labels.at(gid);
 	auto ms_per_module = ms_data.measurements.at(gid);
 
+	// Width of a pixel
 	auto pitch = module.pixel.get_pitch();
-	
-	for(int i=0; i<ms_counts; ++i){	    
+
+	// Loop over the number of measurements per module
+	for(int i=0; i<ms_counts; ++i){
+	    // clabel: valid label which can form a measurement out of cluster
 	    int clabel = ms_labels_per_module[i];
 	    scalar total_weight = 0;
 
+	    // Loop over the labels of cells
 	    for (int j=0; j<cc_labels_per_module.size(); ++j){
+		// Find the cells whose label is same with the valid label (clabel)
+		// and compute the weighted average of local position and error
 		if ( clabel == cc_labels_per_module[j] ){
 		    auto& cell = cells_per_module[j];
 		    scalar weight = cell.activation;
@@ -161,6 +175,7 @@ namespace cuda{
 
 	}
 
+	// pass the cell_module from cell container
 	ms_data.modules[gid] = cells_data.modules[gid];
     }
 }

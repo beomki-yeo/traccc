@@ -5,7 +5,7 @@
  * Mozilla Public License Version 2.0
  */
 
-// CUDA macros
+// Define a qualifier for cuda
 #ifdef __CUDACC__      
 #include <cuda.h>
 #include <cuda_runtime.h>

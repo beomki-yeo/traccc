@@ -50,14 +50,14 @@ namespace traccc {
         template< typename T >
         using jagged_vector_type = jagged_vector_t< T >;
 
-        /// The spacepoint module vector type
+        /// The module Id (geometry_id) vector type
         using module_vector = vector_type< geometry_id >;
         /// The spacepoint vector type
         using spacepoint_vector = jagged_vector_type< spacepoint >;
 
         /// @}
 
-        /// Headers for all of the modules (holding spacepoints) in the event
+        /// Module Id vector
         module_vector modules;
         /// All of the spacepoints in the event
         spacepoint_vector spacepoints;

@@ -14,7 +14,16 @@
 
 namespace traccc {
 namespace cuda{
-    
+
+    /// Wrapper function for counting the number of measurements per event
+    ///
+    /// @param ms_container: The input measurements of an event
+    ///
+    /// @param sp_container: The output spacepoints of an event
+    ///
+    /// @param resource: memery resource for cuda
+    ///
+    /// The global positions and errors of measurements are obtained
     void spacepoint_formation(host_measurement_container& ms_container,
 			      host_spacepoint_container& sp_container,
 			      vecmem::memory_resource* resource);

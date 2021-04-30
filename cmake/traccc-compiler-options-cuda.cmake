@@ -13,7 +13,9 @@ include( traccc-functions )
 # Set up the used C++/CUDA standard(s).
 set( CMAKE_CUDA_STANDARD 17 CACHE STRING "CUDA C++ standard to use" )
 
+# flag for using std containers in kernel
 traccc_add_flag( CMAKE_CUDA_FLAGS "--expt-relaxed-constexpr" )
+# flag for disabling fast math mode to get the same results from both cpu and cuda
 traccc_add_flag( CMAKE_CUDA_FLAGS "-fmad=false" )
 
 # Basic flags for all major build modes.

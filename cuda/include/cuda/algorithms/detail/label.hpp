@@ -13,7 +13,8 @@ namespace traccc {
 namespace cuda{
 namespace detail{
 
-// Label container that stores the sparse ccl information
+    // Label container that stores the CCL related information.
+    // Currently used in sparse CCL and measurement creation
     template< template< typename > class vector_t,
               template< typename > class jagged_vector_t >
     class label_container {
@@ -36,9 +37,9 @@ namespace detail{
 	
         /// @}
 
-        /// number of labels per module
+        /// counting unique labels
 	ccl_label counts;
-        /// All of the labels in the event
+        /// the labels in the event
         ccl_label_vector labels;
 
     };
