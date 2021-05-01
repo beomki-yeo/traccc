@@ -29,15 +29,15 @@ namespace cuda{
 			    detail::host_label_container& ms_labels,
 			    vecmem::memory_resource* resource){
 	auto cell_data = get_data(cells, resource);
-	auto cc_label_data = detail::get_data(cc_labels, resource);
-	auto ms_label_data = detail::get_data(ms_labels, resource);
+	auto cc_label_data = get_data(cc_labels, resource);
+	auto ms_label_data = get_data(ms_labels, resource);
 
 	cell_container_view cell_view(cell_data);
 	detail::label_container_view cc_label_view(cc_label_data);
 	detail::label_container_view ms_label_view(ms_label_data);
 	
 	unsigned int num_threads = WARP_SIZE*2; 
-	unsigned int num_blocks = cell_data.modules.m_size/num_threads + 1;
+	unsigned int num_blocks = cell_data.headers.m_size/num_threads + 1;
 	
 	count_measurements_kernel<<< num_blocks, num_threads >>>(cell_view,
 								 cc_label_view,
@@ -54,8 +54,8 @@ namespace cuda{
 			      vecmem::memory_resource* resource){
 
 	auto cell_data = get_data(ce_container, resource);
-	auto cc_label_data = detail::get_data(cc_labels, resource);
-	auto ms_label_data = detail::get_data(ms_labels, resource);
+	auto cc_label_data = get_data(cc_labels, resource);
+	auto ms_label_data = get_data(ms_labels, resource);
 	auto ms_data = get_data(ms_container, resource);
 
 	cell_container_view cell_view(cell_data);
@@ -64,7 +64,7 @@ namespace cuda{
 	measurement_container_view ms_view(ms_data);
 	
 	unsigned int num_threads = WARP_SIZE*2; 
-	unsigned int num_blocks = cell_data.modules.m_size/num_threads + 1;
+	unsigned int num_blocks = cell_data.headers.m_size/num_threads + 1;
 
 	measurement_creation_kernel<<< num_blocks, num_threads >>>(cell_view,
 								   cc_label_view,
@@ -81,18 +81,18 @@ namespace cuda{
 				   detail::label_container_view ms_label_view){
 
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
-	if (gid>=cell_view.cells.m_size) return;
+	if (gid>=cell_view.items.m_size) return;
 	
-	device_cell_container cells_data({cell_view.modules, cell_view.cells});
-	detail::device_label_container cc_label_data({cc_label_view.counts, cc_label_view.labels});
-	detail::device_label_container ms_label_data({ms_label_view.counts, ms_label_view.labels});
+	device_cell_container cells_data({cell_view.headers, cell_view.items});
+	detail::device_label_container cc_label_data({cc_label_view.headers, cc_label_view.items});
+	detail::device_label_container ms_label_data({ms_label_view.headers, ms_label_view.items});
 	
-	auto cells_per_module = cells_data.cells.at(gid);
-	auto cc_labels_per_module = cc_label_data.labels.at(gid);	
-	auto ms_labels_per_module = ms_label_data.labels.at(gid);
+	auto cells_per_module = cells_data.items.at(gid);
+	auto cc_labels_per_module = cc_label_data.items.at(gid);	
+	auto ms_labels_per_module = ms_label_data.items.at(gid);
 
 	// Loop over unique labels
-	for(int i=1; i<=cc_label_data.counts.at(gid); ++i){
+	for(int i=1; i<=cc_label_data.headers.at(gid); ++i){
 	    scalar weight = 0;
 	    // Loop over the labels of cells
 	    for(int j=0; j<cc_labels_per_module.size(); ++j){
@@ -107,8 +107,8 @@ namespace cuda{
 	    if (weight > 0){ // TODO: pass the threshold from argument
 		// if the total weight is larger than threshold,
 		// record the unique label (i) as valid label
-		ms_labels_per_module[ms_label_data.counts.at(gid)] = i;
-		ms_label_data.counts.at(gid)++;
+		ms_labels_per_module[ms_label_data.headers.at(gid)] = i;
+		ms_label_data.headers.at(gid)++;
 	    }	    
 	}
     }
@@ -120,20 +120,20 @@ namespace cuda{
 				     measurement_container_view ms_view){
 
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
-	if (gid>=cell_view.cells.m_size) return;
+	if (gid>=cell_view.items.m_size) return;
 	
-	device_cell_container cells_data({cell_view.modules, cell_view.cells});
-	detail::device_label_container cc_label_data({cc_label_view.counts, cc_label_view.labels});
-	detail::device_label_container ms_label_data({ms_label_view.counts, ms_label_view.labels});
-	device_measurement_container ms_data({ms_view.modules, ms_view.measurements});
+	device_cell_container cells_data({cell_view.headers, cell_view.items});
+	detail::device_label_container cc_label_data({cc_label_view.headers, cc_label_view.items});
+	detail::device_label_container ms_label_data({ms_label_view.headers, ms_label_view.items});
+	device_measurement_container ms_data({ms_view.headers, ms_view.items});
 	
-	auto cells_per_module = cells_data.cells.at(gid);
-	auto module = cells_data.modules.at(gid);
-	auto cc_counts = cc_label_data.counts.at(gid);
-	auto cc_labels_per_module = cc_label_data.labels.at(gid);	
-	auto ms_counts = ms_label_data.counts.at(gid);	
-	auto ms_labels_per_module = ms_label_data.labels.at(gid);
-	auto ms_per_module = ms_data.measurements.at(gid);
+	auto cells_per_module = cells_data.items.at(gid);
+	auto module = cells_data.headers.at(gid);
+	auto cc_counts = cc_label_data.headers.at(gid);
+	auto cc_labels_per_module = cc_label_data.items.at(gid);	
+	auto ms_counts = ms_label_data.headers.at(gid);	
+	auto ms_labels_per_module = ms_label_data.items.at(gid);
+	auto ms_per_module = ms_data.items.at(gid);
 
 	// Width of a pixel
 	auto pitch = module.pixel.get_pitch();
@@ -176,7 +176,7 @@ namespace cuda{
 	}
 
 	// pass the cell_module from cell container
-	ms_data.modules[gid] = cells_data.modules[gid];
+	ms_data.headers[gid] = cells_data.headers[gid];
     }
 }
 }

@@ -50,22 +50,22 @@ TEST(algorithms, component_connection){
 
     // cuda - prepare data
     traccc::host_cell_container mng_cells = {
-	traccc::host_cell_container::cell_module_vector(&mng_mr),
-        traccc::host_cell_container::cell_vector(&mng_mr) };
+	traccc::host_cell_container::header_vector(&mng_mr),
+        traccc::host_cell_container::item_vector(&mng_mr) };
     
-    mng_cells.cells.push_back(host_cells);
-    mng_cells.modules.push_back(module);    
+    mng_cells.items.push_back(host_cells);
+    mng_cells.headers.push_back(module);    
 
     traccc::cuda::detail::host_label_container mng_labels={
 	vecmem::vector<unsigned int>(1,&mng_mr),
 	vecmem::jagged_vector<unsigned int>(1,&mng_mr)
     };
-    mng_labels.labels[0] = vecmem::vector< unsigned int >(mng_cells.cells[0].size(),0);
+    mng_labels.items[0] = vecmem::vector< unsigned int >(mng_cells.items[0].size(),0);
 
     // cuda - component connection algorithm
     traccc::cuda::component_connection(mng_cells, mng_labels, &mng_mr);
 
-    ASSERT_EQ(mng_labels.counts[0], 4u); 
+    ASSERT_EQ(mng_labels.headers[0], 4u); 
 }
 
 // Google Test can be run manually from the main() function

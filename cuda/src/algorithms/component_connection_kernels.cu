@@ -94,12 +94,12 @@ namespace cuda{
 			      detail::host_label_container& labels_per_event,
 			      vecmem::memory_resource* resource){
 	auto cell_data = get_data(cells_per_event, resource);
-	auto label_data = detail::get_data(labels_per_event, resource);
+	auto label_data = get_data(labels_per_event, resource);
 	cell_container_view cell_view(cell_data);
 	detail::label_container_view label_view(label_data);
 
 	unsigned int num_threads = WARP_SIZE*2; 
-	unsigned int num_blocks = cell_data.modules.m_size/num_threads + 1;
+	unsigned int num_blocks = cell_data.headers.m_size/num_threads + 1;
 
 	cc_kernel<<< num_blocks, num_threads >>>(cell_view, label_view);
 	
@@ -112,13 +112,13 @@ namespace cuda{
 		   detail::label_container_view label_data){
 	// global ID (gid) is for each module
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
-	if (gid>=cell_data.cells.m_size) return;
+	if (gid>=cell_data.items.m_size) return;
 
-	device_cell_container cells_device({cell_data.modules, cell_data.cells});
-	detail::device_label_container labels_device({label_data.counts, label_data.labels});
-	auto counts = labels_device.counts;
-	auto cells_per_module = cells_device.cells.at(gid);
-	auto labels_per_module = labels_device.labels.at(gid);
+	device_cell_container cells_device({cell_data.headers, cell_data.items});
+	detail::device_label_container labels_device({label_data.headers, label_data.items});
+	auto counts = labels_device.headers;
+	auto cells_per_module = cells_device.items.at(gid);
+	auto labels_per_module = labels_device.items.at(gid);
 
 	// run the sparse ccl per module
 	counts[gid] = sparse_ccl(cells_per_module, labels_per_module);

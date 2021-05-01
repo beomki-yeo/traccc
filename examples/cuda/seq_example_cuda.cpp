@@ -84,25 +84,25 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	/*time*/ std::chrono::duration<double> time_read_cpu = end_read_cpu - start_read_cpu; 
 	/*time*/ read_cpu += time_read_cpu.count();
 	
-        m_modules += cells_per_event.modules.size();
+        m_modules += cells_per_event.headers.size();
 
         // Output containers
         traccc::host_measurement_container measurements_per_event;
         traccc::host_spacepoint_container spacepoints_per_event;
-        measurements_per_event.modules.reserve(cells_per_event.modules.size());
-	measurements_per_event.measurements.reserve(cells_per_event.modules.size());
-        spacepoints_per_event.modules.reserve(cells_per_event.modules.size());
-	spacepoints_per_event.spacepoints.reserve(cells_per_event.modules.size()); 
+        measurements_per_event.headers.reserve(cells_per_event.headers.size());
+	measurements_per_event.items.reserve(cells_per_event.headers.size());
+        spacepoints_per_event.headers.reserve(cells_per_event.headers.size());
+	spacepoints_per_event.items.reserve(cells_per_event.headers.size()); 
 	
-        for (std::size_t i = 0; i < cells_per_event.cells.size(); ++i )
+        for (std::size_t i = 0; i < cells_per_event.items.size(); ++i )
         {
             // The algorithmic code part: start
 	    /*time*/ auto start_ccl_cpu = std::chrono::system_clock::now();
 	    
-	    auto& module = cells_per_event.modules[i];
+	    auto& module = cells_per_event.headers[i];
 	    module.pixel = traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
 	    
-            traccc::cluster_collection clusters_per_module = cc(cells_per_event.cells[i], cells_per_event.modules[i]);
+            traccc::cluster_collection clusters_per_module = cc(cells_per_event.items[i], cells_per_event.headers[i]);
             clusters_per_module.position_from_cell = module.pixel;
 	    
 	    /*time*/ auto end_ccl_cpu = std::chrono::system_clock::now();
@@ -125,16 +125,16 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    /*time*/ std::chrono::duration<double> time_sp_cpu = end_sp_cpu - start_sp_cpu; 
 	    /*time*/ sp_cpu += time_sp_cpu.count();
 	    
-            n_cells += cells_per_event.cells[i].size();
+            n_cells += cells_per_event.items[i].size();
             n_clusters += clusters_per_module.items.size();
             n_measurements += measurements_per_module.size();
             n_space_points += spacepoints_per_module.size();
 
-            measurements_per_event.measurements.push_back(std::move(measurements_per_module));
-	    measurements_per_event.modules.push_back(module);
+            measurements_per_event.items.push_back(std::move(measurements_per_module));
+	    measurements_per_event.headers.push_back(module);
 	    
-            spacepoints_per_event.spacepoints.push_back(std::move(spacepoints_per_module));
-	    spacepoints_per_event.modules.push_back(module.module);
+            spacepoints_per_event.items.push_back(std::move(spacepoints_per_module));
+	    spacepoints_per_event.headers.push_back(module.module);
         }
 
 	/*time*/ auto end_total_cpu = std::chrono::system_clock::now();
@@ -154,18 +154,18 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	traccc::cell_reader creader_for_cuda(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1", "activation", "time"});
         traccc::host_cell_container ce_container = traccc::read_cells(creader_for_cuda, mng_mr, surface_transforms);
 	//fill pixel segmentation to cell_module
-	for (auto& mod: ce_container.modules){
+	for (auto& mod: ce_container.headers){
 	    mod.pixel =	traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
 	}
 
 	// prepare ccl label vector
-	int n_modules = ce_container.cells.size();
+	int n_modules = ce_container.items.size();
 	traccc::cuda::detail::host_label_container cc_labels = {
 	    vecmem::vector< unsigned int >(n_modules, 0, &mng_mr),
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
 	};
 	for (int i=0; i<n_modules; ++i){
-	    cc_labels.labels[i]=vecmem::vector<unsigned int>(ce_container.cells[i].size(),0);
+	    cc_labels.items[i]=vecmem::vector<unsigned int>(ce_container.items[i].size(),0);
 	}
 	
 	/*time*/ auto end_read_cuda = std::chrono::system_clock::now();
@@ -192,7 +192,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	    vecmem::jagged_vector< unsigned int >(n_modules, &mng_mr)
 	};
 	for (int i=0; i<n_modules; ++i){
-	    ms_labels.labels[i] = vecmem::vector< unsigned int >(cc_labels.labels[i].size(),0);
+	    ms_labels.items[i] = vecmem::vector< unsigned int >(cc_labels.items[i].size(),0);
 	}
 
 	traccc::cuda::count_measurements(ce_container, cc_labels,
@@ -201,12 +201,12 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	//// cuda - mesaurements creation
 	
 	traccc::host_measurement_container ms_container = {
-	     traccc::host_measurement_container::cell_module_vector( n_modules, &mng_mr ),	     
-	     traccc::host_measurement_container::measurement_vector( n_modules, &mng_mr ) 
+	     traccc::host_measurement_container::header_vector( n_modules, &mng_mr ),
+	     traccc::host_measurement_container::item_vector( n_modules, &mng_mr ) 
 	};	
 	for ( int i=0; i< n_modules; ++i ){
-	    ms_container.measurements[i] =
-		vecmem::vector< traccc::measurement >(ms_labels.counts[i]);
+	    ms_container.items[i] =
+		vecmem::vector< traccc::measurement >(ms_labels.headers[i]);
 	}	
 	
 	traccc::cuda::measurement_creation(ce_container,
@@ -223,12 +223,12 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 
 	/*time*/ auto start_sp_cuda = std::chrono::system_clock::now();
 	traccc::host_spacepoint_container sp_container = {
-	     traccc::host_spacepoint_container::module_vector( n_modules, &mng_mr ),	     
-	     traccc::host_spacepoint_container::spacepoint_vector( n_modules, &mng_mr ) 
+	     traccc::host_spacepoint_container::header_vector( n_modules, &mng_mr ),
+	     traccc::host_spacepoint_container::item_vector( n_modules, &mng_mr ) 
 	};	
 	for ( int i=0; i< n_modules; ++i ){
-	    sp_container.spacepoints[i] =
-		vecmem::vector< traccc::spacepoint >(ms_labels.counts[i]);
+	    sp_container.items[i] =
+		vecmem::vector< traccc::spacepoint >(ms_labels.headers[i]);
 	}	
 
 	traccc::cuda::spacepoint_formation(ms_container,
@@ -245,10 +245,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 
 	
 	// assure we have same results for spacepoints	
-	for(int i=0; i<sp_container.spacepoints.size(); i++){
-	    for(int j=0; j<sp_container.spacepoints[i].size(); j++){
-		auto sp_cuda = sp_container.spacepoints[i][j];
-		auto sp_cpu = spacepoints_per_event.spacepoints[i][j];
+	for(int i=0; i<sp_container.items.size(); i++){
+	    for(int j=0; j<sp_container.items[i].size(); j++){
+		auto sp_cuda = sp_container.items[i][j];
+		auto sp_cpu = spacepoints_per_event.items[i][j];
 		if (sp_cuda.global[0] != sp_cpu.global[0] ||
 		    sp_cuda.global[1] != sp_cpu.global[1] ||
 		    sp_cuda.global[2] != sp_cpu.global[2]){
@@ -258,9 +258,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	}
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
-	for (int i=0; i<measurements_per_event.measurements.size(); ++i){
-	    auto measurements_per_module = measurements_per_event.measurements[i];
-            auto module = measurements_per_event.modules[i];
+	for (int i=0; i<measurements_per_event.items.size(); ++i){
+	    auto measurements_per_module = measurements_per_event.items[i];
+            auto module = measurements_per_event.headers[i];
             for (const auto& measurement : measurements_per_module){
                 const auto& local = measurement.local;
                 mwriter.append({ module.module, local[0], local[1], 0., 0.});
@@ -268,9 +268,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
         }	
 	
         traccc::spacepoint_writer spwriter{std::string("event")+event_number+"-spacepoints.csv"};
-	for (int i=0; i<spacepoints_per_event.spacepoints.size(); ++i){
-	    auto spacepoints_per_module = spacepoints_per_event.spacepoints[i];
-            auto module = spacepoints_per_event.modules[i];
+	for (int i=0; i<spacepoints_per_event.items.size(); ++i){
+	    auto spacepoints_per_module = spacepoints_per_event.items[i];
+            auto module = spacepoints_per_event.headers[i];
 	    
             for (const auto& spacepoint : spacepoints_per_module){
                 const auto& pos = spacepoint.global;

@@ -14,7 +14,7 @@
 
 namespace traccc {
 namespace cuda{
-
+    
     /// Wrapper function for counting the number of measurements per event
     ///
     /// @param cells: The input cells of an event

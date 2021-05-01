@@ -29,7 +29,7 @@ namespace cuda{
 	spacepoint_container_view sp_view(sp_data);
 	
 	unsigned int num_threads = WARP_SIZE*2; 
-	unsigned int num_blocks = ms_data.modules.m_size/num_threads + 1;
+	unsigned int num_blocks = ms_data.headers.m_size/num_threads + 1;
 	
 	spacepoint_formation_kernel<<< num_blocks, num_threads >>>(ms_view, sp_view);
 	
@@ -43,13 +43,13 @@ namespace cuda{
 				     spacepoint_container_view sp_view){
 
 	int gid = blockDim.x * blockIdx.x + threadIdx.x;
-	if (gid>=ms_view.measurements.m_size) return;
+	if (gid>=ms_view.items.m_size) return;
 	
-	device_measurement_container ms_data({ms_view.modules, ms_view.measurements});
-	device_spacepoint_container sp_data({sp_view.modules, sp_view.spacepoints});
+	device_measurement_container ms_data({ms_view.headers, ms_view.items});
+	device_spacepoint_container sp_data({sp_view.headers, sp_view.items});
 
-	auto ms_per_module = ms_data.measurements.at(gid);
-	auto sp_per_module = sp_data.spacepoints.at(gid);
+	auto ms_per_module = ms_data.items.at(gid);
+	auto sp_per_module = sp_data.items.at(gid);
        
 	for (int i=0; i<ms_per_module.size(); ++i){
 	    auto& ms = ms_per_module[i];
@@ -57,12 +57,12 @@ namespace cuda{
 	    point3 local_3d = {std::get<0>(ms.local), std::get<1>(ms.local), 0.};
 
 	    // transform the local position to global position
-	    sp.global= ms_data.modules[gid].placement.point_to_global(local_3d);
+	    sp.global= ms_data.headers[gid].placement.point_to_global(local_3d);
 
 	    // TODO: local error transformation to global one
 	}
 
-	sp_data.modules.at(gid) = ms_data.modules.at(gid).module;
+	sp_data.headers.at(gid) = ms_data.headers.at(gid).module;
     }
 }
 }
