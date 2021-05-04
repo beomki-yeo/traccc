@@ -9,6 +9,10 @@
 
 #include "edm/spacepoint.hpp"
 #include "definitions/primitives.hpp"
+#include "utils/axis.hpp"
+#include <memory>
+
+namespace traccc{
 
 // spacepoint grid configuration
 struct spacepoint_grid_config {
@@ -26,19 +30,26 @@ struct spacepoint_grid_config {
     // negative direction in z in mm
     float zMin;
     // maximum distance in r from middle space point to bottom or top spacepoint
-    // in mm                                                
+    // in mm
     float deltaRMax;
     // maximum forward direction expressed as cot(theta)
     float cotThetaMax;
 };
 
-struct axis {
+template< class... Axes >    
+class spacepoint_grid{
+public:
+    spacepoint_grid(std::tuple< Axes... > axes): m_axes(std::move(axes)) {}
+private:    
+    std::tuple< Axes... > m_axes;
+    vecmem::jagged_vector< spacepoint > binned_sp;
+};
 
-}
+class spacepoint_grid_creator{
+public:
+    template< class ... Axes >
 
-struct spacepoint_grid{
-    spacepoint_grid(const spacepoint_grid_config& config){
-
+    static spacepoint_grid < Axes... > create_grid(const spacepoint_grid_config& config){
 	// calculate circle intersections of helix and max detector radius
 	float minHelixRadius = config.minPt / (300. * config.bFieldInZ);  // in mm
 	float maxR2 = config.rMax * config.rMax;
@@ -60,9 +71,7 @@ struct spacepoint_grid{
 	// divide 2pi by angle delta to get number of phi-bins
 	// size is always 2pi even for regions of interest
 	int phiBins = std::floor(2 * M_PI / (outerAngle - innerAngle));
-	Acts::detail::Axis<detail::AxisType::Equidistant,
-			   detail::AxisBoundaryType::Closed>
-	    phiAxis(-M_PI, M_PI, phiBins);
+	axis phiAxis(-M_PI, M_PI, phiBins);
 	
 	// TODO: can probably be optimized using smaller z bins
 	// and returning (multiple) neighbors only in one z-direction for forward
@@ -71,10 +80,11 @@ struct spacepoint_grid{
 	
 	float zBinSize = config.cotThetaMax * config.deltaRMax;
 	int zBins = std::floor((config.zMax - config.zMin) / zBinSize);
-	detail::Axis<detail::AxisType::Equidistant, detail::AxisBoundaryType::Bound>
-	    zAxis(config.zMin, config.zMax, zBins);
-       	
+	axis zAxis(config.zMin, config.zMax, zBins);
+
+	return spacepoint_grid(std::make_tuple(phiAxis, zAxis));
     }
+};
     
-    vecmem::jagged_vector< spacepoint > binned_sp;
-}
+
+} // namespace traccc
