@@ -86,19 +86,28 @@ struct seed_finding {
             triplet_counter_container.headers[i] = 0;
             triplet_container.headers[i] = 0;
 
-            doublet_counter_container.items[i].resize(n_spM);
-            mid_bot_container.items[i].resize(n_mid_bot_doublets);
-            mid_top_container.items[i].resize(n_mid_top_doublets);
-            triplet_counter_container.items[i].resize(n_mid_bot_doublets);
-            triplet_container.items[i].resize(n_triplets);
+	    if (first_alloc == true){
+	    
+		doublet_counter_container.items[i].resize(n_spM);
+		mid_bot_container.items[i].resize(n_mid_bot_doublets);
+		mid_top_container.items[i].resize(n_mid_top_doublets);
+		triplet_counter_container.items[i].resize(n_mid_bot_doublets);
+		triplet_container.items[i].resize(n_triplets);
 
+	    }
+	    
             n_internal_sp += isp_container.items[i].size();
         }
 
         seed_container.headers[0] = 0;
+
+	if (first_alloc == true){
+	
         seed_container.items[0].resize(
             m_stats_config->get_seeds_size(n_internal_sp));
 
+	}
+	
         first_alloc = false;
 
         traccc::cuda::doublet_counting(m_seedfinder_config, isp_container,
