@@ -16,6 +16,7 @@ namespace traccc {
     struct spacepoint {
         point3 global = { 0., 0., 0.};
         variance3 variance = { 0., 0., 0.};
+	size_t measurement_index;
     };
 
     /// Container of spacepoints belonging to one detector module
