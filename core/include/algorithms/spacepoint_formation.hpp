@@ -48,16 +48,16 @@ struct spacepoint_formation {
                     const host_measurement_collection& measurements,
                     host_spacepoint_collection& spacepoints) const {
         // Run the algorithm
-	spacepoints.reserve(measurements.size());
-	for (size_t meas_idx=0; meas_idx<measurements.size(); ++meas_idx){
-	    const auto& m = measurements[meas_idx];	    
-	    spacepoint s;
-	    point3 local_3d = {m.local[0], m.local[1], 0.};
-	    s.global = module.placement.point_to_global(local_3d);
-	    s.measurement_index = meas_idx;
-	    // @todo add variance estimation
-	    spacepoints.push_back(std::move(s));
-	}
+        spacepoints.reserve(measurements.size());
+        for (size_t meas_idx = 0; meas_idx < measurements.size(); ++meas_idx) {
+            const auto& m = measurements[meas_idx];
+            spacepoint s;
+            point3 local_3d = {m.local[0], m.local[1], 0.};
+            s.global = module.placement.point_to_global(local_3d);
+            s.measurement_index = meas_idx;
+            // @todo add variance estimation
+            spacepoints.push_back(std::move(s));
+        }
     }
 };
 
