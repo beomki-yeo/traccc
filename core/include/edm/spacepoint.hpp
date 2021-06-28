@@ -19,7 +19,8 @@ namespace traccc {
 struct spacepoint {
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
-
+    size_t measurement_index;
+    
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__
@@ -30,6 +31,8 @@ struct spacepoint {
     scalar radius() const {
         return std::sqrt(global[0] * global[0] + global[1] * global[1]);
     }
+    __CUDA_HOST_DEVICE__
+    const size_t& meas_index() const { return measurement_index; }
 };
 
 inline bool operator==(const spacepoint& lhs, const spacepoint& rhs) {
