@@ -1,3 +1,12 @@
+/** TRACCC library, part of the ACTS project (R&D line)
+ *
+ * (c) 2021 CERN for the benefit of the ACTS project
+ *
+ * Mozilla Public License Version 2.0
+ */
+
+#pragma once
+
 #include "Acts/Geometry/TrackingGeometry.hpp"
 #include "Acts/TrackFinding/CombinatorialKalmanFilter.hpp"
 #include "Acts/TrackFinding/MeasurementSelector.hpp"
@@ -13,9 +22,17 @@ class track_finding_algorithm {
 
 public:
 
-    track_finding_algorithm(){}
+    track_finding_algorithm(host_measurement_container& measurements,
+			    host_seed_container& seeds):
+	m_measurements(measurements),
+	m_seeds(seeds)
+    {}
+
+    void operator()(){
+
+    }
     
-// acts_cpu
+    // acts_cpu
     using TrackFinderOptions =
 	Acts::CombinatorialKalmanFilterOptions<ActsExamples::MeasurementCalibrator,
 					       Acts::MeasurementSelector>;
@@ -28,7 +45,8 @@ public:
 	const TrackFinderOptions&)>;
 
 private:
-    
+    host_measurement_container& m_measurements;
+    host_seed_container& m_seeds;
 };
 
 }
