@@ -70,13 +70,19 @@ using fatras_hit_reader = dfe::NamedTupleCsvReader<csv_fatras_hit>;
 
 struct csv_measurement {
     uint64_t geometry_id = 0;
+    std::string local_key = "";
     scalar local0 = 0.;
     scalar local1 = 0.;
+    scalar phi = 0.;
+    scalar theta = 0.;
+    scalar time = 0.;
     scalar var_local0 = 0.;
     scalar var_local1 = 0.;
+    scalar var_phi = 0.;
+    scalar var_theta = 0.;
+    scalar var_time = 0.;
 
-    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, var_local0,
-                   var_local1);
+    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta, time, var_local0, var_local1, var_phi, var_theta, var_time);
 };
 
 using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;    
