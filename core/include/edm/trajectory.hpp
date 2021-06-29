@@ -54,9 +54,9 @@ struct Types {
 
 struct trajectory {
     enum {
-	  MeasurementSizeMax = Acts::eBoundSize,
-	  // 25 for the maximum number of measurements in trackML detector
-	  NumMeasurementsMax = 25,
+        MeasurementSizeMax = Acts::eBoundSize,
+        // 25 for the maximum number of measurements in trackML detector
+        NumMeasurementsMax = 25,
     };
     unsigned int n_measurements;
     unsigned int seed_idx;
