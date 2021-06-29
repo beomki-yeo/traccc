@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "edm/trajectory.hpp"
+
 #include "Acts/Geometry/TrackingGeometry.hpp"
 #include "Acts/TrackFinding/CombinatorialKalmanFilter.hpp"
 #include "Acts/TrackFinding/MeasurementSelector.hpp"
@@ -23,7 +25,7 @@ class track_finding_algorithm {
 public:
 
     track_finding_algorithm(host_measurement_container& measurements,
-			    host_trajecory_container& tracks):
+			    host_trajectory_container& tracks):
 	m_measurements(measurements),
 	m_tracks(tracks)
     {}

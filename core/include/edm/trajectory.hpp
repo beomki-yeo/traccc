@@ -27,6 +27,9 @@
 #include <type_traits>
 #include <vector>
 
+// Acts
+#include "Acts/EventData/Measurement.hpp"
+
 // Eigen
 #include <Eigen/Core>
 
@@ -50,15 +53,18 @@ struct Types {
 };
 
 struct trajectory {
-    // 25 for the maximum number of measurements in trackML detector
-    // is this the best...?
+    enum {
+	  MeasurementSizeMax = Acts::eBoundSize,
+	  // 25 for the maximum number of measurements in trackML detector
+	  NumMeasurementsMax = 25,
+    };
     unsigned int n_measurements;
     unsigned int seed_idx;
-    std::array<Coefficients<Acts::eBoundSize>, 25> m_params;
-    std::array<Covariance<Acts::eBoundSize>, 25> m_cov;
-    std::array<Coefficients<Acts::MeasurementSizeMax>, 25> m_meas;
-    std::array<Covariance<Acts::MeasurementSizeMax>, 25> m_meas_cov;
-}
+    array<Types<Acts::eBoundSize>::Coefficients, NumMeasurementsMax> m_params;
+    array<Types<Acts::eBoundSize>::Covariance, NumMeasurementsMax> m_cov;
+    array<Types<MeasurementSizeMax>::Coefficients, NumMeasurementsMax> m_meas;
+    array<Types<MeasurementSizeMax>::Covariance, NumMeasurementsMax> m_meas_cov;
+};
 
 /// Container of trajectorys belonging to one detector module
 template <template <typename> class vector_t>

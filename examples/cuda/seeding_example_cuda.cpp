@@ -132,7 +132,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
       ----------------------------*/
     
     // traccc_cuda
-    traccc::cuda::propagator cuda_propagator;
+    //traccc::cuda::propagator cuda_propagator;
     
 
     /*-----------------
