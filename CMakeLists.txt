@@ -36,6 +36,9 @@ include( traccc-vecmem )
 #acts
 find_package(Acts)
 
+#eigen
+find_package(Eigen3)
+
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
   add_subdirectory( cuda )

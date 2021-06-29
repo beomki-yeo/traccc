@@ -6,7 +6,7 @@ target_include_directories(traccc_core
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(traccc_core
-  INTERFACE vecmem::core)
+  INTERFACE vecmem::core Eigen3::Eigen)
 
 install(TARGETS traccc_core
         PUBLIC_HEADER

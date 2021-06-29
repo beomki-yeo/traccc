@@ -113,9 +113,9 @@ struct seed_filtering {
         // weight seeds
 
         for (; it < itBegin + maxSeeds; ++it) {
-            //seeds.push_back(*it);
-	    seeds.headers[0]++;
-	    seeds.items[0].push_back(*it);
+            // seeds.push_back(*it);
+            seeds.headers[0]++;
+            seeds.items[0].push_back(*it);
         }
     }
 

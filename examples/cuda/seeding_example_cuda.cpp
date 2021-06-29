@@ -121,11 +121,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     grid_config.cotThetaMax = config.cotThetaMax;
 
     traccc::spacepoint_grouping sg(config, grid_config);
-
+        
     traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
-                                       &mng_mr);
-
+                                       &mng_mr);    
+    
     /*----------------------------
       Track finding configuration
       ----------------------------*/
@@ -202,7 +202,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         /*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-        //traccc::host_seed_collection seeds;
 	traccc::host_seed_container seeds;
 
         traccc::seed_finding sf =
@@ -225,7 +224,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         /*-----------------------
           track finding -- cpu
           -----------------------*/
-
+		
 	
         /*-----------------------
           seed finding -- cuda
@@ -251,7 +250,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         if (!skip_cpu) {
             int n_match = 0;
-            //for (auto seed : seeds) {
 	    for (auto seed : seeds.items[0]) {
                 if (std::find(
                         seeds_cuda.items[0].begin(),
@@ -261,7 +259,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
                     n_match++;
                 }
             }
-            //float matching_rate = float(n_match) / seeds.size();
 	    float matching_rate = float(n_match) / seeds.headers[0];
             std::cout << "event " << std::to_string(skip_events + event)
                       << " seed matching rate: " << matching_rate << std::endl;

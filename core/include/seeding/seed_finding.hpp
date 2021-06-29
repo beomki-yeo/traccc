@@ -34,8 +34,9 @@ struct seed_finding {
     ///
     /// @return seed_collection is the vector of seeds per event
     host_seed_container operator()() {
-        host_seed_container seed_container({host_seed_container::header_vector(1,0),
-					    host_seed_container::item_vector(1)});
+        host_seed_container seed_container(
+            {host_seed_container::header_vector(1, 0),
+             host_seed_container::item_vector(1)});
         this->operator()(seed_container);
 
         return seed_container;
@@ -104,8 +105,8 @@ struct seed_finding {
         for (size_t i = 0; i < m_isp_container.headers.size(); ++i) {
             m_seed_stats.n_internal_sp += m_isp_container.items[i].size();
         }
-        //m_seed_stats.n_seeds = seeds.size();
-	m_seed_stats.n_seeds = seeds.items[0].size();
+        // m_seed_stats.n_seeds = seeds.size();
+        m_seed_stats.n_seeds = seeds.items[0].size();
     }
 
     std::vector<multiplet_statistics> get_multiplet_stats() {

@@ -20,7 +20,7 @@ struct spacepoint {
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
     size_t measurement_index;
-    
+
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__

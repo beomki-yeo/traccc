@@ -23,9 +23,9 @@ class track_finding_algorithm {
 public:
 
     track_finding_algorithm(host_measurement_container& measurements,
-			    host_seed_container& seeds):
+			    host_trajecory_container& tracks):
 	m_measurements(measurements),
-	m_seeds(seeds)
+	m_tracks(tracks)
     {}
 
     void operator()(){
@@ -46,7 +46,7 @@ public:
 
 private:
     host_measurement_container& m_measurements;
-    host_seed_container& m_seeds;
+    host_trajectory_container& m_tracks;
 };
 
 }
