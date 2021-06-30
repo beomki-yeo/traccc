@@ -151,6 +151,12 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
                                        &mng_mr);    
 
+    /*------------------------
+      Track finding algorithm
+      ------------------------*/
+
+
+    
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
     
     // Loop over events

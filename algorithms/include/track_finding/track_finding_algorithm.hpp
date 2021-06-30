@@ -24,14 +24,14 @@ class track_finding_algorithm {
 
 public:
 
-    track_finding_algorithm(host_measurement_container& measurements,
-			    host_trajectory_container& tracks):
-	m_measurements(measurements),
-	m_tracks(tracks)
-    {}
-
-    void operator()(){
-
+    track_finding_algorithm(){}
+    
+    host_trajectory_container operator()(const host_measurement_container& measurement_container){
+        host_trajectory_container track_container(
+            {host_trajectory_container::header_vector(1, 0),
+             host_trajectory_container::item_vector(1)});
+        this->operator()(measurement_container, trajectory_container);
+	
     }
     
     // acts_cpu
@@ -47,8 +47,6 @@ public:
 	const TrackFinderOptions&)>;
 
 private:
-    host_measurement_container& m_measurements;
-    host_trajectory_container& m_tracks;
 };
 
 }
