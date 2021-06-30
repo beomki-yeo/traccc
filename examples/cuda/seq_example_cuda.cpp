@@ -154,6 +154,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     /*------------------------
       Track finding algorithm
       ------------------------*/
+
+    traccc::track_finding_algorithm tf();
     
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
     
