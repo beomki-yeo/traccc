@@ -42,7 +42,8 @@ public:
     
     // acts_cpu
     using TrackFinderOptions =
-	Acts::CombinatorialKalmanFilterOptions<ActsExamples::MeasurementCalibrator,
+	Acts::CombinatorialKalmanFilterOptions<ActsExamples::IndexSourceLinkAccessor,
+					       ActsExamples::MeasurementCalibrator,
 					       Acts::MeasurementSelector>;
     using TrackFinderResult = std::vector<
 	Acts::Result<Acts::CombinatorialKalmanFilterResult<ActsExamples::IndexSourceLink>>>;

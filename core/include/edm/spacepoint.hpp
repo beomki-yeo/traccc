@@ -22,6 +22,8 @@ struct spacepoint {
     size_t measurement_index;
 
     __CUDA_HOST_DEVICE__
+    const point3& global_position() const { return global; }
+    __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__
     const scalar& y() const { return global[1]; }

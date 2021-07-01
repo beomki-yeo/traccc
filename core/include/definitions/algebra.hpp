@@ -152,7 +152,7 @@ auto block(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
 
 /** Transform wrapper class to ensure standard API within differnt plugins
  **/
-struct transform3 {
+struct transform3 {    
     using matrix44 = array<array<scalar, 4>, 4>;
 
     matrix44 _data;

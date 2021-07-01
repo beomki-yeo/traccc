@@ -8,19 +8,21 @@
 #pragma once
 
 #include "edm/container.hpp"
+#include "Acts/Definitions/TrackParametrization.hpp"
 
 namespace traccc {
 
 /// Header: unsigned int for number of seeds
 
-/// Item: seed consisting of three spacepoints, z origin and weight
+/// Item: seed consisting of three spacepoints, z origin, weight and track parameters
 struct seed {
     spacepoint spB;
     spacepoint spM;
     spacepoint spT;
     float weight;
     float z_vertex;
-
+    Acts::BoundVector track_params;
+    
     __CUDA_HOST_DEVICE__
     seed& operator=(const seed& aSeed) {
         spB = aSeed.spB;
@@ -36,7 +38,7 @@ inline bool operator==(const seed& lhs, const seed& rhs) {
     return (lhs.spB == rhs.spB && lhs.spM == rhs.spM && lhs.spT == rhs.spT);
 }
 
-/// Container of internal_spacepoint for an event
+/// Container of seeds for an event
 template <template <typename> class vector_t>
 using seed_collection = vector_t<seed>;
 
