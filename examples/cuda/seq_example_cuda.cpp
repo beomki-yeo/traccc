@@ -27,6 +27,12 @@
 // seeding (cuda)
 #include "cuda/seeding/seed_finding.hpp"
 
+// track parmeter estimiation (cpu)
+#include "seeding/track_params_estimating.hpp"
+
+// track finding (cpu)
+#include "track_finding/track_finding_algorithm.hpp"
+
 // io
 #include "csv/csv_io.hpp"
 
@@ -142,6 +148,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 
     traccc::spacepoint_grouping sg(config, grid_config);
     traccc::seed_finding sf(config);
+
+    traccc::track_params_estimating tp();
     
     traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
