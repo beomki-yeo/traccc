@@ -46,12 +46,12 @@ int main() {
 
     traccc::component_connection cc;
     traccc::measurement_creation mt;
-    traccc::spacepoint_formation sp;
+    //traccc::spacepoint_formation sp;
 
     // Algorithmic code: start
     clusters = cc(cells, module);
     measurements = mt(clusters, module);
-    spacepoints = sp(module, measurements);
+    //spacepoints = sp(module, measurements);
 
     return 0;
 }

@@ -51,7 +51,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     uint64_t m_modules = 0;
     uint64_t n_clusters = 0;
     uint64_t n_measurements = 0;
-    uint64_t n_space_points = 0;
+    uint64_t n_spacepoints = 0;
 
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
@@ -76,11 +76,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 
         // Output containers
         traccc::host_measurement_container measurements_per_event;
-        traccc::host_spacepoint_container spacepoints_per_event;
         measurements_per_event.headers.reserve(cells_per_event.headers.size());
         measurements_per_event.items.reserve(cells_per_event.headers.size());
-        spacepoints_per_event.headers.reserve(cells_per_event.headers.size());
-        spacepoints_per_event.items.reserve(cells_per_event.headers.size());
 
         for (std::size_t i = 0; i < cells_per_event.items.size(); ++i) {
             auto& module = cells_per_event.headers[i];
@@ -94,24 +91,28 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 
             traccc::host_measurement_collection measurements_per_module =
                 mt(clusters_per_module, module);
-            traccc::host_spacepoint_collection spacepoints_per_module =
-                sp(module, measurements_per_module);
+
             // The algorithmnic code part: end
 
             n_cells += cells_per_event.items[i].size();
             n_clusters += clusters_per_module.items.size();
             n_measurements += measurements_per_module.size();
-            n_space_points += spacepoints_per_module.size();
 
             measurements_per_event.items.push_back(
                 std::move(measurements_per_module));
             measurements_per_event.headers.push_back(module);
-
-            spacepoints_per_event.items.push_back(
-                std::move(spacepoints_per_module));
-            spacepoints_per_event.headers.push_back(module.module);
         }
 
+	/*---------------------
+	  spacepoint formation 
+	  ---------------------*/
+	
+	auto spacepoints_per_event = sp(measurements_per_event);
+
+	for (auto items: spacepoints_per_event.items){
+	    n_spacepoints += items.size();
+	}
+	
         /*-------------------
              Seed finding
           -------------------*/
@@ -220,7 +221,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     std::cout << "- created " << n_clusters << " clusters. " << std::endl;
     std::cout << "- created " << n_measurements << " measurements. "
               << std::endl;
-    std::cout << "- created " << n_space_points << " space points. "
+    std::cout << "- created " << n_spacepoints << " space points. "
               << std::endl;
 
     return 0;

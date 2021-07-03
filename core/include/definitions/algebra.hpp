@@ -64,37 +64,6 @@ inline vector3 cross(const vector3 &a, const vector3 &b) {
             a[0] * b[1] - b[0] * a[1]};
 }
 }  // namespace vector
-
-// array setter methdos
-namespace setter {
-
-/** This method sets the row of matrix
- *
- * @param m the input matrix
- * @param v the input vector
- * @param row the target row
- **/    
-template <typename matrix_type, typename vector_type>
-void set_row(matrix_type& m, const vector_type& v, unsigned int row){
-    for (unsigned int icol = 0; icol < m.cols(); ++icol) {
-	m[icol][row] = v[icol];
-    }        
-}
-
-/** This method sets the column of matrix
- *
- * @param m the input matrix
- * @param v the input vector
- * @param col the target column
- **/        
-template <typename matrix_type, typename vector_type>
-void set_col(matrix_type& m, const vector_type& v, unsigned int col){
-    for (unsigned int irow = 0; irow < m.rows(); ++irow) {
-	m[col][irow] = v[irow];
-    }        
-}
-    
-} // namespace setter
     
 // array getter methdos
 namespace getter {

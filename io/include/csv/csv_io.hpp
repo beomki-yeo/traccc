@@ -82,7 +82,7 @@ struct csv_measurement {
     scalar var_theta = 0.;
     scalar var_time = 0.;
 
-    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta, time, var_local0, var_local1, var_phi, var_theta, var_time);
+    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local_key, local0, local1, phi, theta, time, var_local0, var_local1, var_phi, var_theta, var_time);
 };
 
 using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;    

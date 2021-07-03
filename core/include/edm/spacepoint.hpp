@@ -17,9 +17,11 @@ namespace traccc {
 
 /// A spacepoint definition: global position and errors
 struct spacepoint {
+    using measurement_index = array<size_t,2>;
+    
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
-    size_t measurement_index;
+    measurement_index m_idx;
 
     __CUDA_HOST_DEVICE__
     const point3& global_position() const { return global; }
@@ -34,7 +36,7 @@ struct spacepoint {
         return std::sqrt(global[0] * global[0] + global[1] * global[1]);
     }
     __CUDA_HOST_DEVICE__
-    const size_t& meas_index() const { return measurement_index; }
+    const auto& idx() const { return m_idx; }
 };
 
 inline bool operator==(const spacepoint& lhs, const spacepoint& rhs) {

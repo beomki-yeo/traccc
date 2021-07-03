@@ -21,7 +21,7 @@ struct seed {
     spacepoint spT;
     float weight;
     float z_vertex;
-    Acts::BoundVector track_params;
+    //Acts::BoundVector track_params;
     
     __CUDA_HOST_DEVICE__
     seed& operator=(const seed& aSeed) {

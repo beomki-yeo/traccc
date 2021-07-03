@@ -31,7 +31,7 @@ struct pol2_params {
 class tml_stats_config : public stats_config {
    public:
     tml_stats_config() {
-        safety_factor = 2.0;
+        safety_factor = 3.0;
         safety_adder = 10;
 	//safety_factor = 10.0;
         //safety_adder = 50000;
