@@ -7,22 +7,23 @@
 
 #pragma once
 
-#include "edm/container.hpp"
 #include "Acts/Definitions/TrackParametrization.hpp"
+#include "edm/container.hpp"
 
 namespace traccc {
 
 /// Header: unsigned int for number of seeds
 
-/// Item: seed consisting of three spacepoints, z origin, weight and track parameters
+/// Item: seed consisting of three spacepoints, z origin, weight and track
+/// parameters
 struct seed {
     spacepoint spB;
     spacepoint spM;
     spacepoint spT;
     float weight;
     float z_vertex;
-    //Acts::BoundVector track_params;
-    
+    // Acts::BoundVector track_params;
+
     __CUDA_HOST_DEVICE__
     seed& operator=(const seed& aSeed) {
         spB = aSeed.spB;

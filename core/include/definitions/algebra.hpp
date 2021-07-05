@@ -64,7 +64,7 @@ inline vector3 cross(const vector3 &a, const vector3 &b) {
             a[0] * b[1] - b[0] * a[1]};
 }
 }  // namespace vector
-    
+
 // array getter methdos
 namespace getter {
 /** This method retrieves phi from a vector, vector base with rows > 2
@@ -152,7 +152,7 @@ auto block(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
 
 /** Transform wrapper class to ensure standard API within differnt plugins
  **/
-struct transform3 {    
+struct transform3 {
     using matrix44 = array<array<scalar, 4>, 4>;
 
     matrix44 _data;

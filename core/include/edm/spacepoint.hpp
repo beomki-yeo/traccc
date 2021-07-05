@@ -17,8 +17,8 @@ namespace traccc {
 
 /// A spacepoint definition: global position and errors
 struct spacepoint {
-    using measurement_index = array<size_t,2>;
-    
+    using measurement_index = array<size_t, 2>;
+
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
     measurement_index m_idx;
