@@ -312,7 +312,6 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
             end_tp_estimation_cpu - start_tp_estimation_cpu;
         /*time*/ tp_estimation_cpu += time_tp_estimation_cpu.count();
 
-	
         /*----------------------------------
           compare seeds from cpu and cuda
           ----------------------------------*/
