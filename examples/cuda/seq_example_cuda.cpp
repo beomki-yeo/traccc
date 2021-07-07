@@ -33,6 +33,10 @@
 // io
 #include "csv/csv_io.hpp"
 
+// gpuKalmanFilter
+#include "Geometry/GeometryContext.hpp"
+#include "MagneticField/MagneticFieldContext.hpp"
+
 // vecmem
 #include <vecmem/memory/cuda/managed_memory_resource.hpp>
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -44,7 +48,6 @@
 // custom
 #include "tml_stats_config.hpp"
 
-
 int seq_run(const std::string& detector_file, const std::string& cells_dir,
 	    unsigned int skip_events, unsigned int events, bool skip_cpu,
             bool skip_write) {
@@ -55,6 +58,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
                            "rot_xw", "rot_zu", "rot_zv", "rot_zw"});
     auto surface_transforms = traccc::read_surfaces(sreader);
 
+    // Context
+    Acts::GeometryContext gctx(0);
+    Acts::MagneticFieldContext mctx(0);
+    
     // Algorithms
     traccc::component_connection cc;
     traccc::measurement_creation mt;
@@ -300,11 +307,13 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 	/*----------------------------------
 	  track parameter estimatoin -- cpu
           ----------------------------------*/
+
+	traccc::host_track_parameters_container track_params;
 	
         /*time*/ auto start_tp_estimation_cpu = std::chrono::system_clock::now();
 	
         if (!skip_cpu) {
-	    tpe(measurements_per_event, seeds);
+	    track_params = tpe(measurements_per_event, seeds, gctx);
 	}
 
         /*time*/ auto end_tp_estimation_cpu = std::chrono::system_clock::now();

@@ -23,6 +23,9 @@
 #include "edm/cluster.hpp"
 #include "edm/spacepoint.hpp"
 
+/// gpuKalmanFilter
+#include "Surfaces/PlaneSurface.hpp"
+
 /// reader
 namespace traccc {
 
@@ -152,6 +155,8 @@ using seed_statistics_writer = dfe::NamedTupleCsvWriter<csv_seed_statistics>;
 
 struct csv_surface {
     uint64_t geometry_id = 0;
+    unsigned int layer_id = 0;
+    unsigned int volume_id = 0;
     scalar cx, cy, cz;
     scalar rot_xu, rot_xv, rot_xw;
     scalar rot_yu, rot_yv, rot_yw;
@@ -181,7 +186,7 @@ std::map<geometry_id, transform3> read_surfaces(surface_reader& sreader) {
     }
     return transform_map;
 }
-
+    
 /// Read the collection of cells per module and fill into a collection
 ///
 /// @param creader The cellreader type

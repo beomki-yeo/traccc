@@ -34,7 +34,13 @@ add_subdirectory(extern)
 include( traccc-vecmem )
 
 #acts
-find_package(Acts)
+#find_package(Acts)
+
+#open MP
+find_package(OpenMP)
+
+#gpuKalmanFilter
+find_package(Actscore)
 
 #eigen
 find_package(Eigen3)

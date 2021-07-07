@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "Acts/Definitions/TrackParametrization.hpp"
 #include "edm/container.hpp"
 
 namespace traccc {
@@ -22,7 +21,6 @@ struct seed {
     spacepoint spT;
     float weight;
     float z_vertex;
-    // Acts::BoundVector track_params;
 
     __CUDA_HOST_DEVICE__
     seed& operator=(const seed& aSeed) {

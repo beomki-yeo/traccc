@@ -9,6 +9,7 @@
 
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
+#include <edm/track_parameters.hpp>
 #include <iostream>
 #include <seeding/detail/seeding_config.hpp>
 #include <seeding/detail/statistics.hpp>
@@ -16,22 +17,36 @@
 #include <seeding/seed_filtering.hpp>
 #include <seeding/triplet_finding.hpp>
 
-#include "Acts/Definitions/Units.hpp"
+#include "Utilities/Definitions.hpp"
 
 namespace traccc {
 
 /// track parameters estimation
-/// Originated from Acts/Seeding/EstimateTrackParamsFromSeed.hpp
+/// Algorithms from Acts/Seeding/EstimateTrackParamsFromSeed.hpp
 
 struct track_params_estimating {
     track_params_estimating() {}
 
+    host_track_parameters_container operator()(const host_measurement_container& measurements,
+					       const host_seed_container& seed_container,
+					       const Acts::GeometryContext& gctx){
+        host_track_parameters_container track_parameters_container(
+            {host_track_parameters_container::header_vector(1, 0),
+             host_track_parameters_container::item_vector(1)});
+	this->operator()(measurements, seed_container, gctx, track_parameters_container);
+
+	return track_parameters_container;
+    }
+    
     /// Callable operator for track parameter estimation
-    /// naively assumed that bfield is 2 T...
+    /// naively assumed that bfield is 2 T...    
     void operator()(const host_measurement_container& measurements,
-                    host_seed_container& seed_container,
+                    const host_seed_container& seed_container,
+		    const Acts::GeometryContext& gctx,
+		    host_track_parameters_container& track_parameters_container,
                     vector3 bfield = {0, 0, 2},
                     scalar mass = 139.57018 * Acts::UnitConstants::MeV) {
+	
         auto& seeds = seed_container.items[0];
 
         for (auto seed : seeds) {
@@ -61,6 +76,7 @@ struct track_params_estimating {
 
             transform3 trans(translation, newZAxis, newXAxis);
 
+	    
             // The coordinate of the middle and top space point in the new frame
             auto local1 = trans.point_to_local(sp_global_positions[1]);
             auto local2 = trans.point_to_local(sp_global_positions[2]);
@@ -102,7 +118,7 @@ struct track_params_estimating {
             vector3 direction = transform3::rotate(
                 trans._data, vector::normalize(transDirection));
 
-            array<double, Acts::eBoundSize> params;
+	    Acts::BoundVector params;
 
             // The estimated phi and theta
             params[Acts::eBoundPhi] = getter::phi(direction);
@@ -144,6 +160,20 @@ struct track_params_estimating {
                 params[Acts::eBoundTime] =
                     getter::norm(sp_global_positions[0]) / v;
             }
+	    
+	    Acts::BoundMatrix cov = Acts::BoundSymMatrix::Zero();
+	    cov(Acts::eBoundLoc0, Acts::eBoundLoc0) = meas_for_spB.variance[0];
+	    cov(Acts::eBoundLoc1, Acts::eBoundLoc1) = meas_for_spB.variance[1];
+
+	    // Note: cov params for theta,phi and p should be investigated in detail
+	    cov(Acts::eBoundPhi, Acts::eBoundPhi) = 1*Acts::UnitConstants::degree;
+	    cov(Acts::eBoundTheta, Acts::eBoundTheta) = 1*Acts::UnitConstants::degree;
+	    ActsScalar p = 1/params[Acts::eBoundQOverP];
+	    ActsScalar sigmaP = 0.001 * p;
+	    ActsScalar sigmaQoP = sigmaP / (p*p);
+	    cov(Acts::eBoundQOverP, Acts::eBoundQOverP) = sigmaQoP * sigmaQoP;
+
+	    bound_parameters bd_params(gctx, cov, params, nullptr);
         }
     }
 };
