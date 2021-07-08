@@ -20,6 +20,11 @@ namespace traccc {
 struct measurement {
     point2 local = {0., 0.};
     variance2 variance = {0., 0.};
+
+    unsigned int header_id = 0;
+    
+    // truth information
+    particle_id pid = 0;
 };
 
 /// Container of measurements belonging to one detector module

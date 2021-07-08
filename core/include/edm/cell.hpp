@@ -58,12 +58,13 @@ using device_cell_collection = cell_collection<vecmem::device_vector>;
 struct cell_module {
     event_id event = 0;
     geometry_id module = 0;
+    uint64_t surface_id = 0;
     transform3 placement = transform3{};
 
     channel_id range0[2] = {std::numeric_limits<channel_id>::max(), 0};
     channel_id range1[2] = {std::numeric_limits<channel_id>::max(), 0};
 
-    pixel_segmentation pixel;
+    pixel_segmentation pixel;    
 };  // struct cell_module
 
 /// Convenience declaration for the cell container type to use in host code

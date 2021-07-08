@@ -23,6 +23,9 @@ struct spacepoint {
     variance3 variance = {0., 0., 0.};
     measurement_index m_idx;
 
+    // truth information
+    particle_id pid = 0;
+    
     __CUDA_HOST_DEVICE__
     const point3& global_position() const { return global; }
     __CUDA_HOST_DEVICE__

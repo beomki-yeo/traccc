@@ -391,7 +391,11 @@ host_spacepoint_container read_hits(
         geometry_id geom_id = iohit.geometry_id;
         point3 position({iohit.tx, iohit.ty, iohit.tz});
         variance3 variance({0, 0, 0});
-        spacepoint sp({position, variance});
+	particle_id pid(iohit.particle_id);
+
+	// null measurement index
+        spacepoint sp({position, variance,
+		       spacepoint::measurement_index({0,0}), pid});
 
         auto it =
             std::find(result.headers.begin(), result.headers.end(), geom_id);
