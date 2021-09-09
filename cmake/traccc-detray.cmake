@@ -12,7 +12,8 @@ message( STATUS "Building detray as part of the traccc project" )
 
 # Declare where to get VecMem from.
 FetchContent_Declare( Detray
-   GIT_REPOSITORY "https://github.com/acts-project/detray.git" )
+  GIT_REPOSITORY "https://github.com/acts-project/detray.git"
+  GIT_TAG        552d5622a0dc4aeb99a13576b4ebc12ca469eadd)
 
 # Prevent Detray from building its tests and benchmarks
 # builds/uses GoogleTest.
