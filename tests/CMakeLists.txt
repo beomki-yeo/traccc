@@ -22,3 +22,6 @@ target_include_directories(
 add_library(traccc::tests::common ALIAS traccc_tests_common)
 
 add_subdirectory(cpu)
+if(TRACCC_BUILD_CUDA)
+  add_subdirectory(cuda)
+endif()  
