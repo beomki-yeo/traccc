@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 // This defines the local frame test suite
-TEST(algorithms, grid) {}
+TEST(algorithms, grid_cuda) {}
 
 // Google Test can be run manually from the main() function
 // or, it can be linked to the gtest_main library for an already
