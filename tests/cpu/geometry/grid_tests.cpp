@@ -6,6 +6,8 @@
  */
 
 // traccc include
+#include "edm/spacepoint.hpp"
+#include "edm/internal_spacepoint.hpp"
 #include "seeding/detail/seeding_config.hpp"
 
 // detray include
@@ -16,6 +18,9 @@
 #include "grids/populator.hpp"
 #include "utils/indexing.hpp"
 
+// vecmem include
+#include "vecmem/containers/vector.hpp"
+
 #include <gtest/gtest.h>
 
 #include <climits>
@@ -24,12 +29,43 @@
 TEST(algorithms, cuda_grid) {
 
     using scalar = detray::scalar;
+    using spacepoint_t = traccc::internal_spacepoint<traccc::spacepoint>;
     
-    traccc::spacepoint_grid_config grid_config;       
-    detray::replace_populator<> replacer;
+    traccc::spacepoint_grid_config grid_config;
+
+    /*---------------
+      grid setup
+      ---------------*/
+    
+    // calculate circle intersections of helix and max detector radius
+    scalar minHelixRadius =
+        grid_config.minPt / (300. * grid_config.bFieldInZ);  // in mm
+    scalar maxR2 = grid_config.rMax * grid_config.rMax;
+    scalar xOuter = maxR2 / (2 * minHelixRadius);
+    scalar yOuter = std::sqrt(maxR2 - xOuter * xOuter);
+    scalar outerAngle = std::atan(xOuter / yOuter);
+    // intersection of helix and max detector radius minus maximum R distance
+    // from middle SP to top SP
+    scalar innerAngle = 0;
+    if (grid_config.rMax > grid_config.deltaRMax) {
+        scalar innerCircleR2 = (grid_config.rMax - grid_config.deltaRMax) *
+                               (grid_config.rMax - grid_config.deltaRMax);
+        scalar xInner = innerCircleR2 / (2 * minHelixRadius);
+        scalar yInner = std::sqrt(innerCircleR2 - xInner * xInner);
+        innerAngle = std::atan(xInner / yInner);
+    }
+
+    // FIXME: phibin size must include max impact parameters
+    // divide 2pi by angle delta to get number of phi-bins
+    // size is always 2pi even for regions of interest
+    int phiBins = std::floor(2 * M_PI / (outerAngle - innerAngle));
+
+
+    detray::attach_populator< false, spacepoint_t> replacer;
     detray::serializer2 serializer;
-
-
+    
+    detray::axis::regular<> xaxis{10, -5., 5.};
+    detray::axis::regular<> yaxis{10, -5., 5.};
     
     /*
     detray::replace_populator<> replacer;
