@@ -19,6 +19,9 @@ FetchContent_Declare( Detray
 # builds/uses GoogleTest.
 set( DETRAY_UNIT_TESTS OFF )
 set( DETRAY_BENCHMARKS OFF )
+if(TRACC_BUILD_CUDA)
+  set( DETRAY_BUILD_CUDA ON )
+endif()  
 
 # Get it into the current directory.
 FetchContent_Populate( Detray )
