@@ -9,6 +9,7 @@
 #include "edm/spacepoint.hpp"
 #include "edm/internal_spacepoint.hpp"
 #include "seeding/detail/seeding_config.hpp"
+#include "clusterization/clusterization_algorithm.hpp"
 
 // detray include
 #include "tests/common/test_defs.hpp"
@@ -20,6 +21,14 @@
 
 // vecmem include
 #include "vecmem/containers/vector.hpp"
+#include <vecmem/memory/cuda/managed_memory_resource.hpp>
+#include <vecmem/memory/host_memory_resource.hpp>
+
+// io
+#include "io/csv.hpp"
+#include "io/reader.hpp"
+#include "io/utils.hpp"
+#include "io/writer.hpp"
 
 #include <gtest/gtest.h>
 
@@ -28,18 +37,38 @@
 // This defines the local frame test suite
 TEST(algorithms, grid_cuda) {
 
-    std::string file =
-        get_datafile("tml_pixel_barrel/event000000000-cells.csv");
-
+    // Memory resource used by the EDM.
+    vecmem::cuda::managed_memory_resource mng_mr;
     
+    // Read the surface transforms
+    auto surface_transforms = traccc::read_geometry("tml_detector/trackml-detector.csv");
+
+    // Read the cells from the relevant event file
+    std::string io_cells_file =
+	traccc::data_directory() + "tml_pixels/" + "/" +
+	traccc::get_event_filename(0, "-cells.csv");
+    
+    traccc::cell_reader creader(io_cells_file, {"geometry_id", "hit_id", "cannel0", "channel1","activation", "time"});
+    traccc::host_cell_container cells_per_event =
+	traccc::read_cells(creader, mng_mr, &surface_transforms);
+    
+    /*-------------------
+      Run clusterization
+      -------------------*/
+
+    traccc::clusterization_algorithm ca;
+    auto ca_result = ca(cells_per_event);
+    auto& measurements_per_event = ca_result.first;
+    auto& spacepoints_per_event = ca_result.second;
+    
+    /*---------------
+      Axis setup
+      ---------------*/
+
     using scalar = detray::scalar;
     using spacepoint_t = traccc::internal_spacepoint<traccc::spacepoint>;
     
     traccc::spacepoint_grid_config grid_config;
-
-    /*---------------
-      Axis setup
-      ---------------*/
     
     // calculate circle intersections of helix and max detector radius
     scalar minHelixRadius =
