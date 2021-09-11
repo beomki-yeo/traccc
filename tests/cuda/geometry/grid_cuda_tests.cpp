@@ -10,6 +10,7 @@
 #include "edm/internal_spacepoint.hpp"
 #include "seeding/detail/seeding_config.hpp"
 #include "clusterization/clusterization_algorithm.hpp"
+#include "seeding/spacepoint_binning.hpp"
 
 // detray include
 #include "tests/common/test_defs.hpp"
