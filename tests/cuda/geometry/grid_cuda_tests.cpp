@@ -28,6 +28,10 @@
 // This defines the local frame test suite
 TEST(algorithms, grid_cuda) {
 
+    std::string file =
+        get_datafile("tml_pixel_barrel/event000000000-cells.csv");
+
+    
     using scalar = detray::scalar;
     using spacepoint_t = traccc::internal_spacepoint<traccc::spacepoint>;
     
@@ -81,7 +85,12 @@ TEST(algorithms, grid_cuda) {
     detray::serializer2 serializer;
     
     using grid2r = detray::grid2<decltype(replacer), decltype(phi_axis), decltype(z_axis), decltype(serializer)>;
-       
+
+    /*------------------------
+      Run spacepoint grouping
+      ------------------------*/
+
+    
 }
 
 // Google Test can be run manually from the main() function
