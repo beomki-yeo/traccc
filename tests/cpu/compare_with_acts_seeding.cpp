@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <iostream>
 
 // io
@@ -60,37 +61,15 @@ inline bool operator==(const traccc::spacepoint& traccc_sp,
 inline bool operator==(const Acts::BoundVector& acts_vec,
                        const traccc::bound_vector& traccc_vec) {
     if (std::abs(acts_vec[Acts::eBoundLoc0] -
-                 traccc_vec[traccc::e_bound_loc0]) <
-            traccc::float_epsilon * 10 &&
+                 traccc_vec[traccc::e_bound_loc0]) < traccc::float_epsilon &&
         std::abs(acts_vec[Acts::eBoundLoc1] -
-                 traccc_vec[traccc::e_bound_loc1]) <
-            traccc::float_epsilon * 10 &&
+                 traccc_vec[traccc::e_bound_loc1]) < traccc::float_epsilon &&
         std::abs(acts_vec[Acts::eBoundTheta] -
-                 traccc_vec[traccc::e_bound_theta]) <
-            traccc::float_epsilon * 10 &&
+                 traccc_vec[traccc::e_bound_theta]) < traccc::float_epsilon &&
         std::abs(acts_vec[Acts::eBoundPhi] - traccc_vec[traccc::e_bound_phi]) <
-            traccc::float_epsilon * 10) {
+            traccc::float_epsilon) {
         return true;
     }
-    return false;
-}
-
-inline bool operator==(const traccc::seed& rhs,
-                       const Acts::Seed<SpacePoint>& lhs) {
-    auto& triplets = lhs.sp();
-    auto& acts_spB = triplets[0];
-    auto& acts_spM = triplets[1];
-    auto& acts_spT = triplets[2];
-
-    auto& traccc_spB = rhs.spB;
-    auto& traccc_spM = rhs.spM;
-    auto& traccc_spT = rhs.spT;
-
-    if (acts_spB == traccc_spB && acts_spM == traccc_spM &&
-        acts_spT == traccc_spT) {
-        return true;
-    }
-
     return false;
 }
 
@@ -115,6 +94,8 @@ TEST(algorithms, compare_with_acts_seeding) {
         traccc::read_spacepoints_from_event(event, hits_dir, surface_transforms,
                                             host_mr);
 
+    /*time*/ auto start_traccc_cpu = std::chrono::system_clock::now();
+
     /*--------------------------------
       TRACCC seeding
       --------------------------------*/
@@ -125,8 +106,12 @@ TEST(algorithms, compare_with_acts_seeding) {
       TRACCC track params estimation
       --------------------------------*/
 
-    auto tp_output = tp(seeds);
+    auto tp_output = tp(spacepoints_per_event, seeds);
     auto& traccc_params = tp_output;
+
+    /*time*/ auto end_traccc_cpu = std::chrono::system_clock::now();
+    /*time*/ std::chrono::duration<double> traccc_cpu =
+        end_traccc_cpu - start_traccc_cpu;
 
     /*--------------------------------
       ACTS seeding
@@ -239,25 +224,12 @@ TEST(algorithms, compare_with_acts_seeding) {
     auto groupIt = spGroup.begin();
     auto endOfGroups = spGroup.end();
 
+    /*time*/ auto start_acts_cpu = std::chrono::system_clock::now();
+
     for (; !(groupIt == endOfGroups); ++groupIt) {
         seedVector.push_back(a.createSeedsForGroup(
             groupIt.bottom(), groupIt.middle(), groupIt.top()));
     }
-
-    // seed equality check
-    int n_seed_match = 0;
-    for (auto& outputVec : seedVector) {
-        for (auto& seed : outputVec) {
-            if (std::find(seeds.get_items()[0].begin(),
-                          seeds.get_items()[0].end(),
-                          seed) != seeds.get_items()[0].end()) {
-                n_seed_match++;
-            }
-        }
-    }
-
-    float seed_match_ratio = float(n_seed_match) / seeds.total_size();
-    EXPECT_TRUE((seed_match_ratio > 0.95) && (seed_match_ratio <= 1.));
 
     /*--------------------------------
       ACTS track params estimation
@@ -317,6 +289,47 @@ TEST(algorithms, compare_with_acts_seeding) {
         }
     }
 
+    /*time*/ auto end_acts_cpu = std::chrono::system_clock::now();
+    /*time*/ std::chrono::duration<double> acts_cpu =
+        end_acts_cpu - start_acts_cpu;
+
+    // seed equality check
+    int n_seed_match = 0;
+    for (auto& outputVec : seedVector) {
+        for (auto& seed : outputVec) {
+            if (std::find_if(
+                    seeds.get_items()[0].begin(), seeds.get_items()[0].end(),
+                    [&](traccc::seed traccc_seed) {
+                        // check if traccc and acts seed are the same
+                        auto& triplets = seed.sp();
+                        auto& acts_spB = triplets[0];
+                        auto& acts_spM = triplets[1];
+                        auto& acts_spT = triplets[2];
+
+                        auto traccc_spB =
+                            spacepoints_per_event.at(traccc_seed.spB_link);
+                        auto traccc_spM =
+                            spacepoints_per_event.at(traccc_seed.spM_link);
+                        auto traccc_spT =
+                            spacepoints_per_event.at(traccc_seed.spT_link);
+
+                        if (acts_spB == traccc_spB && acts_spM == traccc_spM &&
+                            acts_spT == traccc_spT) {
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    ) != seeds.get_items()[0].end()) {
+                n_seed_match++;
+            }
+        }
+    }
+
+    float seed_match_ratio = float(n_seed_match) / seeds.total_size();
+    EXPECT_TRUE((seed_match_ratio > 0.95) && (seed_match_ratio <= 1.));
+
     // params equality check
     int n_params_match = 0;
     for (auto& traccc_param : traccc_params) {
@@ -335,4 +348,8 @@ TEST(algorithms, compare_with_acts_seeding) {
     std::cout << "-------- Result ---------" << std::endl;
     std::cout << "seed matching ratio: " << seed_match_ratio << std::endl;
     std::cout << "params matching ratio: " << params_match_ratio << std::endl;
+
+    std::cout << "-------- Time ---------" << std::endl;
+    std::cout << "traccc time: " << traccc_cpu.count() << std::endl;
+    std::cout << "acts time: " << acts_cpu.count() << std::endl;
 }
