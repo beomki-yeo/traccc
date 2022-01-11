@@ -61,13 +61,16 @@ inline bool operator==(const traccc::spacepoint& traccc_sp,
 inline bool operator==(const Acts::BoundVector& acts_vec,
                        const traccc::bound_vector& traccc_vec) {
     if (std::abs(acts_vec[Acts::eBoundLoc0] -
-                 traccc_vec[traccc::e_bound_loc0]) < traccc::float_epsilon &&
+                 traccc_vec[traccc::e_bound_loc0]) <
+            traccc::float_epsilon * 10 &&
         std::abs(acts_vec[Acts::eBoundLoc1] -
-                 traccc_vec[traccc::e_bound_loc1]) < traccc::float_epsilon &&
+                 traccc_vec[traccc::e_bound_loc1]) <
+            traccc::float_epsilon * 10 &&
         std::abs(acts_vec[Acts::eBoundTheta] -
-                 traccc_vec[traccc::e_bound_theta]) < traccc::float_epsilon &&
+                 traccc_vec[traccc::e_bound_theta]) <
+            traccc::float_epsilon * 10 &&
         std::abs(acts_vec[Acts::eBoundPhi] - traccc_vec[traccc::e_bound_phi]) <
-            traccc::float_epsilon) {
+            traccc::float_epsilon * 10) {
         return true;
     }
     return false;
