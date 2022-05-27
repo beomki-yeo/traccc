@@ -25,14 +25,14 @@ namespace traccc {
 inline void write_cells(
     size_t event, const std::string &cells_directory,
     const traccc::data_format &data_format,
-    const traccc::cell_container_types::host &cells_per_event) {
+    const traccc::cell_container_types::const_view &cells_view) {
 
     if (data_format == traccc::data_format::binary) {
 
         std::string io_cells_file = data_directory() + cells_directory +
                                     get_event_filename(event, "-cells.dat");
 
-        traccc::write_binary(io_cells_file, cells_per_event);
+        traccc::write_binary(io_cells_file, cells_view);
     } else {
         throw std::invalid_argument("Allowed data format is binary");
     }
@@ -47,14 +47,14 @@ inline void write_cells(
 inline void write_spacepoints(
     size_t event, const std::string &hits_directory,
     const traccc::data_format &data_format,
-    const spacepoint_container_types::host &spacepoints_per_event) {
+    const spacepoint_container_types::const_view &spacepoints_view) {
 
     if (data_format == traccc::data_format::binary) {
 
         std::string io_hits_file = data_directory() + hits_directory +
                                    get_event_filename(event, "-hits.dat");
 
-        traccc::write_binary(io_hits_file, spacepoints_per_event);
+        traccc::write_binary(io_hits_file, spacepoints_view);
     } else {
         throw std::invalid_argument("Allowed data format is binary");
     }

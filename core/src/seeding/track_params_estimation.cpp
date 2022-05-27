@@ -16,10 +16,13 @@ track_params_estimation::track_params_estimation(vecmem::memory_resource& mr)
     : m_mr(mr) {}
 
 track_params_estimation::output_type track_params_estimation::operator()(
-    const spacepoint_container_types::host& spacepoints,
-    const host_seed_collection& seeds) const {
+    const spacepoint_container_types::const_view& spacepoints_view,
+    const seed_collection_types::const_view& seeds_view) const {
 
-    output_type result(&m_mr.get());
+    bound_track_parameters_collection_types::host result(&m_mr.get());
+    const spacepoint_container_types::const_device spacepoints(
+        spacepoints_view);
+    const traccc::seed_collection_types::const_device seeds(seeds_view);
 
     // convenient assumption on bfield and mass
     // TODO: Make use of bfield extenstion in the future
@@ -33,7 +36,7 @@ track_params_estimation::output_type track_params_estimation::operator()(
         result.push_back(track_params);
     }
 
-    return result;
+    return vecmem::get_data(result);
 }
 
 }  // namespace traccc

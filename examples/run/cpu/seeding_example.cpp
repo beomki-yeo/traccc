@@ -53,20 +53,23 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
          event < common_opts.events + common_opts.skip; ++event) {
 
         // Read the hits from the relevant event file
-        traccc::spacepoint_container_types::host spacepoints_per_event =
+        traccc::spacepoint_container_types::const_view spacepoints_view =
             traccc::read_spacepoints_from_event(event, i_cfg.hit_directory,
                                                 common_opts.input_data_format,
                                                 surface_transforms, host_mr);
-
         /*----------------
              Seeding
           ---------------*/
 
-        auto seeds = sa(spacepoints_per_event);
+        auto seeds_view = sa(spacepoints_view);
 
         /*----------------
              Statistics
           ---------------*/
+
+        const traccc::spacepoint_container_types::const_device
+            spacepoints_per_event(spacepoints_view);
+        const traccc::seed_collection_types::const_device seeds(seeds_view);
 
         n_spacepoints += spacepoints_per_event.total_size();
         n_seeds += seeds.size();

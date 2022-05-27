@@ -25,8 +25,9 @@ namespace traccc {
 /// This algorithm performs the local-to-global transformation of the 2D
 /// measurements made on every detector module, into 3D spacepoint coordinates.
 ///
-class spacepoint_formation : public algorithm<spacepoint_container_types::host(
-                                 const measurement_container_types::host&)> {
+class spacepoint_formation
+    : public algorithm<spacepoint_container_types::const_view(
+          const measurement_container_types::const_view&)> {
 
     public:
     /// Constructor for spacepoint_formation
@@ -42,8 +43,8 @@ class spacepoint_formation : public algorithm<spacepoint_container_types::host(
     /// @return A spacepoint container, with one spacepoint for every
     ///         measurement
     ///
-    output_type operator()(
-        const measurement_container_types::host& measurements) const override;
+    output_type operator()(const measurement_container_types::const_view&
+                               measurements_view) const override;
 
     private:
     std::reference_wrapper<vecmem::memory_resource> m_mr;

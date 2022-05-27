@@ -6,7 +6,8 @@
  */
 
 // Project include(s).
-#include "traccc/clusterization/clusterization_algorithm.hpp"
+#include "traccc/clusterization/component_connection.hpp"
+#include "traccc/clusterization/measurement_creation.hpp"
 #include "traccc/clusterization/spacepoint_formation.hpp"
 #include "traccc/edm/cell.hpp"
 #include "traccc/edm/cluster.hpp"
@@ -45,7 +46,8 @@ int par_run(const std::string &detector_file, const std::string &cells_dir,
     vecmem::host_memory_resource resource;
 
     // Algorithms
-    traccc::clusterization_algorithm ca(resource);
+    traccc::component_connection cc(resource);
+    traccc::measurement_creation mc(resource);
     traccc::spacepoint_formation sf(resource);
 
     // Output stats
@@ -59,26 +61,39 @@ int par_run(const std::string &detector_file, const std::string &cells_dir,
     for (unsigned int event = 0; event < events; ++event) {
 
         // Read the cells from the relevant event file
-        traccc::cell_container_types::host cells_per_event =
+        traccc::cell_container_types::const_view cells_view =
             traccc::read_cells_from_event(event, cells_dir,
                                           traccc::data_format::csv,
                                           surface_transforms, resource);
 
         /*-------------------
-            Clusterization
+            CCL
           -------------------*/
 
-        auto measurements_per_event = ca(cells_per_event);
+        auto clusters_view = cc(cells_view);
+
+        /*------------------------
+            Measurement Creation
+          ------------------------*/
+
+        auto measurements_view = mc(clusters_view);
 
         /*------------------------
             Spacepoint formation
           ------------------------*/
 
-        auto spacepoints_per_event = sf(measurements_per_event);
+        auto spacepoints_view = sf(measurements_view);
 
         /*----------------------------
           Statistics
           ----------------------------*/
+
+        const traccc::cell_container_types::const_device cells_per_event(
+            cells_view);
+        const traccc::measurement_container_types::const_device
+            measurements_per_event(measurements_view);
+        const traccc::spacepoint_container_types::const_device
+            spacepoints_per_event(spacepoints_view);
 
         n_modules += cells_per_event.size();
         n_cells += cells_per_event.total_size();

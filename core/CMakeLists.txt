@@ -37,8 +37,6 @@ traccc_add_library( traccc_core core TYPE SHARED
   "include/traccc/clusterization/detail/sparse_ccl.hpp"
   "include/traccc/clusterization/component_connection.hpp"
   "src/clusterization/component_connection.cpp"
-  "include/traccc/clusterization/clusterization_algorithm.hpp"
-  "src/clusterization/clusterization_algorithm.cpp"
   "include/traccc/clusterization/spacepoint_formation.hpp"
   "src/clusterization/spacepoint_formation.cpp"
   "include/traccc/clusterization/measurement_creation.hpp"

@@ -42,6 +42,8 @@ struct container_data {
 /// Structure holding (all of the) data about the container in host code
 template <typename header_t, typename item_t>
 struct container_buffer {
+    using header_type = header_t;
+    using item_type = item_t;
     using header_vector = vecmem::data::vector_buffer<header_t>;
     using item_vector = vecmem::data::jagged_vector_buffer<item_t>;
     header_vector headers;
@@ -62,6 +64,11 @@ struct container_buffer {
 ///
 template <typename header_t, typename item_t>
 struct container_view {
+
+    /// Header type
+    using header_type = header_t;
+    /// item type
+    using item_type = item_t;
 
     /// Type for the header vector (view)
     using header_vector = vecmem::data::vector_view<header_t>;

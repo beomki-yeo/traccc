@@ -177,16 +177,22 @@ measurement_cell_map generate_measurement_cell_map(
     // Read the surface transforms
     auto surface_transforms = read_geometry(detector_file);
 
+    /*
     // Read the cells from the relevant event file
-    cell_container_types::host cells_per_event =
+    cell_container_types::const_view cells_view =
         read_cells_from_event(event, cells_dir, traccc::data_format::csv,
                               surface_transforms, resource);
+
+    cell_container_types::host cells_per_event(cells_view.headers,
+                                               cells_view.items);
+
+
 
     for (std::size_t i = 0; i < cells_per_event.size(); ++i) {
         auto module = cells_per_event.at(i).header;
 
         // The algorithmic code part: start
-        cluster_container_types::host clusters =
+        cluster_container_types::const_view clusters =
             cc(cells_per_event.at(i).items, cells_per_event.at(i).header);
         for (auto& cl_id : clusters.get_headers()) {
             cl_id.pixel = module.pixel;
@@ -202,6 +208,7 @@ measurement_cell_map generate_measurement_cell_map(
             result[meas] = clus;
         }
     }
+    */
 
     return result;
 }
@@ -242,10 +249,11 @@ measurement_particle_map generate_measurement_particle_map(
     auto surface_transforms = read_geometry(detector_file);
 
     // Read the spacepoints from the relevant event file
-    spacepoint_container_types::host spacepoints_per_event =
+    spacepoint_container_types::const_view spacepoints_per_event =
         read_spacepoints_from_event(event, hits_dir, traccc::data_format::csv,
                                     surface_transforms, resource);
 
+    /*
     for (std::size_t i = 0; i < spacepoints_per_event.size(); ++i) {
         const auto& spacepoints_per_module = spacepoints_per_event.at(i).items;
 
@@ -259,7 +267,7 @@ measurement_particle_map generate_measurement_particle_map(
             result[meas][ptc]++;
         }
     }
-
+    */
     return result;
 }
 

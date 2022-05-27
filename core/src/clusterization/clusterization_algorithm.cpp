@@ -14,7 +14,9 @@ clusterization_algorithm::clusterization_algorithm(vecmem::memory_resource& mr)
     : m_cc(mr), m_mc(mr), m_mr(mr) {}
 
 clusterization_algorithm::output_type clusterization_algorithm::operator()(
-    const cell_container_types::host& cells) const {
+    const cell_container_types::const_view& cells_view) const {
+
+    const cell_container_types::const_device cells(cells_view);
 
     // Create the result container.
     output_type result(&(m_mr.get()));
@@ -25,11 +27,12 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
 
         // Get the cells for the current module.
         cell_module module = cells.at(i).header;
-        cell_container_types::host::item_vector::const_reference
+        cell_container_types::const_device::item_vector::const_reference
             cells_per_module = cells.at(i).items;
 
         // Reconstruct all measurements for the current module.
-        cluster_container_types::host clusters = m_cc(cells_per_module, module);
+        cluster_container_types::const_device clusters =
+            m_cc(cells_per_module, module);
         for (cluster_id& cl_id : clusters.get_headers()) {
             cl_id.pixel = module.pixel;
         }

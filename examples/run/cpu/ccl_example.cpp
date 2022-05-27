@@ -29,7 +29,9 @@ double delta_ms(std::chrono::high_resolution_clock::time_point s,
 }
 }  // namespace
 
-void print_statistics(const traccc::cell_container_types::host& data) {
+void print_statistics(const traccc::cell_container_types::const_view& view) {
+    const traccc::cell_container_types::const_device data(view);
+
     static std::vector<std::size_t> bins_edges = {
         0,   1,   2,    3,    4,    6,    8,    11,   16,
         23,  32,  45,   64,   91,   128,  181,  256,  362,
@@ -78,11 +80,8 @@ void print_statistics(const traccc::cell_container_types::host& data) {
 }
 
 void run_on_event(traccc::component_connection& cc,
-                  traccc::cell_container_types::host& data) {
-    for (std::size_t i = 0; i < data.size(); ++i) {
-        traccc::cluster_container_types::host clusters =
-            cc(data.at(i).items, data.at(i).header);
-    }
+                  traccc::cell_container_types::const_view& data) {
+    traccc::cluster_container_types::const_view clusters = cc(data);
 }
 
 int main(int argc, char* argv[]) {
@@ -104,7 +103,8 @@ int main(int argc, char* argv[]) {
 
     traccc::cell_reader creader(event_file, {"geometry_id", "hit_id", "cannel0",
                                              "channel1", "activation", "time"});
-    traccc::cell_container_types::host data = traccc::read_cells(creader, mem);
+    traccc::cell_container_types::const_view data =
+        traccc::read_cells(creader, mem);
 
     auto time_read_end = std::chrono::high_resolution_clock::now();
 

@@ -31,7 +31,7 @@ int create_binaries(const std::string& detector_file,
         if (!cell_directory.empty()) {
 
             // Read the cells from the relevant event file
-            traccc::cell_container_types::host cells_csv =
+            traccc::cell_container_types::const_view cells_csv =
                 traccc::read_cells_from_event(event, cell_directory,
                                               common_opts.input_data_format,
                                               surface_transforms, host_mr);
@@ -44,7 +44,7 @@ int create_binaries(const std::string& detector_file,
         if (!hit_directory.empty()) {
 
             // Read the hits from the relevant event file
-            traccc::spacepoint_container_types::host spacepoints_csv =
+            traccc::spacepoint_container_types::const_view spacepoints_csv =
                 traccc::read_spacepoints_from_event(
                     event, hit_directory, common_opts.input_data_format,
                     surface_transforms, host_mr);

@@ -17,11 +17,14 @@ seed_finding::seed_finding(const seedfinder_config& finder_config,
       m_seed_filtering(filter_config) {}
 
 seed_finding::output_type seed_finding::operator()(
-    const spacepoint_container_types::host& sp_container,
+    const spacepoint_container_types::const_view& spacepoints_view,
     const sp_grid& g2) const {
 
     // Run the algorithm
-    output_type seeds;
+    seed_collection_types::host seeds;
+
+    const spacepoint_container_types::const_device spacepoints(
+        spacepoints_view);
 
     const bool bottom = true;
     const bool top = false;
@@ -61,11 +64,11 @@ seed_finding::output_type seed_finding::operator()(
             }
 
             // seed filtering
-            m_seed_filtering(sp_container, g2, triplets_per_spM, seeds);
+            m_seed_filtering(spacepoints, g2, triplets_per_spM, seeds);
         }
     }
 
-    return seeds;
+    return vecmem::get_data(seeds);
 }
 
 }  // namespace traccc

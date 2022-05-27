@@ -75,8 +75,9 @@ class seeding_performance_writer {
         m_duplication_plot_tool.book(name, m_duplication_plot_caches[name]);
     }
 
-    void write(std::string name, const host_seed_collection& seeds,
-               const spacepoint_container_types::host& spacepoints,
+    void write(std::string name,
+               const seed_collection_types::const_device& seeds,
+               const spacepoint_container_types::const_device& spacepoints,
                event_map& evt_map) {
 
         auto& p_map = evt_map.ptc_map;
@@ -87,7 +88,7 @@ class seeding_performance_writer {
         std::size_t n_matched_seeds = 0;
 
         for (const auto& sd : seeds) {
-            auto measurements = sd.get_measurements(get_data(spacepoints));
+            auto measurements = sd.get_measurements(spacepoints);
 
             std::vector<particle_hit_count> particle_hit_counts =
                 identify_contributing_particles(measurements, m_p_map);

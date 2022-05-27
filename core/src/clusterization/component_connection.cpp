@@ -14,11 +14,68 @@
 #include <vecmem/containers/device_vector.hpp>
 #include <vecmem/containers/vector.hpp>
 
+// System include(s)
+#include <iterator>
+
 namespace traccc {
 
 component_connection::output_type component_connection::operator()(
-    const cell_collection_types::host& cells, const cell_module& module) const {
+    const cell_container_types::const_view& cells_view) const {
 
+    // Create the result container.
+    cluster_container_types::host result(&(m_mr.get()));
+    auto& result_headers = result.get_headers();
+    auto& result_items = result.get_items();
+
+    unsigned int num_clusters = 0;
+
+    const cell_container_types::const_device cells_device(cells_view);
+
+    for (std::size_t i = 0; i < cells_device.size(); i++) {
+
+        const auto module = cells_device.get_headers()[i];
+        const cell_collection_types::const_device cells_per_module =
+            cells_device.get_items()[i];
+
+        // Set up the index vector.
+        std::vector<unsigned int> CCL_indices(cells_per_module.size());
+
+        // Run the algorithm
+        auto num_clusters_per_module =
+            detail::sparse_ccl(cells_per_module, CCL_indices);
+        num_clusters += num_clusters_per_module;
+        result.reserve(num_clusters);
+
+        cluster_container_types::host clusters_per_module(
+            num_clusters_per_module, &(m_mr.get()));
+
+        auto& cluster_modules = clusters_per_module.get_headers();
+        for (auto& cl_id : cluster_modules) {
+            cl_id.module = module.module;
+            cl_id.placement = module.placement;
+        }
+
+        auto& cluster_cells = clusters_per_module.get_items();
+        unsigned int icell = 0;
+        for (auto cell_label : CCL_indices) {
+            auto cindex = static_cast<unsigned int>(cell_label - 1);
+            if (cindex < cluster_cells.size()) {
+                cluster_cells[cindex].push_back(cells_per_module[icell++]);
+            }
+        }
+
+        result_headers.insert(result_headers.end(),
+                              std::make_move_iterator(cluster_modules.begin()),
+                              std::make_move_iterator(cluster_modules.end()));
+
+        result_items.insert(result_items.end(),
+                            std::make_move_iterator(cluster_cells.begin()),
+                            std::make_move_iterator(cluster_cells.end()));
+    }
+
+    return get_data(result);
+
+    /*
     // Create the result container.
     output_type result(&(m_mr.get()));
 
@@ -53,6 +110,7 @@ component_connection::output_type component_connection::operator()(
 
     // Return the cluster container.
     return result;
+    */
 }
 
 }  // namespace traccc

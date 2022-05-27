@@ -17,13 +17,15 @@ measurement_creation::measurement_creation(vecmem::memory_resource &mr)
     : m_mr(mr) {}
 
 measurement_creation::output_type measurement_creation::operator()(
-    const cluster_container_types::host &clusters,
-    const cell_module &module) const {
+    const cluster_container_types::const_view &clusters_view) const {
 
     // Create the result object.
-    output_type result(&(m_mr.get()));
+    measurement_container_types::host result(&(m_mr.get()));
+
+    const cluster_container_types::const_device clusters(clusters_view);
 
     // If there are no clusters for this detector module, exit early.
+    /*
     if (clusters.size() == 0) {
         return result;
     }
@@ -81,6 +83,7 @@ measurement_creation::output_type measurement_creation::operator()(
 
     // Return the measurements.
     return result;
+    */
 }
 
 }  // namespace traccc

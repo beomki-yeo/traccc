@@ -212,7 +212,7 @@ inline std::map<geometry_id, transform3> read_surfaces(
 /// @param resource The memory resource to use for the return value
 /// @param tfmap the (optional) transform map
 /// @param max_cells the (optional) maximum number of cells to be read in
-inline cell_container_types::host read_cells(
+inline cell_container_types::const_view read_cells(
     cell_reader& creader, vecmem::memory_resource& resource,
     const traccc::geometry* tfmap = nullptr,
     unsigned int max_cells = std::numeric_limits<unsigned int>::max()) {
@@ -268,7 +268,7 @@ inline cell_container_types::host read_cells(
 
     result.push_back(std::move(module), std::move(cells));
 
-    return result;
+    return get_data(result);
 }
 
 /// Read the collection of cells per module and fill into a collection
@@ -388,7 +388,7 @@ inline measurement_container_types::host read_measurements(
 ///
 /// @param hreader The hit reader type
 /// @param resource The memory resource to use for the return value
-inline spacepoint_container_types::host read_hits(
+inline spacepoint_container_types::const_view read_hits(
     fatras_hit_reader& hreader, vecmem::memory_resource& resource,
     const traccc::geometry* tfmap = nullptr,
     unsigned int max_hits = std::numeric_limits<unsigned int>::max()) {
@@ -425,7 +425,7 @@ inline spacepoint_container_types::host read_hits(
         }
     }
 
-    return result;
+    return get_data(result);
 }
 
 }  // namespace traccc

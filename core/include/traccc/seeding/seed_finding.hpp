@@ -21,8 +21,8 @@ namespace traccc {
 
 /// Seed finding
 class seed_finding
-    : public algorithm<host_seed_collection(
-          const spacepoint_container_types::host&, const sp_grid&)> {
+    : public algorithm<seed_collection_types::const_view(
+          const spacepoint_container_types::const_view&, const sp_grid&)> {
 
     public:
     /// Constructor for the seed finding
@@ -39,8 +39,9 @@ class seed_finding
     /// @param g2 The same spacepoints arranged in a 2D Phi-Z grid
     /// @return seed_collection is the vector of seeds per event
     ///
-    output_type operator()(const spacepoint_container_types::host& sp_container,
-                           const sp_grid& g2) const override;
+    output_type operator()(
+        const spacepoint_container_types::const_view& spacepoints_view,
+        const sp_grid& g2) const override;
 
     private:
     /// Algorithm performing the doublet finding

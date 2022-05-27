@@ -98,6 +98,10 @@ inline bool operator==(const bound_track_parameters& lhs,
     return false;
 }
 
+/// Declare all spacepoint collection types
+using bound_track_parameters_collection_types =
+    collection_types<bound_track_parameters>;
+
 /// Collection of bound_track_parameters
 template <template <typename> class vector_t>
 using bound_track_parameters_collection = vector_t<bound_track_parameters>;

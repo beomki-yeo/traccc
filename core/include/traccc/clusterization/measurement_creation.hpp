@@ -28,8 +28,8 @@ namespace traccc {
 /// module.
 ///
 class measurement_creation
-    : public algorithm<measurement_collection_types::host(
-          const cluster_container_types::host &, const cell_module &)> {
+    : public algorithm<measurement_container_types::const_view(
+          const cluster_container_types::const_view &)> {
 
     public:
     /// Measurement_creation algorithm constructor
@@ -49,8 +49,8 @@ class measurement_creation
     ///
     /// @return a measurement collection - usually same size or sometime
     /// slightly smaller than the input
-    output_type operator()(const cluster_container_types::host &c,
-                           const cell_module &m) const override;
+    output_type operator()(const cluster_container_types::const_view
+                               &clusters_view) const override;
 
     private:
     /// The memory resource used by the algorithm

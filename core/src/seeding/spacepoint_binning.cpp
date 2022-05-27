@@ -22,17 +22,21 @@ spacepoint_binning::spacepoint_binning(
       m_mr(mr) {}
 
 spacepoint_binning::output_type spacepoint_binning::operator()(
-    const spacepoint_container_types::host& sp_container) const {
+    const spacepoint_container_types::const_view& spacepoints_view) const {
 
     output_type g2(m_axes.first, m_axes.second, m_mr.get());
 
+    const spacepoint_container_types::const_device spacepoints(
+        spacepoints_view);
+
     djagged_vector<sp_location> rbins(m_config.get_num_rbins());
 
-    for (unsigned int i = 0; i < sp_container.size(); i++) {
-        for (unsigned int j = 0; j < sp_container.get_items()[i].size(); j++) {
+    for (unsigned int i = 0; i < spacepoints.size(); i++) {
+        for (unsigned int j = 0; j < spacepoints.get_items()[i].size(); j++) {
             sp_location sp_loc{i, j};
-            fill_radius_bins<spacepoint_container_types::host, djagged_vector>(
-                m_config, sp_container, sp_loc, rbins);
+            fill_radius_bins<spacepoint_container_types::const_device,
+                             djagged_vector>(m_config, spacepoints, sp_loc,
+                                             rbins);
         }
     }
 
@@ -42,8 +46,7 @@ spacepoint_binning::output_type spacepoint_binning::operator()(
         for (auto& sp_loc : rbin) {
 
             auto isp = internal_spacepoint<spacepoint>(
-                sp_container, {sp_loc.bin_idx, sp_loc.sp_idx},
-                m_config.beamPos);
+                spacepoints, {sp_loc.bin_idx, sp_loc.sp_idx}, m_config.beamPos);
 
             point2 sp_position = {isp.phi(), isp.z()};
             g2.populate(sp_position, std::move(isp));

@@ -31,8 +31,8 @@ namespace traccc {
 /// implementation internally.
 ///
 class component_connection
-    : public algorithm<cluster_container_types::host(
-          const cell_collection_types::host&, const cell_module&)> {
+    : public algorithm<cluster_container_types::const_view(
+          const cell_container_types::const_view&)> {
 
     public:
     /// Constructor for component_connection
@@ -53,8 +53,8 @@ class component_connection
     /// c++20 piping interface:
     /// @return a cluster collection
     ///
-    output_type operator()(const cell_collection_types::host& cells,
-                           const cell_module& module) const override;
+    output_type operator()(
+        const cell_container_types::const_view& cells_view) const override;
 
     /// @}
 

@@ -20,8 +20,8 @@
 namespace traccc {
 
 /// Main algorithm for performing the track seeding on the CPU
-class seeding_algorithm : public algorithm<host_seed_collection(
-                              const spacepoint_container_types::host&)> {
+class seeding_algorithm : public algorithm<seed_collection_types::const_view(
+                              const spacepoint_container_types::const_view&)> {
 
     public:
     /// Constructor for the seed finding algorithm
@@ -35,8 +35,8 @@ class seeding_algorithm : public algorithm<host_seed_collection(
     /// @param spacepoint All spacepoints in the event
     /// @return The track seeds reconstructed from the spacepoints
     ///
-    output_type operator()(
-        const spacepoint_container_types::host& spacepoints) const override;
+    output_type operator()(const spacepoint_container_types::const_view&
+                               spacepoints_view) const override;
 
     private:
     /// Sub-algorithm performing the spacepoint binning

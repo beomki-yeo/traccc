@@ -46,18 +46,14 @@ struct seed {
 
     TRACCC_HOST_DEVICE
     std::array<measurement, 3> get_measurements(
-        const spacepoint_container_types::const_view& spacepoints_view) const {
-        const spacepoint_container_types::const_device spacepoints(
-            spacepoints_view);
+        const spacepoint_container_types::const_device& spacepoints) const {
         return {spacepoints.at(spB_link).meas, spacepoints.at(spM_link).meas,
                 spacepoints.at(spT_link).meas};
     }
 
     TRACCC_HOST_DEVICE
     std::array<spacepoint, 3> get_spacepoints(
-        const spacepoint_container_types::const_view& spacepoints_view) const {
-        const spacepoint_container_types::const_device spacepoints(
-            spacepoints_view);
+        const spacepoint_container_types::const_device& spacepoints) const {
         return {spacepoints.at(spB_link), spacepoints.at(spM_link),
                 spacepoints.at(spT_link)};
     }
@@ -77,6 +73,9 @@ TRACCC_HOST std::vector<std::array<spacepoint, 3>> get_spacepoint_vector(
 
     return result;
 }
+
+/// Declare all spacepoint collection types
+using seed_collection_types = collection_types<seed>;
 
 /// Container of internal_spacepoint for an event
 template <template <typename> class vector_t>

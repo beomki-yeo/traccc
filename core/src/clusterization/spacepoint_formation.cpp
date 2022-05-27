@@ -14,18 +14,22 @@ spacepoint_formation::spacepoint_formation(vecmem::memory_resource& mr)
     : m_mr(mr) {}
 
 spacepoint_formation::output_type spacepoint_formation::operator()(
-    const measurement_container_types::host& measurements) const {
+    const measurement_container_types::const_view& measurements_view) const {
 
     // Create the result container, with the correct "outer size".
-    output_type result(measurements.size(), &(m_mr.get()));
+    spacepoint_container_types::host result(measurements_view.headers.size(),
+                                            &(m_mr.get()));
+
+    const measurement_container_types::const_device measurements(
+        measurements_view);
 
     // Iterate over the modules.
     for (std::size_t i = 0; i < measurements.size(); ++i) {
 
         // Access the measurements of the current module.
         const cell_module& module = measurements.get_headers()[i];
-        const measurement_collection_types::host& measurements_per_module =
-            measurements.get_items()[i];
+        const measurement_collection_types::const_device&
+            measurements_per_module = measurements.get_items()[i];
 
         // Set the geometry ID for this collection of spacepoints.
         result[i].header = module.module;
@@ -45,7 +49,7 @@ spacepoint_formation::output_type spacepoint_formation::operator()(
     }
 
     // Return the created container.
-    return result;
+    return get_data(result);
 }
 
 }  // namespace traccc

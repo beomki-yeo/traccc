@@ -12,7 +12,8 @@
 #include "traccc/io/writer.hpp"
 
 // algorithms
-#include "traccc/clusterization/clusterization_algorithm.hpp"
+#include "traccc/clusterization/component_connection.hpp"
+#include "traccc/clusterization/measurement_creation.hpp"
 #include "traccc/clusterization/spacepoint_formation.hpp"
 #include "traccc/seeding/seeding_algorithm.hpp"
 #include "traccc/seeding/track_params_estimation.hpp"
@@ -47,7 +48,8 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
     // Memory resource used by the EDM.
     vecmem::host_memory_resource host_mr;
 
-    traccc::clusterization_algorithm ca(host_mr);
+    traccc::component_connection cc(host_mr);
+    traccc::measurement_creation mc(host_mr);
     traccc::spacepoint_formation sf(host_mr);
     traccc::seeding_algorithm sa(host_mr);
     traccc::track_params_estimation tp(host_mr);
@@ -62,38 +64,52 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
          event < common_opts.events + common_opts.skip; ++event) {
 
         // Read the cells from the relevant event file
-        traccc::cell_container_types::host cells_per_event =
+        traccc::cell_container_types::const_view cells_view =
             traccc::read_cells_from_event(event, i_cfg.cell_directory,
                                           common_opts.input_data_format,
                                           surface_transforms, host_mr);
 
         /*-------------------
-            Clusterization
+            CCL
           -------------------*/
 
-        auto measurements_per_event = ca(cells_per_event);
+        auto clusters_view = cc(cells_view);
+
+        /*------------------------
+            Measurement Creation
+          ------------------------*/
+
+        auto measurements_view = mc(clusters_view);
 
         /*------------------------
             Spacepoint formation
           ------------------------*/
 
-        auto spacepoints_per_event = sf(measurements_per_event);
+        auto spacepoints_view = sf(measurements_view);
 
         /*-----------------------
           Seeding algorithm
           -----------------------*/
 
-        auto seeds = sa(spacepoints_per_event);
+        auto seeds_view = sa(spacepoints_view);
 
         /*----------------------------
           Track params estimation
           ----------------------------*/
 
-        auto params = tp(spacepoints_per_event, seeds);
+        auto params_view = tp(spacepoints_view, seeds_view);
 
         /*----------------------------
           Statistics
           ----------------------------*/
+
+        const traccc::cell_container_types::const_device cells_per_event(
+            cells_view);
+        const traccc::measurement_container_types::const_device
+            measurements_per_event(measurements_view);
+        const traccc::spacepoint_container_types::const_device
+            spacepoints_per_event(spacepoints_view);
+        const traccc::seed_collection_types::const_device seeds(seeds_view);
 
         n_modules += cells_per_event.size();
         n_cells += cells_per_event.total_size();

@@ -21,7 +21,6 @@
 
 // VecMem include(s).
 #include <vecmem/memory/host_memory_resource.hpp>
-#include <vecmem/utils/copy.hpp>
 
 // System include(s).
 #include <fstream>
@@ -45,7 +44,7 @@ inline traccc::geometry read_geometry(const std::string &detector_file) {
 /// @param data_format is the data format (e.g. csv or binary) of output file
 /// @param surface_transforms is the input geometry data
 /// @param resource is the vecmem resource
-inline traccc::cell_container_types::host read_cells_from_event(
+inline traccc::cell_container_types::const_view read_cells_from_event(
     size_t event, const std::string &cells_directory,
     const traccc::data_format &data_format, traccc::geometry surface_transforms,
     vecmem::memory_resource &resource) {
@@ -64,10 +63,8 @@ inline traccc::cell_container_types::host read_cells_from_event(
         std::string io_cells_file = data_directory() + cells_directory +
                                     get_event_filename(event, "-cells.dat");
 
-        vecmem::copy copy;
-
-        return traccc::read_binary<traccc::cell_container_types::host>(
-            io_cells_file, copy, resource);
+        return traccc::read_binary<traccc::cell_container_types::buffer>(
+            io_cells_file, resource);
     } else {
         throw std::invalid_argument("Allowed data format is csv or binary");
     }
@@ -80,7 +77,7 @@ inline traccc::cell_container_types::host read_cells_from_event(
 /// @param data_format is the data format (e.g. csv or binary) of output file
 /// @param surface_transforms is the input geometry data
 /// @param resource is the vecmem resource
-inline spacepoint_container_types::host read_spacepoints_from_event(
+inline spacepoint_container_types::const_view read_spacepoints_from_event(
     size_t event, const std::string &hits_directory,
     const traccc::data_format &data_format, traccc::geometry surface_transforms,
     vecmem::memory_resource &resource) {
@@ -98,10 +95,8 @@ inline spacepoint_container_types::host read_spacepoints_from_event(
         std::string io_hits_file = data_directory() + hits_directory +
                                    get_event_filename(event, "-hits.dat");
 
-        vecmem::copy copy;
-
-        return traccc::read_binary<spacepoint_container_types::host>(
-            io_hits_file, copy, resource);
+        return traccc::read_binary<spacepoint_container_types::buffer>(
+            io_hits_file, resource);
     } else {
         throw std::invalid_argument("Allowed data format is csv or binary");
     }
@@ -116,18 +111,19 @@ inline traccc::demonstrator_input read(size_t events,
     auto geom = read_geometry(detector_file);
     auto readFn = std::bind(read_cells_from_event, _1, cell_directory,
                             data_format, geom, resource);
-    traccc::demonstrator_input input_data(events, &resource);
+    traccc::demonstrator_input input_data;
 
 #if defined(_OPENMP)
 #pragma omp parallel for
 #endif
     for (size_t event = 0; event < events; ++event) {
-        traccc::cell_container_types::host cells_per_event = readFn(event);
+        traccc::cell_container_types::const_view cells_per_event =
+            readFn(event);
 
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        { input_data[event] = cells_per_event; }
+        { input_data.push_back(cells_per_event); }
     }
     return input_data;
 }

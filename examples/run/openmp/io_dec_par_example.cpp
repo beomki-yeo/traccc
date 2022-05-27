@@ -6,7 +6,8 @@
  */
 
 // Project include(s).
-#include "traccc/clusterization/clusterization_algorithm.hpp"
+#include "traccc/clusterization/component_connection.hpp"
+#include "traccc/clusterization/measurement_creation.hpp"
 #include "traccc/clusterization/spacepoint_formation.hpp"
 #include "traccc/edm/measurement.hpp"
 #include "traccc/edm/spacepoint.hpp"
@@ -32,7 +33,8 @@ traccc::demonstrator_result run(traccc::demonstrator_input input_data,
                                 vecmem::host_memory_resource resource) {
 
     // Algorithms
-    traccc::clusterization_algorithm ca(resource);
+    traccc::component_connection cc(resource);
+    traccc::measurement_creation mc(resource);
     traccc::spacepoint_formation sf(resource);
 
     // Output stats
@@ -43,29 +45,41 @@ traccc::demonstrator_result run(traccc::demonstrator_input input_data,
 
     auto startAlgorithms = std::chrono::system_clock::now();
 
-    traccc::demonstrator_result aggregated_results(input_data.size(),
-                                                   &resource);
+    traccc::demonstrator_result aggregated_results;
 
 #pragma omp parallel for reduction (+:n_modules, n_cells, n_measurements, n_spacepoints)
     for (size_t event = 0; event < input_data.size(); ++event) {
-        traccc::cell_container_types::host cells_per_event =
+        traccc::cell_container_types::const_view cells_view =
             input_data.operator[](event);
 
         /*-------------------
-            Clusterization
+            CCL
           -------------------*/
 
-        auto measurements_per_event = ca(cells_per_event);
+        auto clusters_view = cc(cells_view);
+
+        /*------------------------
+            Measurement Creation
+          ------------------------*/
+
+        auto measurements_view = mc(clusters_view);
 
         /*------------------------
             Spacepoint formation
           ------------------------*/
 
-        auto spacepoints_per_event = sf(measurements_per_event);
+        auto spacepoints_view = sf(measurements_view);
 
         /*----------------------------
           Statistics
           ----------------------------*/
+
+        const traccc::cell_container_types::const_device cells_per_event(
+            cells_view);
+        const traccc::measurement_container_types::const_device
+            measurements_per_event(measurements_view);
+        const traccc::spacepoint_container_types::const_device
+            spacepoints_per_event(spacepoints_view);
 
         n_modules += cells_per_event.size();
         n_cells += cells_per_event.total_size();
@@ -73,8 +87,8 @@ traccc::demonstrator_result run(traccc::demonstrator_input input_data,
         n_spacepoints += spacepoints_per_event.total_size();
 
 #pragma omp critical
-        aggregated_results[event] =
-            traccc::result({measurements_per_event, spacepoints_per_event});
+        aggregated_results.push_back(
+            traccc::result({measurements_view, spacepoints_view}));
     }
 
     auto endAlgorithms = std::chrono::system_clock::now();

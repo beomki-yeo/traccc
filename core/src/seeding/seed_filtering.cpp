@@ -16,8 +16,9 @@ seed_filtering::seed_filtering(const seedfilter_config& config)
     : m_filter_config(config) {}
 
 void seed_filtering::operator()(
-    const spacepoint_container_types::host& sp_container, const sp_grid& g2,
-    host_triplet_collection& triplets, host_seed_collection& seeds) const {
+    const spacepoint_container_types::const_device& sp_container,
+    const sp_grid& g2, host_triplet_collection& triplets,
+    host_seed_collection& seeds) const {
 
     host_seed_collection seeds_per_spM;
 

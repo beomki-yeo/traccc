@@ -30,8 +30,9 @@ namespace detail {
 /// @param L an equivalance table
 ///
 /// @return the root of @param e
+template <template <typename> class vector_t>
 TRACCC_HOST_DEVICE inline unsigned int find_root(
-    const vecmem::device_vector<unsigned int>& L, unsigned int e) {
+    const vector_t<unsigned int>& L, unsigned int e) {
 
     unsigned int r = e;
     assert(r < L.size());
@@ -47,8 +48,10 @@ TRACCC_HOST_DEVICE inline unsigned int find_root(
 /// @param L an equivalance table
 ///
 /// @return the rleast common ancestor of the entries
-TRACCC_HOST_DEVICE inline unsigned int make_union(
-    vecmem::device_vector<unsigned int>& L, unsigned int e1, unsigned int e2) {
+template <template <typename> class vector_t>
+TRACCC_HOST_DEVICE inline unsigned int make_union(vector_t<unsigned int>& L,
+                                                  unsigned int e1,
+                                                  unsigned int e2) {
 
     int e;
     if (e1 < e2) {
@@ -92,9 +95,12 @@ TRACCC_HOST_DEVICE inline bool is_far_enough(traccc::cell a, traccc::cell b) {
 /// @param L is the vector of the output indices (to which cluster a cell
 /// belongs to)
 /// @param labels is the number of clusters found
-TRACCC_HOST_DEVICE inline void sparse_ccl(
+template <template <typename> class vector_t>
+TRACCC_HOST_DEVICE inline unsigned int sparse_ccl(
     const cell_collection_types::const_device& cells,
-    vecmem::device_vector<unsigned int>& L, unsigned int& labels) {
+    vector_t<unsigned int>& L) {
+
+    unsigned int labels = 0;
 
     // The number of cells.
     const unsigned int n_cells = cells.size();
@@ -126,6 +132,8 @@ TRACCC_HOST_DEVICE inline void sparse_ccl(
         }
         L[i] = l;
     }
+
+    return labels;
 }
 }  // namespace detail
 

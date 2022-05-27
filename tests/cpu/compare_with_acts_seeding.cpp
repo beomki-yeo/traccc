@@ -129,7 +129,7 @@ TEST_P(CompareWithActsSeedingTests, Run) {
     auto surface_transforms = traccc::read_geometry(detector_file);
 
     // Read the hits from the relevant event file
-    traccc::spacepoint_container_types::host spacepoints_per_event =
+    traccc::spacepoint_container_types::const_view spacepoints_view =
         traccc::read_spacepoints_from_event(event, hits_dir,
                                             traccc::data_format::csv,
                                             surface_transforms, host_mr);
@@ -138,15 +138,20 @@ TEST_P(CompareWithActsSeedingTests, Run) {
       TRACCC seeding
       --------------------------------*/
 
-    auto internal_spacepoints_per_event = sb(spacepoints_per_event);
-    auto seeds = sf(spacepoints_per_event, internal_spacepoints_per_event);
+    auto internal_spacepoints_per_event = sb(spacepoints_view);
+    auto seeds_view = sf(spacepoints_view, internal_spacepoints_per_event);
 
     /*--------------------------------
       TRACCC track params estimation
       --------------------------------*/
 
-    auto tp_output = tp(spacepoints_per_event, seeds);
-    auto& traccc_params = tp_output;
+    auto traccc_params_view = tp(spacepoints_view, seeds_view);
+
+    const traccc::spacepoint_container_types::const_device
+        spacepoints_per_event(spacepoints_view);
+    const traccc::seed_collection_types::const_device seeds(seeds_view);
+    const traccc::bound_track_parameters_collection_types::const_device
+        traccc_params(traccc_params_view);
 
     /*--------------------------------
       ACTS seeding
@@ -155,7 +160,7 @@ TEST_P(CompareWithActsSeedingTests, Run) {
     // copy traccc::spacepoint into SpacePoint
     std::vector<const SpacePoint*> spVec;
     for (std::size_t i_h = 0; i_h < spacepoints_per_event.size(); i_h++) {
-        auto& items = spacepoints_per_event.get_items()[i_h];
+        const auto& items = spacepoints_per_event.get_items()[i_h];
         for (auto& sp : items) {
 
             SpacePoint* acts_sp =
@@ -174,7 +179,7 @@ TEST_P(CompareWithActsSeedingTests, Run) {
     // spacepoint equality check
     int n_sp_match = 0;
     for (std::size_t i_h = 0; i_h < spacepoints_per_event.size(); i_h++) {
-        auto& items = spacepoints_per_event.get_items()[i_h];
+        const auto& items = spacepoints_per_event.get_items()[i_h];
         for (auto& sp : items) {
             if (std::find(spVec.begin(), spVec.end(), sp) != spVec.end()) {
                 n_sp_match++;
@@ -324,7 +329,7 @@ TEST_P(CompareWithActsSeedingTests, Run) {
         auto spB = spacePoints[0];
         traccc::geometry_id geo_id = 0;
         for (std::size_t i_h = 0; i_h < spacepoints_per_event.size(); i_h++) {
-            auto& items = spacepoints_per_event.get_items()[i_h];
+            const auto& items = spacepoints_per_event.get_items()[i_h];
             if (std::find(items.begin(), items.end(), spB) != items.end()) {
                 geo_id = spacepoints_per_event.get_headers()[i_h];
                 break;

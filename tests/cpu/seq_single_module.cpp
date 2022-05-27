@@ -22,7 +22,6 @@
 #include <gtest/gtest.h>
 
 TEST(algorithms, seq_single_module) {
-
     // Memory resource used in the test.
     vecmem::host_memory_resource resource;
 
