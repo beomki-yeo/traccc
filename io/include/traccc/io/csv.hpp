@@ -108,7 +108,7 @@ struct csv_particle {
                    vz, vt, px, py, pz, m, q);
 };
 
-using fatras_particle_reader = dfe::NamedTupleCsvReader<csv_particle>;
+using particle_reader = dfe::NamedTupleCsvReader<csv_particle>;
 
 /// writer
 
@@ -329,6 +329,7 @@ inline spacepoint_container_types::host read_hits(
         auto placement = (*tfmap)[geom_id];
 
         point3 position({iohit.tx, iohit.ty, iohit.tz});
+        // FIXME: This transformation will ONLY work on cartesian...
         auto local = placement.point_to_local(position);
         measurement m({point2({local[0], local[1]}), variance2({0., 0.})});
         spacepoint sp({position, m});
