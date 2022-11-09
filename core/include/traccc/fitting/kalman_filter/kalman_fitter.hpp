@@ -16,6 +16,7 @@
 
 // detray include(s).
 #include "detray/propagator/actor_chain.hpp"
+#include "detray/propagator/actors/aborters.hpp"
 #include "detray/propagator/actors/parameter_resetter.hpp"
 #include "detray/propagator/actors/parameter_transporter.hpp"
 #include "detray/propagator/actors/pointwise_material_interactor.hpp"
@@ -27,9 +28,15 @@ namespace traccc {
 template <typename stepper_t, typename navigator_t>
 class kalman_fitter {
 
+    // Scalar type
+    using scalar_type = typename stepper_t::scalar_type;
+
     public:
     struct config {
         std::size_t n_iterations = 1;
+        scalar_type pathlimit = std::numeric_limits<scalar>::max();
+        scalar_type overstep_tolerance = -10 * detray::unit_constants::um;
+        scalar_type step_constraint = 5. * detray::unit_constants::mm;
     };
 
     // transform3 type
@@ -39,14 +46,15 @@ class kalman_fitter {
     using detector_type = typename navigator_t::detector_type;
 
     // Actor types
+    using aborter = detray::pathlimit_aborter;
     using transporter = detray::parameter_transporter<transform3_type>;
     using interactor = detray::pointwise_material_interactor<transform3_type>;
     using fit_actor = traccc::kalman_actor<transform3_type, vecmem::vector>;
     using resetter = detray::parameter_resetter<transform3_type>;
 
     using actor_chain_type =
-        detray::actor_chain<std::tuple, transporter, interactor, fit_actor,
-                            resetter>;
+        detray::actor_chain<std::tuple, aborter, transporter, interactor,
+                            fit_actor, resetter>;
 
     // Propagator type
     using propagator_type =
@@ -85,14 +93,24 @@ class kalman_fitter {
         // Create propagator
         propagator_type propagator({}, {});
 
+        // Set path limit
+        m_aborter_state.set_path_limit(m_cfg.pathlimit);
+
         // Create actor chain states
         typename actor_chain_type::state actor_states =
-            std::tie(m_transporter_state, m_interactor_state, fit_actor_state,
-                     m_resetter_state);
+            std::tie(m_aborter_state, m_transporter_state, m_interactor_state,
+                     fit_actor_state, m_resetter_state);
 
         // Create propagator state
         typename propagator_type::state propagation(
             seed_params, m_detector->get_bfield(), *m_detector, actor_states);
+
+        // Set overstep tolerance and stepper constraint
+        propagation._stepping().set_overstep_tolerance(
+            m_cfg.overstep_tolerance);
+        propagation._stepping
+            .template set_constraint<detray::step::constraint::e_accuracy>(
+                m_cfg.step_constraint);
 
         // Run forward filtering
         propagator.propagate(propagation);
@@ -174,6 +192,7 @@ class kalman_fitter {
     fitter_info<transform3_type> m_fit_info;
     vecmem::vector<track_state<transform3_type>> m_track_states;
 
+    typename aborter::state m_aborter_state{};
     typename transporter::state m_transporter_state{};
     typename interactor::state m_interactor_state{};
     typename resetter::state m_resetter_state{};

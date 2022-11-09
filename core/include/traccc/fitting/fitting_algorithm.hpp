@@ -46,6 +46,17 @@ class fitting_algorithm : public algorithm<track_state_container_types::host(
             // Seed parameter
             const auto& seed_param = track_candidates[i].header;
 
+            ///////// Delete Me /////////
+            /*
+            printf("%lu %f %f %f %f %f %f \n", i,
+                   getter::element(seed_param.vector(), 0, 0),
+                   getter::element(seed_param.vector(), 1, 0),
+                   getter::element(seed_param.vector(), 2, 0),
+                   getter::element(seed_param.vector(), 3, 0),
+                   getter::element(seed_param.vector(), 4, 0));
+            */
+            ///////// Delete Me /////////
+
             // Make a vector of track state
             auto& cands = track_candidates[i].items;
             vecmem::vector<track_state<transform3_type>> track_states;

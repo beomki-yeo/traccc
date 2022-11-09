@@ -42,7 +42,7 @@ TEST(kalman_filter, telescope_truth_tracking) {
      *****************************/
 
     // Numer of events
-    std::size_t n_events = 10000;
+    std::size_t n_events = 50000;
 
     // Standard deviations for seed track parameters
     std::array<scalar, e_bound_size> stddevs = {
@@ -73,7 +73,7 @@ TEST(kalman_filter, telescope_truth_tracking) {
                          covfie::field>;
 
     // B field value and its type
-    const vector3 B{2, 0, 0 * detray::unit_constants::T};
+    const vector3 B{2 * detray::unit_constants::T, 0, 0};
     using b_field_t = typename detector_type::bfield_type;
 
     // Create the detector
@@ -94,13 +94,18 @@ TEST(kalman_filter, telescope_truth_tracking) {
     constexpr unsigned int theta_steps{1};
     constexpr unsigned int phi_steps{1};
     const vector3 x_0{0, 0, 0};
-    const scalar mom_0 = 1 * detray::unit_constants::GeV;
+    const scalar mom_0 = 10. * detray::unit_constants::GeV;
 
-    // Track direction: {theta = M_PI/2, phi = 0}
+    // Track direction: {theta = PI/2, phi = PI/6}
+    /*
     auto generator =
         detray::uniform_track_generator<traccc::free_track_parameters>(
             theta_steps, phi_steps, x_0, mom_0, {M_PI / 2., M_PI / 2.},
-            {0., 0.});
+            {M_PI / 6., M_PI / 6.});
+    */
+    auto generator =
+        detray::uniform_track_generator<traccc::free_track_parameters>(
+            theta_steps, phi_steps, x_0, mom_0, {M_PI / 2., M_PI / 2.}, {0, 0});
 
     // Smearing value for measurements
     detray::measurement_smearer<scalar> meas_smearer(

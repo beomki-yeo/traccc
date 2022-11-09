@@ -101,6 +101,17 @@ struct seed_generator {
 
             auto& navigation = propagation._navigation;
 
+            //// DELETE ME ////////
+            /*
+            auto& stepping = propagation._stepping;
+            printf("Propagating... ");
+            for (std::size_t i = 0; i < e_free_size; i++) {
+                printf("%f ", getter::element(stepping().vector(), i, 0));
+            }
+            printf("\n");
+            */
+            //// DELETE ME ////////
+
             if (navigation.is_on_module()) {
                 propagation._heartbeat &= navigation.abort();
             }
@@ -131,8 +142,15 @@ struct seed_generator {
 
         auto& stepping = propagation._stepping;
 
+        //// DELETE ME ////////
+        /*
+        printf("Initial \n");
+        for (std::size_t i = 0; i < e_free_size; i++) {
+            printf("%f ", getter::element(stepping().vector(), i, 0));
+        }
+        printf("\n");
+        */
         propagator.propagate(propagation);
-
         /*
         printf("Seed Parameter \n");
 
@@ -157,6 +175,8 @@ struct seed_generator {
         }
         printf("\n");
         */
+        //// DELETE ME ////////
+
         return parameter_smearer()(stepping._bound_params, stddevs);
     }
 
