@@ -13,14 +13,14 @@
 #include "traccc/resolution/fitting_performance_writer.hpp"
 
 // detray include(s).
+#include "detray/detectors/create_telescope_detector.hpp"
 #include "detray/propagator/actors/aborters.hpp"
 #include "detray/propagator/actors/parameter_resetter.hpp"
 #include "detray/propagator/actors/parameter_transporter.hpp"
 #include "detray/propagator/actors/pointwise_material_interactor.hpp"
 #include "detray/propagator/propagator.hpp"
-#include "tests/common/tools/create_telescope_detector.hpp"
-#include "tests/common/tools/simulator.hpp"
-#include "tests/common/tools/track_generators.hpp"
+#include "detray/simulation/simulator.hpp"
+#include "detray/simulation/track_generators.hpp"
 
 // VecMem include(s).
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -106,8 +106,8 @@ TEST(kalman_filter, telescope_truth_tracking) {
     detray::measurement_smearer<scalar> meas_smearer(
         50 * detray::unit_constants::um, 50 * detray::unit_constants::um);
 
-    auto sim = detray::simulator(n_events, data_directory(), det, generator,
-                                 meas_smearer);
+    auto sim = detray::simulator(n_events, det, generator, meas_smearer,
+                                 data_directory());
     sim.run();
 
     /***************************

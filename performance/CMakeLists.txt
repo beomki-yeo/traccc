@@ -42,4 +42,4 @@ traccc_add_library( traccc_performance performance TYPE SHARED
    "include/traccc/performance/container_comparator.hpp"
    "include/traccc/performance/impl/container_comparator.ipp" )
 target_link_libraries( traccc_performance
-   PUBLIC ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist traccc::core traccc::io detray_tests_common )
+   PUBLIC ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist traccc::core traccc::io covfie::core )
