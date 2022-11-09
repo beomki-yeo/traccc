@@ -42,7 +42,7 @@ TEST(kalman_filter, telescope_truth_tracking) {
      *****************************/
 
     // Numer of events
-    std::size_t n_events = 50000;
+    std::size_t n_events = 10000;
 
     // Standard deviations for seed track parameters
     std::array<scalar, e_bound_size> stddevs = {
@@ -51,7 +51,7 @@ TEST(kalman_filter, telescope_truth_tracking) {
         0.017,
         0.017,
         0.001 / detray::unit_constants::GeV,
-        1 * detray::unit_constants::ns};
+        1 * detray::unit_constants::us};
 
     // Material and thickness for detector planes
     const auto mat = detray::silicon_tml<scalar>();

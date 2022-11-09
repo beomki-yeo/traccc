@@ -101,6 +101,25 @@ struct gain_matrix_updater {
         trk_state.filtered().set_covariance(filtered_cov);
         trk_state.filtered_chi2() = matrix_operator().element(chi2, 0, 0);
 
+        //////////////////// Delete ME /////////////////////////
+        /*
+        printf("Surface: %lu \n", trk_state.surface_link());
+
+        printf("Predicted: ");
+        for (auto i = 0; i < e_bound_size; i++){
+            printf("%f ", getter::element(trk_state.predicted().vector(),i,0));
+        }
+        printf("\n");
+
+        printf("Filtered: ");
+        for (auto i = 0; i < e_bound_size; i++){
+            printf("%f ", getter::element(trk_state.filtered().vector(),i,0));
+        }
+        printf("Filtered Chi2: %f", trk_state.filtered_chi2());
+
+        printf("\n");
+        */
+
         return true;
     }
 };
