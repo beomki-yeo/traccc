@@ -19,20 +19,28 @@
 
 namespace traccc {
 
-// Struct for fitting results
+/// Fitting result per track
 template <typename algebra_t>
 struct fitter_info {
     using scalar_type = typename algebra_t::scalar_type;
 
+    /// Seed track parameter
     detray::bound_track_parameters<algebra_t> seed_params;
+
+    /// Fitted track parameter
     detray::bound_track_parameters<algebra_t> fit_params;
 
+    /// Number of degree of freedoms of fitted track
     scalar_type ndf;
+
+    /// Chi square of fitted track
     scalar_type chi2;
+
+    /// P-value of fitted track
     scalar_type p_val;
 };
 
-/// Track state definition for fitter
+/// Fitting result per measurement
 template <typename algebra_t>
 struct track_state {
 
@@ -46,6 +54,7 @@ struct track_state {
     using matrix_type =
         typename matrix_operator::template matrix_type<ROWS, COLS>;
 
+    /// Construction with track candidate
     TRACCC_HOST_DEVICE
     track_state(const track_candidate& trk_cand)
         : m_surface_link(trk_cand.surface_link), m_measurement(trk_cand.meas) {
@@ -54,11 +63,16 @@ struct track_state {
         m_smoothed.set_surface_link(m_surface_link);
     }
 
+    /// @return the surface link
     TRACCC_HOST_DEVICE
     inline std::size_t surface_link() const { return m_surface_link; }
 
-    // Get the local position of measurement
-    // FIXME: There is an inefficient conversion from vector to matrix
+    /// @return the measurement
+    TRACCC_HOST_DEVICE
+    inline const measurement& get_measurement() const { return m_measurement; }
+
+    /// @return the local position of measurement with 2 X 1 matrix
+    // FIXME: The conversion from vector to matrix is inefficient
     TRACCC_HOST_DEVICE
     inline matrix_type<2, 1> measurement_local() const {
         matrix_type<2, 1> ret = matrix_operator().template zero<2, 1>();
@@ -67,7 +81,7 @@ struct track_state {
         return ret;
     }
 
-    // Get the local covariance of measurement
+    /// @return the covariance of local position of measurement
     TRACCC_HOST_DEVICE
     inline matrix_type<2, 2> measurement_covariance() const {
         matrix_type<2, 2> ret = matrix_operator().template zero<2, 2>();
@@ -76,48 +90,61 @@ struct track_state {
         return ret;
     }
 
+    /// @return the non-const reference of predicted track state
     TRACCC_HOST_DEVICE
     inline bound_track_parameters_type& predicted() { return m_predicted; }
 
-    TRACCC_HOST_DEVICE
-    inline bound_matrix& jacobian() { return m_jacobian; }
-
-    TRACCC_HOST_DEVICE
-    inline const bound_matrix& jacobian() const { return m_jacobian; }
-
+    /// @return the const reference of predicted track state
     TRACCC_HOST_DEVICE
     inline const bound_track_parameters_type& predicted() const {
         return m_predicted;
     }
 
+    /// @return the non-const transport jacobian
+    TRACCC_HOST_DEVICE
+    inline bound_matrix& jacobian() { return m_jacobian; }
+
+    /// @return the const transport jacobian
+    TRACCC_HOST_DEVICE
+    inline const bound_matrix& jacobian() const { return m_jacobian; }
+
+    /// @return the non-const chi square of filtered parameter
     TRACCC_HOST_DEVICE
     inline scalar_type& filtered_chi2() { return m_filtered_chi2; }
 
+    /// @return the const chi square of filtered parameter
     TRACCC_HOST_DEVICE
     inline const scalar_type& filtered_chi2() const { return m_filtered_chi2; }
 
+    /// @return the non-const filtered parameter
     TRACCC_HOST_DEVICE
     inline bound_track_parameters_type& filtered() { return m_filtered; }
 
+    /// @return the const filtered parameter
     TRACCC_HOST_DEVICE
     inline const bound_track_parameters_type& filtered() const {
         return m_filtered;
     }
 
+    /// @return the non-const chi square of smoothed parameter
     TRACCC_HOST_DEVICE
     inline scalar_type& smoothed_chi2() { return m_smoothed_chi2; }
 
+    /// @return the const chi square of smoothed parameter
     TRACCC_HOST_DEVICE
     inline const scalar_type& smoothed_chi2() const { return m_smoothed_chi2; }
 
+    /// @return the non-const smoothed parameter
     TRACCC_HOST_DEVICE
     inline bound_track_parameters_type& smoothed() { return m_smoothed; }
 
+    /// @return the const smoothed parameter
     TRACCC_HOST_DEVICE
     inline const bound_track_parameters_type& smoothed() const {
         return m_smoothed;
     }
 
+    private:
     std::size_t m_surface_link;
     measurement m_measurement;
     bound_matrix m_jacobian =

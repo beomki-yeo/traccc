@@ -13,6 +13,7 @@
 
 namespace traccc {
 
+/// Track candidate contains the measurement object and its surface link
 struct track_candidate {
     geometry_id surface_link;
     measurement meas;

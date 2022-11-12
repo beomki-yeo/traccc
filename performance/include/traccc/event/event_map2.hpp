@@ -18,8 +18,8 @@ namespace traccc {
 inline bool operator==(const csv_measurement& lhs,
                        const track_state<transform3>& rhs) {
     if (lhs.geometry_id == rhs.surface_link() &&
-        lhs.local0 == rhs.m_measurement.local[0] &&
-        lhs.local1 == rhs.m_measurement.local[1]) {
+        lhs.local0 == rhs.get_measurement().local[0] &&
+        lhs.local1 == rhs.get_measurement().local[1]) {
         return true;
     }
     return false;
