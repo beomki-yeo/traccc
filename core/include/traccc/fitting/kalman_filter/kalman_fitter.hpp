@@ -138,20 +138,7 @@ class kalman_fitter {
         // Run smoothing
         smooth(fit_actor_state.m_track_states);
 
-        // Backward Propagation (Currently Doesn't work)
-        /*
-        // Flip the stepper direction and momentum for backward filtering
-        propagation._stepping().flip();
-
-        // Flip the navigation direction for backward filtering
-        propagation._navigation.set_direction(
-            detray::navigation::direction::e_backward);
-
-        // Run backward filtering
-        propagator.propagate(propagation);
-        */
-
-        // TODO: Write track info
+        //@todo: Write track info
     }
 
     /// Run smoothing after kalman filtering
@@ -190,29 +177,10 @@ class kalman_fitter {
         }
     }
 
-    /*
-    // For Eq. (3.38 - 3.40) of "Pattern Recognition, Tracking and Vertex
-    // Reconstruction in Particle Detectors" from R.Frühwirth and A. Strandlie
-    template <typename track_state_collection_t>
-    void smooth2(track_state_collection_t& track_states) {
-
-        const auto& mask_store = m_detector.get()->mask_store();
-
-        for (auto it = track_states.begin(); it != track_states.end(); it++) {
-            auto& trk_state = *it;
-
-            // Surface
-            const auto& surface =
-                m_detector.get()->surface_by_index(trk_state.surface_link());
-
-            // Run kalman smoother
-            mask_store.template call<gain_matrix_smoother<transform3_type>>(
-                surface.mask(), surface, trk_state);
-        }
-    }
-    */
-
+    /// @return fitter result of a track
     fitter_info<transform3_type> get_fitter_info() const { return m_fit_info; }
+
+    /// @return fitter result of each track states
     vecmem::vector<track_state<transform3_type>> get_track_states() const {
         return m_track_states;
     }
