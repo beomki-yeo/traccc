@@ -135,7 +135,6 @@ TEST(kalman_filter, telescope_truth_tracking) {
         // Make a seed parameter
         free_track_parameters vertex(pos, io_particle.vt, mom, io_particle.q);
         auto seed_params = sg(vertex, stddevs);
-        // auto seed_params = parameter_smearer()(vertex, stddevs);
 
         // Make a track candidate vector
         vecmem::vector<track_candidate> candidates(&host_mr);

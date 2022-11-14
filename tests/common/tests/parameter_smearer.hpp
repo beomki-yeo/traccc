@@ -24,74 +24,12 @@ namespace traccc {
 
 using matrix_operator = typename transform3::matrix_actor;
 
-/// Track parameter smearer
-struct parameter_smearer {
-
-    std::random_device rd{};
-    std::mt19937 generator{rd()};
-
-    bound_track_parameters operator()(
-        bound_track_parameters& param,
-        const std::array<scalar, e_bound_size>& stddevs) {
-        // New vector
-        auto new_vec = matrix_operator().template zero<e_bound_size, 1>();
-
-        // New covariance
-        auto new_cov =
-            matrix_operator().template zero<e_bound_size, e_bound_size>();
-
-        for (std::size_t i = 0; i < e_bound_size; i++) {
-
-            matrix_operator().element(new_vec, i, 0) =
-                std::normal_distribution<scalar>(
-                    matrix_operator().element(param.vector(), i, 0),
-                    stddevs[i])(generator);
-
-            matrix_operator().element(new_cov, i, i) = stddevs[i] * stddevs[i];
-        }
-
-        // Set vector and covariance
-        param.set_vector(new_vec);
-        param.set_covariance(new_cov);
-
-        return param;
-    }
-
-    free_track_parameters operator()(
-        free_track_parameters& param,
-        const std::array<scalar, e_free_size>& stddevs) {
-        // New vector
-        auto new_vec = matrix_operator().template zero<e_free_size, 1>();
-
-        // New covariance
-        auto new_cov =
-            matrix_operator().template zero<e_free_size, e_free_size>();
-
-        for (std::size_t i = 0; i < e_free_size; i++) {
-
-            matrix_operator().element(new_vec, i, 0) =
-                std::normal_distribution<scalar>(
-                    matrix_operator().element(param.vector(), i, 0),
-                    stddevs[i])(generator);
-
-            matrix_operator().element(new_cov, i, i) = stddevs[i] * stddevs[i];
-        }
-
-        // Set vector and covariance
-        param.set_vector(new_vec);
-        param.set_covariance(new_cov);
-
-        // Normalize dir
-        const auto dir = param.dir();
-        param.set_dir(vector::normalize(dir));
-
-        return param;
-    }
-};
-
+/// Seed track parameter generator which returns the bound track parameter at
+/// the first surface
 template <typename stepper_t, typename navigator_t>
 struct seed_generator {
 
+    /// Aborter actor which stops the propagation when the track reaches
     struct aborter : detray::actor {
         struct state {};
 
@@ -101,17 +39,6 @@ struct seed_generator {
 
             auto& navigation = propagation._navigation;
 
-            //// DELETE ME ////////
-            /*
-            auto& stepping = propagation._stepping;
-            printf("Propagating... ");
-            for (std::size_t i = 0; i < e_free_size; i++) {
-                printf("%f ", getter::element(stepping().vector(), i, 0));
-            }
-            printf("\n");
-            */
-            //// DELETE ME ////////
-
             if (navigation.is_on_module()) {
                 propagation._heartbeat &= navigation.abort();
             }
@@ -120,7 +47,6 @@ struct seed_generator {
 
     using transform3_type = typename stepper_t::transform3_type;
     using detector_type = typename navigator_t::detector_type;
-
     using transporter = detray::parameter_transporter<transform3_type>;
     using resetter = detray::parameter_resetter<transform3_type>;
     using actor_chain_type =
@@ -142,42 +68,29 @@ struct seed_generator {
 
         auto& stepping = propagation._stepping;
 
-        //// DELETE ME ////////
-        /*
-        printf("Initial \n");
-        for (std::size_t i = 0; i < e_free_size; i++) {
-            printf("%f ", getter::element(stepping().vector(), i, 0));
-        }
-        printf("\n");
-        */
         propagator.propagate(propagation, actor_states);
-        /*
-        printf("Seed Parameter \n");
 
-        for (std::size_t i = 0; i < e_free_size; i++) {
-            printf("%f ", getter::element(stepping().vector(), i, 0));
-        }
-        printf("\n");
-
-        printf("%lu ", stepping._bound_params.surface_link());
-        for (std::size_t i = 0; i < e_bound_size; i++) {
-            printf("%f ",
-                   getter::element(stepping._bound_params.vector(), i, 0));
-        }
-        printf("\n");
+        // Smeared vector and its covariance
+        auto new_vec = matrix_operator().template zero<e_bound_size, 1>();
+        auto new_cov =
+            matrix_operator().template zero<e_bound_size, e_bound_size>();
 
         for (std::size_t i = 0; i < e_bound_size; i++) {
-            for (std::size_t j = 0; j < e_bound_size; j++) {
-                printf("%f ", getter::element(
-                                  stepping._bound_params.covariance(), i, j));
-            }
-            printf("\n");
-        }
-        printf("\n");
-        */
-        //// DELETE ME ////////
 
-        return parameter_smearer()(stepping._bound_params, stddevs);
+            matrix_operator().element(new_vec, i, 0) =
+                std::normal_distribution<scalar>(
+                    matrix_operator().element(stepping._bound_params.vector(),
+                                              i, 0),
+                    stddevs[i])(generator);
+
+            matrix_operator().element(new_cov, i, i) = stddevs[i] * stddevs[i];
+        }
+
+        // Set vector and covariance
+        stepping._bound_params.set_vector(new_vec);
+        stepping._bound_params.set_covariance(new_cov);
+
+        return stepping._bound_params;
     }
 
     std::random_device rd{};
