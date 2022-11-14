@@ -29,7 +29,6 @@
 #include <gtest/gtest.h>
 
 using namespace traccc;
-using matrix_operator = typename transform3::matrix_actor;
 
 // This defines the local frame test suite
 TEST(kalman_filter, telescope_truth_tracking) {
@@ -38,30 +37,10 @@ TEST(kalman_filter, telescope_truth_tracking) {
     vecmem::host_memory_resource host_mr;
 
     /*****************************
-     *  Setup values
-     *****************************/
-
-    // Numer of events
-    std::size_t n_events = 50000;
-
-    // Standard deviations for seed track parameters
-    std::array<scalar, e_bound_size> stddevs = {
-        0.03 * detray::unit<scalar>::mm,
-        0.03 * detray::unit<scalar>::mm,
-        0.017,
-        0.017,
-        0.001 / detray::unit<scalar>::GeV,
-        1 * detray::unit<scalar>::us};
-
-    // Material and thickness for detector planes
-    const auto mat = detray::silicon_tml<scalar>();
-    const scalar thickness = 0.5 * detray::unit<scalar>::mm;
-
-    /*****************************
      * Build a telescope geometry
      *****************************/
 
-    // Plane alignment direction
+    // Plane alignment direction (aligned to x-axis)
     detray::detail::ray<transform3> traj{{0, 0, 0}, 0, {1, 0, 0}, -1};
     // Position of planes (in mm unit)
     std::vector<scalar> plane_positions = {-10., 20., 40., 60.,  80., 100.,
@@ -77,6 +56,9 @@ TEST(kalman_filter, telescope_truth_tracking) {
     using b_field_t = typename detector_type::bfield_type;
 
     // Create the detector
+    const auto mat = detray::silicon_tml<scalar>();
+    const scalar thickness = 0.5 * detray::unit<scalar>::mm;
+
     const detector_type det = create_telescope_detector(
         host_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
@@ -87,30 +69,22 @@ TEST(kalman_filter, telescope_truth_tracking) {
      * Generate simulation data
      ***************************/
 
-    // Basic setups
-    // 1. one track per event
-    // 2. vertex: (0,0,0)
-    // 3. momentum: 1 GeV/c
     constexpr unsigned int theta_steps{1};
     constexpr unsigned int phi_steps{1};
     const vector3 x_0{0, 0, 0};
-    const scalar mom_0 = 1. * detray::unit<scalar>::GeV;
+    const scalar p_0 = 1. * detray::unit<scalar>::GeV;
 
-    // Track direction: {theta = PI/2, phi = PI/3}
-    /*
+    // Track direction: {theta = PI/2, phi = 0}
     auto generator =
         detray::uniform_track_generator<traccc::free_track_parameters>(
-            theta_steps, phi_steps, x_0, mom_0, {M_PI / 2., M_PI / 2.},
-            {M_PI / 3., M_PI / 3.});
-    */
-    auto generator =
-        detray::uniform_track_generator<traccc::free_track_parameters>(
-            theta_steps, phi_steps, x_0, mom_0, {M_PI / 2., M_PI / 2.}, {0, 0});
+            theta_steps, phi_steps, x_0, p_0, {M_PI / 2., M_PI / 2.}, {0, 0});
 
     // Smearing value for measurements
     detray::measurement_smearer<scalar> meas_smearer(
         50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um);
 
+    // Run simulator
+    const std::size_t n_events = 50000;
     auto sim = detray::simulator(n_events, det, generator, meas_smearer,
                                  data_directory());
     sim.run();
@@ -123,7 +97,6 @@ TEST(kalman_filter, telescope_truth_tracking) {
     using navigator_type = detray::navigator<decltype(det)>;
     using rk_stepper_type = detray::rk_stepper<b_field_t::view_t, transform3>;
     using fitter_type = kalman_fitter<rk_stepper_type, navigator_type>;
-    // using seed_parameter_type = free_track_parameters;
     using seed_parameter_type = bound_track_parameters;
 
     seed_generator<rk_stepper_type, navigator_type> sg(det);
@@ -150,8 +123,16 @@ TEST(kalman_filter, telescope_truth_tracking) {
         point3 pos{io_particle.vx, io_particle.vy, io_particle.vz};
         vector3 mom{io_particle.px, io_particle.py, io_particle.pz};
 
+        // Standard deviations for seed track parameters
+        std::array<scalar, e_bound_size> stddevs = {
+            0.03 * detray::unit<scalar>::mm,
+            0.03 * detray::unit<scalar>::mm,
+            0.017,
+            0.017,
+            0.001 / detray::unit<scalar>::GeV,
+            1 * detray::unit<scalar>::us};
+
         // Make a seed parameter
-        // @TODO: Smear the seed
         free_track_parameters vertex(pos, io_particle.vt, mom, io_particle.q);
         auto seed_params = sg(vertex, stddevs);
         // auto seed_params = parameter_smearer()(vertex, stddevs);
@@ -187,7 +168,7 @@ TEST(kalman_filter, telescope_truth_tracking) {
 
     ASSERT_EQ(track_states.size(), n_events);
 
-    // performance writer
+    // Write fitting result
     traccc::fitting_performance_writer fit_performance_writer(
         traccc::fitting_performance_writer::config{});
 
