@@ -29,7 +29,8 @@ using matrix_operator = typename transform3::matrix_actor;
 template <typename stepper_t, typename navigator_t>
 struct seed_generator {
 
-    /// Aborter actor which stops the propagation when the track reaches
+    /// Aborter actor which stops the propagation when the track reaches the
+    /// first sensitive surface
     struct aborter : detray::actor {
         struct state {};
 
@@ -39,7 +40,10 @@ struct seed_generator {
 
             auto& navigation = propagation._navigation;
 
-            if (navigation.is_on_module()) {
+            // Abort if the surface is sensitive
+            if (navigation.is_on_module() &&
+                navigation.current()->sf_id ==
+                    detray::surface_id::e_sensitive) {
                 propagation._heartbeat &= navigation.abort();
             }
         }

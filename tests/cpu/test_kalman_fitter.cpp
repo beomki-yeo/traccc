@@ -77,7 +77,8 @@ TEST(kalman_filter, telescope_truth_tracking) {
     // Track direction: {theta = PI/2, phi = 0}
     auto generator =
         detray::uniform_track_generator<traccc::free_track_parameters>(
-            theta_steps, phi_steps, x_0, p_0, {M_PI / 2., M_PI / 2.}, {0, 0});
+            theta_steps, phi_steps, x_0, p_0, {M_PI / 2., M_PI / 2.},
+            {M_PI / 3, M_PI / 3});
 
     // Smearing value for measurements
     detray::measurement_smearer<scalar> meas_smearer(
@@ -105,6 +106,15 @@ TEST(kalman_filter, telescope_truth_tracking) {
     traccc::track_candidates_container_types<seed_parameter_type>::host
         track_candidates(&host_mr);
 
+    // Standard deviations for seed track parameters
+    std::array<scalar, e_bound_size> stddevs = {
+        0.03 * detray::unit<scalar>::mm,
+        0.03 * detray::unit<scalar>::mm,
+        0.017,
+        0.017,
+        0.001 / detray::unit<scalar>::GeV,
+        1 * detray::unit<scalar>::us};
+
     for (std::size_t event = 0; event < n_events; event++) {
 
         // Read the measurements from the relevant event file
@@ -122,15 +132,6 @@ TEST(kalman_filter, telescope_truth_tracking) {
 
         point3 pos{io_particle.vx, io_particle.vy, io_particle.vz};
         vector3 mom{io_particle.px, io_particle.py, io_particle.pz};
-
-        // Standard deviations for seed track parameters
-        std::array<scalar, e_bound_size> stddevs = {
-            0.03 * detray::unit<scalar>::mm,
-            0.03 * detray::unit<scalar>::mm,
-            0.017,
-            0.017,
-            0.001 / detray::unit<scalar>::GeV,
-            1 * detray::unit<scalar>::us};
 
         // Make a seed parameter
         free_track_parameters vertex(pos, io_particle.vt, mom, io_particle.q);
