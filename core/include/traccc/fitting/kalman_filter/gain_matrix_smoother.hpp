@@ -84,29 +84,6 @@ struct gain_matrix_smoother {
         cur_state.smoothed().set_vector(smt_vec);
         cur_state.smoothed().set_covariance(smt_cov);
 
-        //////////////////// Delete ME /////////////////////////
-        /*
-        printf("Surface: %lu \n", cur_state.surface_link());
-
-        printf("Predicted: ");
-        for (auto i = 0; i < e_bound_size; i++){
-            printf("%f ", getter::element(cur_state.predicted().vector(),i,0));
-        }
-        printf("\n");
-
-        printf("Filtered: ");
-        for (auto i = 0; i < e_bound_size; i++){
-            printf("%f ", getter::element(cur_filtered_vec,i,0));
-        }
-        printf("\n");
-
-        printf("Smoothed: ");
-        for (auto i = 0; i < e_bound_size; i++){
-            printf("%f ", getter::element(smt_vec,i,0));
-        }
-        printf("\n");
-        */
-
         // projection matrix
         // Dimension: (2 X 6)
         const auto H =
