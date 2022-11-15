@@ -34,6 +34,8 @@
 using namespace traccc;
 
 // Kalman Fitting Test
+//
+// Tuple parameter made of (1) initial particle momentum and (2) initial phi
 class KalmanFittingTests
     : public ::testing::TestWithParam<std::tuple<scalar, scalar>> {};
 
@@ -203,8 +205,8 @@ TEST_P(KalmanFittingTests, Run) {
     std::array<std::string, 5> pull_names{"pull_d0", "pull_z0", "pull_phi",
                                           "pull_theta", "pull_qop"};
 
-    auto f = std::unique_ptr<TFile>{
-        TFile::Open(writer_cfg.file_path.c_str(), "read")};
+    auto f = fit_performance_writer.get_file();
+
     auto gaus = new TF1("gaus", "gaus", -5, 5);
     double fit_par[3];
 
@@ -227,8 +229,6 @@ TEST_P(KalmanFittingTests, Run) {
         // Sigma check
         ASSERT_NEAR(fit_par[2], 1, 0.1);
     }
-
-    f->Close();
 }
 
 INSTANTIATE_TEST_SUITE_P(

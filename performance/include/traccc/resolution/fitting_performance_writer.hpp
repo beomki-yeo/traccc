@@ -32,8 +32,17 @@ class fitting_performance_writer {
         res_plot_tool::config res_plot_tool_config;
     };
 
+    /// Constructor with writer config
     fitting_performance_writer(config cfg);
 
+    /// Destructor that closes the file
+    ~fitting_performance_writer();
+
+    /// Fill the tracking results into the histograms
+    ///
+    /// @param name cache name
+    /// @param track_states_per_track vector of track states of a track
+    /// @param evt_map event map to find the truth values
     template <typename event_store_t>
     void write(const std::string& name,
                const track_state_collection_types::host& track_states_per_track,
@@ -48,11 +57,20 @@ class fitting_performance_writer {
                              track_states_per_track[8].smoothed());
     }
 
+    /// Add cache (e.g. CPU or GPU) to the file
+    ///
+    /// @param name cache name
     void add_cache(const std::string& name);
 
+    /// Writing caches into the file
     void finalize();
 
+    /// Return the file pointer
+    TFile* get_file(){ return m_output_file.get(); }
+
     private:
+
+    /// Create a file
     void init();
 
     config m_cfg;
