@@ -49,12 +49,12 @@ class fitting_performance_writer {
                event_store_t& evt_map) {
         // Find truth parameter associated with the track
         const auto truth_param = evt_map.find_truth_param(
-            track_states_per_track[8].surface_link(),
-            track_states_per_track[8].get_measurement());
+            track_states_per_track[0].surface_link(),
+            track_states_per_track[0].get_measurement());
 
         // For the moment, only fill with the first measurements
         m_res_plot_tool.fill(m_res_plot_caches[name], truth_param,
-                             track_states_per_track[8].smoothed());
+                             track_states_per_track[0].smoothed());
     }
 
     /// Add cache (e.g. CPU or GPU) to the file
@@ -66,6 +66,8 @@ class fitting_performance_writer {
     void finalize();
 
     /// Return the file pointer
+    ///
+    /// @return the file pointer
     TFile* get_file(){ return m_output_file.get(); }
 
     private:
