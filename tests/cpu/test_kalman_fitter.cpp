@@ -173,12 +173,12 @@ TEST(kalman_filter, telescope_truth_tracking) {
 
     fit_performance_writer.add_cache("CPU");
 
-    for (std::size_t i = 0; i < n_events; i++) {
-        const auto& track_states_per_track = track_states[i].items;
+    for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {
+        const auto& track_states_per_track = track_states[i_evt].items;
 
         ASSERT_EQ(track_states_per_track.size(), plane_positions.size() - 2);
 
-        traccc::event_map2<detector_type> evt_map(det, i, "", "", "");
+        traccc::event_map2<detector_type> evt_map(det, i_evt);
         fit_performance_writer.write("CPU", track_states_per_track, evt_map);
     }
 

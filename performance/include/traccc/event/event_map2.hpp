@@ -22,8 +22,8 @@ struct event_map2 {
     using vector3 = typename detector_type::vector3;
 
     event_map2(const detector_type& det, size_t event,
-               const std::string& hit_dir, const std::string& measurement_dir,
-               const std::string& particle_dir)
+               const std::string& hit_dir = "", const std::string& measurement_dir = "",
+               const std::string& particle_dir = "")
         : m_detector(std::make_unique<detector_type>(det)) {
 
         std::string io_meas_hit_id_file =
