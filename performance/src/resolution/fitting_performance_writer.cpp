@@ -14,16 +14,6 @@ fitting_performance_writer::fitting_performance_writer(
     fitting_performance_writer::config cfg)
     : m_cfg(std::move(cfg)), m_res_plot_tool(m_cfg.res_plot_tool_config) {}
 
-fitting_performance_writer::~fitting_performance_writer() {
-    for (auto& [name, cache] : m_res_plot_caches) {
-        m_res_plot_tool.clear(cache);
-    }
-
-    if (m_output_file) {
-        m_output_file->Close();
-    }
-}
-
 void fitting_performance_writer::add_cache(const std::string& name) {
     if (not m_output_file) {
         init();
@@ -49,6 +39,14 @@ void fitting_performance_writer::finalize() {
     for (auto const& [name, cache] : m_res_plot_caches) {
         m_res_plot_tool.write(cache);
     }
+
+    for (auto& [name, cache] : m_res_plot_caches) {
+        m_res_plot_tool.clear(cache);
+    }
+
+    if (m_output_file) {
+        m_output_file->Close();
+    }    
 }
 
 }  // namespace traccc

@@ -28,10 +28,21 @@
 // GTest include(s).
 #include <gtest/gtest.h>
 
+// ROOT include(s).
+#include <TF1.h>
+
 using namespace traccc;
 
+// Kalman Fitting Test
+class KalmanFittingTests
+    : public ::testing::TestWithParam<std::tuple<scalar, scalar>> {};
+
 // This defines the local frame test suite
-TEST(kalman_filter, telescope_truth_tracking) {
+TEST_P(KalmanFittingTests, Run) {
+
+    // Test Parameters
+    const scalar p0 = std::get<0>(GetParam());
+    const scalar phi0 = std::get<1>(GetParam());
 
     // Memory resource
     vecmem::host_memory_resource host_mr;
@@ -71,21 +82,19 @@ TEST(kalman_filter, telescope_truth_tracking) {
 
     constexpr unsigned int theta_steps{1};
     constexpr unsigned int phi_steps{1};
-    const vector3 x_0{0, 0, 0};
-    const scalar p_0 = 1. * detray::unit<scalar>::GeV;
+    const vector3 x0{0, 0, 0};
 
-    // Track direction: {theta = PI/2, phi = 0}
     auto generator =
         detray::uniform_track_generator<traccc::free_track_parameters>(
-            theta_steps, phi_steps, x_0, p_0, {M_PI / 2., M_PI / 2.},
-            {M_PI / 3, M_PI / 3});
+            theta_steps, phi_steps, x0, p0, {M_PI / 2., M_PI / 2.},
+            {phi0, phi0});
 
     // Smearing value for measurements
     detray::measurement_smearer<scalar> meas_smearer(
         50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um);
 
     // Run simulator
-    const std::size_t n_events = 50000;
+    const std::size_t n_events = 10000;
     auto sim = detray::simulator(n_events, det, generator, meas_smearer,
                                  data_directory());
     sim.run();
@@ -169,8 +178,10 @@ TEST(kalman_filter, telescope_truth_tracking) {
     ASSERT_EQ(track_states.size(), n_events);
 
     // Write fitting result
-    traccc::fitting_performance_writer fit_performance_writer(
-        traccc::fitting_performance_writer::config{});
+    traccc::fitting_performance_writer::config writer_cfg;
+    writer_cfg.file_path = "performance_track_fitting.root";
+
+    traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
 
     fit_performance_writer.add_cache("CPU");
 
@@ -184,4 +195,54 @@ TEST(kalman_filter, telescope_truth_tracking) {
     }
 
     fit_performance_writer.finalize();
+
+    /********************
+     * Pull value test
+     ********************/
+
+    std::array<std::string, 5> pull_names{"pull_d0", "pull_z0", "pull_phi",
+                                          "pull_theta", "pull_qop"};
+
+    auto f = std::unique_ptr<TFile>{
+        TFile::Open(writer_cfg.file_path.c_str(), "read")};
+    auto gaus = new TF1("gaus", "gaus", -5, 5);
+    double fit_par[3];
+
+    for (auto name : pull_names) {
+
+        auto pull_d0 = (TH1F*)f->Get(name.c_str());
+
+        gaus->SetParameters(1, 0.);
+        gaus->SetParLimits(1, -0.1, 0.1);
+        gaus->SetParameters(2, 1.0);
+        gaus->SetParLimits(2, 0.9, 1.1);
+
+        auto res = pull_d0->Fit("gaus", "Q0S");
+
+        gaus->GetParameters(&fit_par[0]);
+
+        // Mean check
+        ASSERT_NEAR(fit_par[1], 0, 0.05);
+
+        // Sigma check
+        ASSERT_NEAR(fit_par[2], 1, 0.1);
+    }
+
+    f->Close();
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    KalmanFitValidation, KalmanFittingTests,
+    ::testing::Values(
+        std::make_tuple(1 * detray::unit<scalar>::GeV, 0),
+        std::make_tuple(1 * detray::unit<scalar>::GeV, M_PI / 8),
+        std::make_tuple(1 * detray::unit<scalar>::GeV, M_PI / 6),
+        std::make_tuple(1 * detray::unit<scalar>::GeV, M_PI / 4),
+        std::make_tuple(10 * detray::unit<scalar>::GeV, 0),
+        std::make_tuple(10 * detray::unit<scalar>::GeV, M_PI / 8),
+        std::make_tuple(10 * detray::unit<scalar>::GeV, M_PI / 6),
+        std::make_tuple(10 * detray::unit<scalar>::GeV, M_PI / 4),
+        std::make_tuple(100 * detray::unit<scalar>::GeV, 0),
+        std::make_tuple(100 * detray::unit<scalar>::GeV, M_PI / 8),
+        std::make_tuple(100 * detray::unit<scalar>::GeV, M_PI / 6),
+        std::make_tuple(100 * detray::unit<scalar>::GeV, M_PI / 4)));

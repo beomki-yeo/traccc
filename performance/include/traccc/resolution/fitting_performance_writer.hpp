@@ -34,8 +34,6 @@ class fitting_performance_writer {
 
     fitting_performance_writer(config cfg);
 
-    ~fitting_performance_writer();
-
     template <typename event_store_t>
     void write(const std::string& name,
                const track_state_collection_types::host& track_states_per_track,
