@@ -15,16 +15,6 @@
 
 namespace traccc {
 
-inline bool operator==(const csv_measurement& lhs,
-                       const track_state<transform3>& rhs) {
-    if (lhs.geometry_id == rhs.surface_link() &&
-        lhs.local0 == rhs.get_measurement().local[0] &&
-        lhs.local1 == rhs.get_measurement().local[1]) {
-        return true;
-    }
-    return false;
-}
-
 template <typename detector_type>
 struct event_map2 {
 
@@ -93,12 +83,21 @@ struct event_map2 {
         assert(m_measurements.size() == m_meas_hit_ids.size());
     }
 
-    bound_track_parameters find_truth_param(
-        const track_state<transform3>& trk_state) const {
+    bound_track_parameters find_truth_param(const geometry_id surface_link,
+                                            const measurement& meas) const {
 
         // Find the corresponding measurement
-        auto it =
-            std::find(m_measurements.begin(), m_measurements.end(), trk_state);
+        auto is_same_meas = [&](const csv_measurement& csv_meas) {
+            if (csv_meas.geometry_id == surface_link &&
+                csv_meas.local0 == meas.local[0] &&
+                csv_meas.local1 == meas.local[1]) {
+                return true;
+            }
+            return false;
+        };
+
+        auto it = std::find_if(m_measurements.begin(), m_measurements.end(),
+                               is_same_meas);
         assert(it != m_measurements.end());
 
         // Measurement index
