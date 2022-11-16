@@ -72,7 +72,7 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param track_states the vector of track states
     template <typename seed_parameters_t>
-    void run(const seed_parameters_t& seed_params,
+    void fit(const seed_parameters_t& seed_params,
              vecmem::vector<track_state<transform3_type>>&& track_states) {
 
         // Kalman actor state that takes track candidates
@@ -85,7 +85,7 @@ class kalman_fitter {
             fit_actor_state.reset();
 
             if (i == 0) {
-                fit(seed_params, fit_actor_state);
+                filter(seed_params, fit_actor_state);
             }
             // From the second iteration, seed parameter is the smoothed track
             // parameter at the first surface
@@ -93,7 +93,7 @@ class kalman_fitter {
                 const auto& new_seed_params =
                     fit_actor_state.m_track_states[0].smoothed();
 
-                fit(new_seed_params, fit_actor_state);
+                filter(new_seed_params, fit_actor_state);
             }
         }
 
@@ -107,8 +107,8 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param track_states the vector of track states
     template <typename seed_parameters_t>
-    void fit(const seed_parameters_t& seed_params,
-             typename fit_actor::state& fit_actor_state) {
+    void filter(const seed_parameters_t& seed_params,
+                typename fit_actor::state& fit_actor_state) {
 
         // Create propagator
         propagator_type propagator({}, {});

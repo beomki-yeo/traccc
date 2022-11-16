@@ -59,7 +59,7 @@ class fitting_algorithm
             }
 
             // Run fitter
-            fitter.run(seed_param, std::move(track_states));
+            fitter.fit(seed_param, std::move(track_states));
 
             trk_states.push_back(std::move(fitter.get_fitter_info()),
                                  std::move(fitter.get_track_states()));
