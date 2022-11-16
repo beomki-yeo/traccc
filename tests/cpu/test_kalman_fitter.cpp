@@ -96,7 +96,7 @@ TEST_P(KalmanFittingTests, Run) {
         50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um);
 
     // Run simulator
-    const std::size_t n_events = 10;
+    const std::size_t n_events = 10000;
     auto sim = detray::simulator(n_events, det, generator, meas_smearer,
                                  data_directory());
     sim.run();
