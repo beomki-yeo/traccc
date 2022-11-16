@@ -109,13 +109,11 @@ TEST_P(KalmanFittingTests, Run) {
     using navigator_type = detray::navigator<decltype(det)>;
     using rk_stepper_type = detray::rk_stepper<b_field_t::view_t, transform3>;
     using fitter_type = kalman_fitter<rk_stepper_type, navigator_type>;
-    using seed_parameter_type = bound_track_parameters;
 
     seed_generator<rk_stepper_type, navigator_type> sg(det);
 
     // Track candidates for multiple tracks
-    traccc::track_candidates_container_types<seed_parameter_type>::host
-        track_candidates(&host_mr);
+    traccc::track_candidates_container_types::host track_candidates(&host_mr);
 
     // Standard deviations for seed track parameters
     std::array<scalar, e_bound_size> stddevs = {
@@ -172,7 +170,7 @@ TEST_P(KalmanFittingTests, Run) {
      * Run Track fitting
      ********************/
 
-    fitting_algorithm<fitter_type, seed_parameter_type> fitting(det);
+    fitting_algorithm<fitter_type> fitting(det);
 
     // Run fitting
     auto track_states = fitting(track_candidates);
