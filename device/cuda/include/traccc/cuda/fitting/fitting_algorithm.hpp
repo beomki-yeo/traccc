@@ -44,9 +44,11 @@ class fitting_algorithm : public algorithm<track_state_container_types::buffer(
         const typename track_candidates_container_types<seed_parameter_t>::
             const_view& track_candidates_view) const override {
 
-        /*
         fitter_t fitter(*m_detector.get());
 
+        track_state_container_types::host trk_states;
+
+        /*
         track_state_container_types::host trk_states;
 
         // The number of tracks
@@ -77,6 +79,7 @@ class fitting_algorithm : public algorithm<track_state_container_types::buffer(
     }
 
     private:
+    traccc::memory_resource m_mr;
     std::unique_ptr<detector_type> m_detector;
 };
 
