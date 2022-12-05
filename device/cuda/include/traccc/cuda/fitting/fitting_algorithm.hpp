@@ -25,28 +25,48 @@ namespace traccc::cuda {
 template <typename fitter_t>
 class fitting_algorithm
     : public algorithm<track_state_container_types::buffer(
-          const typename track_candidates_container_types::const_view&)> {
+          const typename fitter_t::detector_type&,
+          const typename track_candidate_container_types::const_view&)> {
 
     public:
-    /// Type delcarations
-    using detector_type = typename fitter_t::detector_type;
     using transform3_type = typename fitter_t::transform3_type;
 
-    /// Constructor with a detector
-    fitting_algorithm(const detector_type& det);
-
-    /// Operator executing the algorithm
+    /// Constructor for the fitting algorithm
     ///
-    /// @param track_candidates_view is a view of candidate measurements from
-    /// track finding
-    /// @return the buffer of the fitted track parameters
+    /// @param mr The memory resource to use
+    ///
+    fitting_algorithm(const traccc::memory_resource& mr) : m_mr(mr) {}
+
+    /// Run the algorithm
     track_state_container_types::buffer operator()(
-        const typename track_candidates_container_types::const_view&
-            track_candidates_view) const override;
+        const typename fitter_t::detector_type& det,
+        const typename track_candidate_container_types::const_view&
+            track_candidates_view) const override {
+
+        fitter_t fitter(det);
+
+        // Number of tracks
+        const track_candidate_container_types::const_device::header_vector::
+            size_type n_tracks =
+                m_copy->get_size(track_candidates_view.headers);
+
+        // Get the sizes of the track candidates in each track
+        const std::vector<track_candidate_containter_types::const_device::
+                              item_vector::value_type::size_type>
+            candidate_sizes = m_copy->get_sizes(track_candidates_view.items);
+
+        track_state_container_types::buffer trk_states_buffer{
+            {n_tracks, m_mr.main},
+            {std::vector<fitter_info>(n_tracks),
+             std::vector<track_state>(candidate_sizes.begin(),
+                                      candidate_sizes.end()),
+             m_mr.main, m_mr.host}};
+
+        m_copy->setup(trk_states_buffer.headers);
+        m_copy->setup(trk_states_buffer.items);
+    }
 
     private:
-    /// Detector object
-    std::unique_ptr<detector_type> m_detector;
     /// Memory resource used by the algorithm
     traccc::memory_resource m_mr;
     /// Copy object used by the algorithm
