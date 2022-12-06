@@ -30,6 +30,7 @@ traccc_add_test(
     test_basic.cu
     test_cca.cpp
     test_copy_algs.cpp
+    test_kalman_filter.cpp
 
     LINK_LIBRARIES
     GTest::gtest
