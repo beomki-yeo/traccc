@@ -35,9 +35,12 @@ traccc_add_test(
     LINK_LIBRARIES
     GTest::gtest
     vecmem::cuda
+    detray::core
+    detray::utils
     traccc::core
     traccc::device_common
     traccc::cuda
+    traccc::performance
     traccc::io
     traccc_tests_cuda_main
     traccc_tests_common

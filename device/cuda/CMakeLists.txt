@@ -34,10 +34,10 @@ traccc_add_library( traccc_cuda cuda TYPE SHARED
   "src/clusterization/clusterization_algorithm.cu"
   # Fitting
   "include/traccc/cuda/fitting/fitting_algorithm.hpp"
-  "src/fitting/fitting_algrothm.cu")
+  "src/fitting/fitting_algorithm.cu")
   
 target_compile_options( traccc_cuda
   PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr> )
 target_link_libraries( traccc_cuda
-  PUBLIC traccc::core vecmem::core
+  PUBLIC traccc::core vecmem::core covfie::core
   PRIVATE traccc::device_common vecmem::cuda )
