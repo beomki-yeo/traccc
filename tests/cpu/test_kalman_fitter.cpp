@@ -53,7 +53,7 @@ TEST_P(KalmanFittingTests, Run) {
     // Memory resource
     vecmem::host_memory_resource host_mr;
 
-    const auto det = create_telescope_detector(
+    const host_detector_type det = create_telescope_detector(
         host_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
         plane_positions, traj, 100000. * detray::unit<scalar>::mm,

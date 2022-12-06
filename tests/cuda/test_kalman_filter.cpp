@@ -29,7 +29,20 @@
 using namespace traccc;
 
 // This defines the local frame test suite
-TEST_P(KalmanFittingTests, Run) {}
+TEST_P(KalmanFittingTests, Run) {
+
+    /*
+    // Test Parameters
+    const scalar p0 = std::get<0>(GetParam());
+    const scalar phi0 = std::get<1>(GetParam());
+
+    // File path
+    std::string file_path =
+        std::to_string(p0) + "_GeV_" + std::to_string(phi0) + "_phi/";
+    std::string full_path =
+        "detray_simulation/telescope/kf_validation/" + file_path;
+    */
+}
 
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitValidation, KalmanFittingTests,
