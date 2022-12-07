@@ -24,6 +24,9 @@
 // GTest include(s).
 #include <gtest/gtest.h>
 
+// System include(s).
+#include <climits>
+
 using namespace traccc;
 
 // This defines the local frame test suite
@@ -33,18 +36,18 @@ TEST_P(KalmanFittingTests, Run) {
     const scalar p0 = std::get<0>(GetParam());
     const scalar phi0 = std::get<1>(GetParam());
 
+    // File path
+    std::string file_path =
+        std::to_string(p0) + "_GeV_" + std::to_string(phi0) + "_phi/";
+    std::string full_path =
+        "detray_simulation/telescope/kf_validation/" + file_path;
+
     // Performance writer
     traccc::fitting_performance_writer::config writer_cfg;
     writer_cfg.file_path = "performance_track_fitting_" + std::to_string(p0) +
                            "_GeV_" + std::to_string(phi0) + "_phi" + ".root";
 
     traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
-
-    // File path
-    std::string file_path =
-        std::to_string(p0) + "_GeV_" + std::to_string(phi0) + "_phi/";
-    std::string full_path =
-        "detray_simulation/telescope/kf_validation/" + file_path;
 
     /*****************************
      * Build a telescope geometry
@@ -56,12 +59,12 @@ TEST_P(KalmanFittingTests, Run) {
     const host_detector_type det = create_telescope_detector(
         host_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
-        plane_positions, traj, 100000. * detray::unit<scalar>::mm,
-        100000. * detray::unit<scalar>::mm, mat, thickness);
+        plane_positions, traj, std::numeric_limits<scalar>::infinity(),
+        std::numeric_limits<scalar>::infinity(), mat, thickness);
 
-    /***************************
-     * Prepare track candidates
-     ***************************/
+    /***************
+     * Run fitting
+     ***************/
 
     // Seed generator
     seed_generator<rk_stepper_type, host_navigator_type> sg(det, stddevs);
