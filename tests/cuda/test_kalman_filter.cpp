@@ -7,9 +7,12 @@
 
 // Project include(s).
 #include "tests/seed_generator.hpp"
+#include "traccc/cuda/fitting/fitting_algorithm.hpp"
+#include "traccc/device/container_h2d_copy_alg.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
+#include "traccc/utils/memory_resource.hpp"
 
 // Test include(s).
 #include "tests/kalman_fitting_test.hpp"
@@ -21,8 +24,10 @@
 #include "detray/simulation/track_generators.hpp"
 
 // VecMem include(s).
+#include <vecmem/memory/cuda/device_memory_resource.hpp>
 #include <vecmem/memory/cuda/managed_memory_resource.hpp>
 #include <vecmem/memory/host_memory_resource.hpp>
+#include <vecmem/utils/cuda/copy.hpp>
 
 // GTest include(s).
 #include <gtest/gtest.h>
@@ -49,10 +54,13 @@ TEST_P(KalmanFittingTests, Run) {
      * Build a telescope geometry
      *****************************/
 
-    // Memory resource(s)
+    // Memory resources used by the application.
+    vecmem::host_memory_resource host_mr;
+    vecmem::cuda::device_memory_resource device_mr;
+    traccc::memory_resource mr{device_mr, &host_mr};
     vecmem::cuda::managed_memory_resource mng_mr;
 
-    const host_detector_type host_det = create_telescope_detector(
+    host_detector_type host_det = create_telescope_detector(
         mng_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
         plane_positions, traj, std::numeric_limits<scalar>::infinity(),
@@ -62,12 +70,20 @@ TEST_P(KalmanFittingTests, Run) {
      * Run fitting
      ***************/
 
+    vecmem::cuda::copy copy;
+
+    traccc::device::container_h2d_copy_alg<
+        traccc::track_candidate_container_types>
+        track_candidate_h2d{mr, copy};
+
     // Seed generator
     seed_generator<rk_stepper_type, host_navigator_type> sg(host_det, stddevs);
 
     // Fitting algorithm object
-    fitting_algorithm<host_fitter_type> host_fitting;
-    // fitting_algorithm<device_fitter_type> device_fitting(mng_mr);
+    traccc::fitting_algorithm<host_fitter_type> host_fitting;
+
+    traccc::cuda::fitting_algorithm<device_fitter_type, host_detector_type>
+        device_fitting(mr);
 
     std::size_t n_events = 100;
 
@@ -87,7 +103,12 @@ TEST_P(KalmanFittingTests, Run) {
         auto host_track_states = host_fitting(host_det, track_candidates);
 
         // Run fitting (device)
-        // auto device_track_states = device_fitting();
+        const traccc::track_candidate_container_types::buffer
+            track_candidates_cuda_buffer =
+                track_candidate_h2d(traccc::get_data(track_candidates));
+
+        auto device_track_states =
+            device_fitting(std::move(host_det), track_candidates_cuda_buffer);
     }
 }
 
