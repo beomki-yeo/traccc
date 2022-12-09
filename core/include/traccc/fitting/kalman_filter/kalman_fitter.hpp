@@ -81,6 +81,13 @@ class kalman_fitter {
         state(vector_type<track_state<transform3_type>>&& track_states)
             : m_fit_actor_state(std::move(track_states)) {}
 
+        /// State constructor
+        ///
+        /// @param track_states the vector of track states
+        TRACCC_HOST_DEVICE
+        state(const vector_type<track_state<transform3_type>>& track_states)
+            : m_fit_actor_state(track_states) {}
+
         /// @return the actor chain state
         typename actor_chain_type::state operator()() {
             return std::tie(m_aborter_state, m_transporter_state,
@@ -188,7 +195,7 @@ class kalman_fitter {
 
         const auto& mask_store = m_detector.mask_store();
 
-        for (typename vecmem::vector<
+        for (typename vector_type<
                  track_state<transform3_type>>::reverse_iterator it =
                  track_states.rbegin() + 1;
              it != track_states.rend(); ++it) {

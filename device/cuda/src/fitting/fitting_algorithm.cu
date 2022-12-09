@@ -41,8 +41,22 @@ __global__ void fit(
         return;
     }
 
+    // Track candidates per track
+    const auto& track_candidates_per_track = track_candidates[gid].items;
+
     // Seed parameter
     const auto& seed_param = track_candidates[gid].header;
+
+    // Track states per track
+    auto track_states_per_track = track_states[gid].items;
+
+    for (auto& cand : track_candidates_per_track) {
+        track_states_per_track.emplace_back(cand);
+    }
+
+    typename fitter_t::state fitter_state(track_states_per_track);
+
+    fitter.fit(seed_param, fitter_state);
 
     /*
     // Make a vector of track state
