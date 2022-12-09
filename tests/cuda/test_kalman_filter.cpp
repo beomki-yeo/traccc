@@ -8,6 +8,7 @@
 // Project include(s).
 #include "tests/seed_generator.hpp"
 #include "traccc/cuda/fitting/fitting_algorithm.hpp"
+#include "traccc/device/container_d2h_copy_alg.hpp"
 #include "traccc/device/container_h2d_copy_alg.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
@@ -76,6 +77,9 @@ TEST_P(KalmanFittingTests, Run) {
         traccc::track_candidate_container_types>
         track_candidate_h2d{mr, copy};
 
+    traccc::device::container_d2h_copy_alg<traccc::track_state_container_types>
+        track_state_d2h{mr, copy};
+
     // Seed generator
     seed_generator<rk_stepper_type, host_navigator_type> sg(host_det, stddevs);
 
@@ -96,19 +100,51 @@ TEST_P(KalmanFittingTests, Run) {
         traccc::track_candidate_container_types::host track_candidates =
             evt_map.generate_truth_candidates(sg, mng_mr);
 
+        // Instantiate cuda containers/collections
+        traccc::track_state_container_types::buffer track_states_cuda_buffer{
+            {{}, *(mr.host)}, {{}, *(mr.host), mr.host}};
+
         // n_trakcs = 100
         ASSERT_EQ(track_candidates.size(), 100);
 
         // Run fitting (host)
-        auto host_track_states = host_fitting(host_det, track_candidates);
+        auto track_states_cpu = host_fitting(host_det, track_candidates);
 
         // Run fitting (device)
         const traccc::track_candidate_container_types::buffer
             track_candidates_cuda_buffer =
                 track_candidate_h2d(traccc::get_data(track_candidates));
 
-        auto device_track_states =
+        track_states_cuda_buffer =
             device_fitting(std::move(host_det), track_candidates_cuda_buffer);
+
+        traccc::track_state_container_types::host track_states_cuda =
+            track_state_d2h(track_states_cuda_buffer);
+
+        ASSERT_EQ(track_states_cpu.size(), track_states_cuda.size());
+
+        const std::size_t n_tracks = track_states_cpu.size();
+
+        for (std::size_t i_trk = 0; i_trk < n_tracks; i_trk++) {
+            auto& host_states = track_states_cpu[i_trk].items;
+            auto& device_states = track_states_cuda[i_trk].items;
+
+            ASSERT_EQ(host_states.size(), device_states.size());
+
+            const std::size_t n_states = host_states.size();
+
+            for (std::size_t i = 0; i < n_states; i++) {
+                ASSERT_EQ(host_states[i].surface_link(),
+                          device_states[i].surface_link());
+                auto& host_smoothed_vec = host_states[i].smoothed().vector();
+                auto& device_smoothed_vec =
+                    device_states[i].smoothed().vector();
+
+                ASSERT_NEAR(
+                    getter::element(host_smoothed_vec, 0, e_bound_qoverp),
+                    getter::element(device_smoothed_vec, 0, e_bound_qoverp), 0);
+            }
+        }
     }
 }
 
