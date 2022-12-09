@@ -32,6 +32,10 @@ class kalman_fitter {
     // scalar type
     using scalar_type = typename stepper_t::scalar_type;
 
+    // vector type
+    template <typename T>
+    using vector_type = typename navigator_t::template vector_type<T>;
+
     // Kalman fitter configuration
     struct config {
         std::size_t n_iterations = 1;
@@ -50,7 +54,7 @@ class kalman_fitter {
     using aborter = detray::pathlimit_aborter;
     using transporter = detray::parameter_transporter<transform3_type>;
     using interactor = detray::pointwise_material_interactor<transform3_type>;
-    using fit_actor = traccc::kalman_actor<transform3_type, vecmem::vector>;
+    using fit_actor = traccc::kalman_actor<transform3_type, vector_type>;
     using resetter = detray::parameter_resetter<transform3_type>;
 
     using actor_chain_type =
@@ -73,7 +77,8 @@ class kalman_fitter {
         /// State constructor
         ///
         /// @param track_states the vector of track states
-        state(vecmem::vector<track_state<transform3_type>>&& track_states)
+        TRACCC_HOST
+        state(vector_type<track_state<transform3_type>>&& track_states)
             : m_fit_actor_state(std::move(track_states)) {}
 
         /// @return the actor chain state
