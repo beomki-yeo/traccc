@@ -22,13 +22,6 @@
 
 namespace traccc::cuda {
 
-/*
-template <typename metadata>
-void fit(detray::detector<metadata>& det_data,
-         track_candidate_container_types::const_view track_candidates_view,
-         track_state_container_types::view track_states_view);
-*/
-
 /// Fitting algorithm for a set of tracks
 template <typename fitter_t, typename host_detector_t>
 class fitting_algorithm

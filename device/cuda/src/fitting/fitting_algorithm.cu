@@ -24,18 +24,23 @@ namespace kernels {
 template <typename fitter_t, typename detector_view_t>
 __global__ void fit(
     detector_view_t det_data,
+    vecmem::data::jagged_vector_view<typename fitter_t::intersection_type>
+        nav_candidates_buffer,
     track_candidate_container_types::const_view track_candidates_view,
     track_state_container_types::view track_states_view) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
     typename fitter_t::detector_type det(det_data);
-    fitter_t fitter(det);
+    vecmem::jagged_device_vector<typename fitter_t::intersection_type>
+        nav_candidates(nav_candidates_buffer);
 
     track_candidate_container_types::const_device track_candidates(
         track_candidates_view);
 
     track_state_container_types::device track_states(track_states_view);
+
+    fitter_t fitter(det);
 
     if (gid >= track_states.size()) {
         return;
@@ -56,19 +61,7 @@ __global__ void fit(
 
     typename fitter_t::state fitter_state(track_states_per_track);
 
-    // fitter.fit(seed_param, fitter_state);
-
-    /*
-    // Make a vector of track state
-    const auto& cands = track_candidates[gid].items;
-    for (auto& cand : cands) {
-        track_states[gid].items.emplace_back(cand);
-    }
-
-    typename fitter_t::state fitter_state(track_states[gid]);
-
-    fitter.fit(seed_param, fitter_state);
-    */
+    fitter.fit(seed_param, fitter_state, nav_candidates.at(gid));
 }
 
 }  // namespace kernels
@@ -119,9 +112,15 @@ fitting_algorithm<fitter_t, host_detector_t>::operator()(
 
     auto det_data = detray::get_data(det);
 
+    // Create navigator candidates buffer
+    auto nav_candidates_buffer =
+        detray::create_candidates_buffer(det, n_tracks, m_mr.main, m_mr.host);
+    m_copy->setup(nav_candidates_buffer);
+
     // Run the track fitting
-    kernels::fit<fitter_t><<<nBlocks, nThreads>>>(
-        det_data, track_candidates_view, track_states_buffer);
+    kernels::fit<fitter_t>
+        <<<nBlocks, nThreads>>>(det_data, nav_candidates_buffer,
+                                track_candidates_view, track_states_buffer);
     return track_states_buffer;
 }
 
