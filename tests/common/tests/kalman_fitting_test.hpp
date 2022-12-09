@@ -33,7 +33,7 @@ class KalmanFittingTests
                          covfie::field>;
     using device_detector_type =
         detray::detector<detray::detector_registry::telescope_detector,
-                         covfie::field, detray::device_container_types>;
+                         covfie::field_view, detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;
     using rk_stepper_type = detray::rk_stepper<b_field_t::view_t, transform3,

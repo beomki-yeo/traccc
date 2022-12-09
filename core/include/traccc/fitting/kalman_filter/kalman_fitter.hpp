@@ -64,6 +64,7 @@ class kalman_fitter {
     /// Constructor with a detector
     ///
     /// @param det the detector object
+    TRACCC_HOST_DEVICE
     kalman_fitter(const detector_type& det) : m_detector(det) {}
 
     /// Kalman fitter state
@@ -100,7 +101,8 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param fitter_state the state of kalman fitter
     template <typename seed_parameters_t>
-    void fit(const seed_parameters_t& seed_params, state& fitter_state) {
+    TRACCC_HOST_DEVICE void fit(const seed_parameters_t& seed_params,
+                                state& fitter_state) {
 
         // Run the kalman filtering for a given number of iterations
         for (std::size_t i = 0; i < m_cfg.n_iterations; i++) {
@@ -129,7 +131,8 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param fitter_state the state of kalman fitter
     template <typename seed_parameters_t>
-    void filter(const seed_parameters_t& seed_params, state& fitter_state) {
+    TRACCC_HOST_DEVICE void filter(const seed_parameters_t& seed_params,
+                                   state& fitter_state) {
 
         // Create propagator
         propagator_type propagator({}, {});
@@ -139,7 +142,7 @@ class kalman_fitter {
 
         // Create propagator state
         typename propagator_type::state propagation(
-            seed_params, m_detector.get().get_bfield(), m_detector.get());
+            seed_params, m_detector.get_bfield(), m_detector);
 
         // Set overstep tolerance and stepper constraint
         propagation._stepping().set_overstep_tolerance(
@@ -163,6 +166,7 @@ class kalman_fitter {
     /// track and vertex fitting", R.Frühwirth, NIM A.
     ///
     /// @param fitter_state the state of kalman fitter
+    TRACCC_HOST_DEVICE
     void smooth(state& fitter_state) {
         auto& track_states = fitter_state.m_fit_actor_state.m_track_states;
 
@@ -177,7 +181,7 @@ class kalman_fitter {
         last.smoothed().set_vector(last.filtered().vector());
         last.smoothed().set_covariance(last.filtered().covariance());
 
-        const auto& mask_store = m_detector.get().mask_store();
+        const auto& mask_store = m_detector.mask_store();
 
         for (typename vecmem::vector<
                  track_state<transform3_type>>::reverse_iterator it =
@@ -186,7 +190,7 @@ class kalman_fitter {
 
             // Surface
             const auto& surface =
-                m_detector.get().surface_by_index(it->surface_link());
+                m_detector.surface_by_index(it->surface_link());
 
             // Run kalman smoother
             mask_store.template call<gain_matrix_smoother<transform3_type>>(
@@ -196,7 +200,7 @@ class kalman_fitter {
 
     private:
     // Detector object
-    std::reference_wrapper<detector_type> m_detector;
+    const detector_type& m_detector;
     // Configuration object
     config m_cfg;
 };
