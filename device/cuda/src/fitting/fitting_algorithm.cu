@@ -56,7 +56,7 @@ __global__ void fit(
 
     typename fitter_t::state fitter_state(track_states_per_track);
 
-    fitter.fit(seed_param, fitter_state);
+    // fitter.fit(seed_param, fitter_state);
 
     /*
     // Make a vector of track state
