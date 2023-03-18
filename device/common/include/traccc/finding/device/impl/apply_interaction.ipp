@@ -48,8 +48,7 @@ TRACCC_DEVICE inline void apply_interaction(
         s0{};
 
     // Run propagation
-    // @TODO test with propagate_sync()
-    propagator.propagate(propagation, std::tie(s0));
+    propagator.propagate_sync(propagation, std::tie(s0));
 
     // Replace the parameter
     params.at(globalIndex) = propagation._stepping._bound_params;

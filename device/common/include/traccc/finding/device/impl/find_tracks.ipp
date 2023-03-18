@@ -145,8 +145,7 @@ TRACCC_DEVICE inline void find_tracks(
                 cfg.min_step_length_for_surface_aborter};
 
             // Run propagation
-            // @TODO test with propagate_sync()
-            propagator.propagate(propagation, std::tie(s0, s1, s2));
+            propagator.propagate_sync(propagation, std::tie(s0, s1, s2));
 
             vecmem::device_atomic_ref<unsigned int> num_measurements_per_layer(
                 n_candidates);

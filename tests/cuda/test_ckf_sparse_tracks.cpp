@@ -195,7 +195,7 @@ TEST_P(CkfSparseTrackTests, Run) {
 
 INSTANTIATE_TEST_SUITE_P(
     CombinatorialKalmanFindingValidation, CkfSparseTrackTests,
-    ::testing::Values(std::make_tuple("single_tracks", 1, 3000),
-                      std::make_tuple("double_tracks", 2, 1500),
-                      std::make_tuple("triple_tracks", 3, 1000),
-                      std::make_tuple("decade_tracks", 10, 300)));
+    ::testing::Values(std::make_tuple("single_tracks", 1, 5000),
+                      std::make_tuple("double_tracks", 2, 2500),
+                      std::make_tuple("triple_tracks", 3, 2000),
+                      std::make_tuple("decade_tracks", 10, 500)));
