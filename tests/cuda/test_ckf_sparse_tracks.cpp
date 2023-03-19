@@ -46,7 +46,7 @@ TEST_P(CkfSparseTrackTests, Run) {
 
     // Input path
     const std::string full_path =
-        "detray_simulation/telescope/kf_validation/" + dir + "/";
+        "detray_simulation/telescope/sparse_tracks/" + dir + "/";
 
     // Performance writer
     traccc::fitting_performance_writer::config writer_cfg;
