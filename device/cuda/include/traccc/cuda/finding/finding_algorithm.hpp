@@ -77,6 +77,7 @@ class finding_algorithm
     finding_algorithm(const traccc::memory_resource& mr);
 
     struct config {
+        // @TODO: This variable should be removed
         unsigned int max_num_branches_per_seed = 10;
         unsigned int max_num_branches_per_surface = 10;
         unsigned int max_track_candidates_per_track = 10;
@@ -90,6 +91,7 @@ class finding_algorithm
     /// Get config object
     config& get_config() { return m_cfg; }
 
+    /// Get config object (const access)
     const config& get_config() const { return m_cfg; }
 
     /// Run the algorithm
