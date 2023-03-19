@@ -77,18 +77,15 @@ TEST_P(CkfSparseTrackTests, Run) {
     // Detector view object
     auto det_view = detray::get_data(host_det);
 
-    /***************
-     * Run CKF
-     ***************/
-
+    // Copy objects
     vecmem::cuda::copy copy;
+
+    traccc::device::container_h2d_copy_alg<traccc::measurement_container_types>
+        measurement_h2d{mr, copy};
 
     traccc::device::container_d2h_copy_alg<
         traccc::track_candidate_container_types>
         track_candidate_d2h{mr, copy};
-
-    traccc::device::container_h2d_copy_alg<traccc::measurement_container_types>
-        measurement_h2d{mr, copy};
 
     traccc::device::container_d2h_copy_alg<traccc::track_state_container_types>
         track_state_d2h{mr, copy};
@@ -99,7 +96,7 @@ TEST_P(CkfSparseTrackTests, Run) {
     // Finding algorithm object
     traccc::cuda::finding_algorithm<rk_stepper_type, device_navigator_type>
         device_finding(mr);
-    // few tracks are missed when chi2_max = 15
+    // few tracks (~1 out of 1000 tracks) are missed when chi2_max = 15
     device_finding.get_config().chi2_max = 30.;
 
     // Fitting algorithm object
@@ -172,13 +169,10 @@ TEST_P(CkfSparseTrackTests, Run) {
 
         for (unsigned int i = 0; i < n_truth_tracks; i++) {
             const auto& trk_states_per_track = track_states_cuda.at(i).items;
-            ASSERT_EQ(trk_states_per_track.size(), 9);
-        }
+            ASSERT_EQ(trk_states_per_track.size(), plane_positions.size());
 
-        for (std::size_t i_trk = 0; i_trk < n_truth_tracks; i_trk++) {
-            auto& device_states = track_states_cuda[i_trk].items;
-
-            fit_performance_writer.write(device_states, host_det, evt_map);
+            fit_performance_writer.write(trk_states_per_track, host_det,
+                                         evt_map);
         }
     }
 
