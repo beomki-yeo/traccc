@@ -424,7 +424,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     m_copy->setup(track_candidates_buffer.items);
 
     // @Note: nBlocks can be zero in case there is no tip. This happens when
-    // chi2_max config is set tightly
+    // chi2_max config is set tightly and no tips are found
     if (n_tips_total > 0) {
         nThreads = WARP_SIZE * 2;
         nBlocks = (n_tips_total + nThreads - 1) / nThreads;
