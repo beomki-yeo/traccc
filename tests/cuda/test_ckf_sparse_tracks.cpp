@@ -136,6 +136,8 @@ TEST_P(CkfSparseTrackTests, Run) {
         traccc::track_candidate_container_types::buffer
             track_candidates_cuda_buffer{{{}, *(mr.host)},
                                          {{}, *(mr.host), mr.host}};
+        copy.setup(track_candidates_cuda_buffer.headers);
+        copy.setup(track_candidates_cuda_buffer.items);
 
         // Navigation buffer
         auto navigation_buffer = detray::create_candidates_buffer(
@@ -186,6 +188,13 @@ TEST_P(CkfSparseTrackTests, Run) {
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
     pull_value_tests(writer_cfg.file_path, pull_names);
 }
+
+/*
+INSTANTIATE_TEST_SUITE_P(CombinatorialKalmanFindingValidation,
+                         CkfSparseTrackTests,
+                         ::testing::Values(std::make_tuple("single_tracks", 1,
+                                                           10)));
+*/
 
 INSTANTIATE_TEST_SUITE_P(
     CombinatorialKalmanFindingValidation, CkfSparseTrackTests,

@@ -40,6 +40,8 @@ TRACCC_DEVICE inline void build_tracks(
 
     auto L = links[tip.first][tip.second];
 
+    // cands_per_track.resize(tip.first + 1);
+
     for (auto it = cands_per_track.rbegin(); it != cands_per_track.rend();
          it++) {
 
