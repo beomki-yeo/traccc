@@ -147,12 +147,12 @@ TRACCC_DEVICE inline void find_tracks(
             // Run propagation
             propagator.propagate_sync(propagation, std::tie(s0, s1, s2));
 
+            // Add measurement candidates to link
             vecmem::device_atomic_ref<unsigned int> num_measurements_per_layer(
                 n_candidates);
             const unsigned int l_pos = num_measurements_per_layer.fetch_add(1);
 
             // @TODO; Consider max_num_branches_per_surface
-
             links[l_pos] = {{last_iteration, in_param_id},
                             {header_id, i + stride},
                             module_id};
@@ -166,7 +166,7 @@ TRACCC_DEVICE inline void find_tracks(
             }
             // Unless the track found a surface, it is considered a tip
             else if (!s2.success &&
-                     iteration >= cfg.min_track_candidates_per_track) {
+                     iteration >= cfg.min_track_candidates_per_track - 1) {
                 tips.push_back({iteration, l_pos});
             }
         }
