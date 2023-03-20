@@ -432,33 +432,14 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
      * Kernel6: Build tracks
      *****************************************************************/
 
-    // Copy tips to host vector (D->H)
-    vecmem::vector<thrust::pair<unsigned int, unsigned int>> tips_host{
-        n_tips_total, m_mr.host};
-    m_copy->operator()(tips_buffer, vecmem::get_data(tips_host),
-                       vecmem::copy::type::device_to_host);
-
-    // Create track size vector
-    std::vector<std::size_t> n_candidates_per_track;
-    n_candidates_per_track.reserve(n_tips_total);
-    for (const auto& t : tips_host) {
-        n_candidates_per_track.push_back(t.first + 1);
-    }
-
     // Create track candidate buffer
     track_candidate_container_types::buffer track_candidates_buffer{
         {n_tips_total, m_mr.main},
-        {n_candidates_per_track, m_mr.main, m_mr.host}};
-
-    // Create track candidate buffer
-    /*
-    track_candidate_container_types::buffer track_candidates_buffer{
-        {n_tips_total, m_mr.main},
-        {std::vector<std::size_t>{n_tips_total, 0},
-         std::vector<std::size_t>{n_tips_total,
-                                  m_cfg.max_num_branches_per_surface},
+        {std::vector<std::size_t>(n_tips_total, 0),
+         std::vector<std::size_t>(n_tips_total,
+                                  m_cfg.max_num_branches_per_surface),
          m_mr.main, m_mr.host}};
-    */
+
     m_copy->setup(track_candidates_buffer.headers);
     m_copy->setup(track_candidates_buffer.items);
 
