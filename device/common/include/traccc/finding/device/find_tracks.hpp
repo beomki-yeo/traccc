@@ -26,8 +26,7 @@ TRACCC_DEVICE inline void find_tracks(
     bound_track_parameters_collection_types::view in_params_view,
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<candidate_link> links_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_view,
+    vecmem::data::vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,

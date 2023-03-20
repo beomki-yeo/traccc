@@ -17,8 +17,7 @@ TRACCC_DEVICE inline void build_tracks(
     measurement_container_types::const_view measurements_view,
     bound_track_parameters_collection_types::view seeds_view,
     vecmem::data::jagged_vector_view<candidate_link> link_view,
-    vecmem::data::jagged_vector_view<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_view,
+    vecmem::data::jagged_vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     track_candidate_container_types::view track_candidates_view);

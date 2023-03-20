@@ -27,8 +27,7 @@ TRACCC_DEVICE inline void find_tracks(
     bound_track_parameters_collection_types::view in_params_view,
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<candidate_link> links_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_view,
+    vecmem::data::vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
@@ -65,8 +64,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::device_vector<candidate_link> links(links_view);
 
     // Param to Link ID
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>>
-        param_to_link(param_to_link_view);
+    vecmem::device_vector<unsigned int> param_to_link(param_to_link_view);
 
     // tips
     vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
@@ -169,7 +167,7 @@ TRACCC_DEVICE inline void find_tracks(
                 const unsigned int out_param_id = num_out_params.fetch_add(1);
 
                 out_params[out_param_id] = propagation._stepping._bound_params;
-                param_to_link[out_param_id] = {iteration, l_pos};
+                param_to_link[out_param_id] = l_pos;
             }
             // Unless the track found a surface, it is considered a tip
             else if (!s2.success &&

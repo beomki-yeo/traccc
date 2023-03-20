@@ -113,8 +113,7 @@ __global__ inline void find_tracks(
     bound_track_parameters_collection_types::view in_params_view,
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<device::candidate_link> links_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_view,
+    vecmem::data::vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
@@ -135,8 +134,7 @@ __global__ inline void build_tracks(
     measurement_container_types::const_view measurements_view,
     bound_track_parameters_collection_types::view seeds_view,
     vecmem::data::jagged_vector_view<device::candidate_link> link_view,
-    vecmem::data::jagged_vector_view<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_view,
+    vecmem::data::jagged_vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     track_candidate_container_types::view track_candidates_view) {
@@ -187,8 +185,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         link_map;
 
     // Create a map for parameter ID to link ID
-    std::map<unsigned int, vecmem::data::vector_buffer<
-                               thrust::pair<unsigned int, unsigned int>>>
+    std::map<unsigned int, vecmem::data::vector_buffer<unsigned int>>
         param_to_link_map;
 
     // Create a map for tip links
@@ -384,16 +381,15 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     }
 
     // Create param_to_link
-    vecmem::data::jagged_vector_buffer<thrust::pair<unsigned int, unsigned int>>
-        param_to_link_buffer(n_parameters_per_iteration, m_mr.main, m_mr.host);
+    vecmem::data::jagged_vector_buffer<unsigned int> param_to_link_buffer(
+        n_parameters_per_iteration, m_mr.main, m_mr.host);
     m_copy->setup(param_to_link_buffer);
 
     // Copy param_to_link map to param_to_link buffer
     for (unsigned int it = 0; it < n_iterations; it++) {
 
-        vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> in(
-            param_to_link_map[it]);
-        vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> out(
+        vecmem::device_vector<unsigned int> in(param_to_link_map[it]);
+        vecmem::device_vector<unsigned int> out(
             *(param_to_link_buffer.host_ptr() + it));
 
         thrust::copy(thrust::device, in.begin(),
