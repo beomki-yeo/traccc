@@ -88,11 +88,15 @@ TEST_P(KalmanFittingTests, Run) {
     traccc::memory_resource mr{device_mr, &host_mr};
     vecmem::sycl::shared_memory_resource shared_mr;
 
+    // Use rectangle surfaces
+    detray::mask<detray::unbounded<detray::rectangle2D<>>> rectangle{
+        0u, 10000.f * detray::unit<scalar>::mm,
+        10000.f * detray::unit<scalar>::mm};
+
     host_detector_type host_det = create_telescope_detector(
         shared_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
-        plane_positions, traj, std::numeric_limits<scalar>::infinity(),
-        std::numeric_limits<scalar>::infinity(), mat, thickness);
+        rectangle, plane_positions, mat, thickness, traj);
 
     /***************
      * Run fitting
