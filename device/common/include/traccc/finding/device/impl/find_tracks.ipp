@@ -28,6 +28,8 @@ TRACCC_DEVICE inline void find_tracks(
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<candidate_link> links_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+        param_to_link_view,
+    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
     const unsigned int& iteration,
@@ -59,8 +61,12 @@ TRACCC_DEVICE inline void find_tracks(
     // Output parameters
     bound_track_parameters_collection_types::device out_params(out_params_view);
 
-    // links
+    // Links
     vecmem::device_vector<candidate_link> links(links_view);
+
+    // Param to Link ID
+    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>>
+        param_to_link(param_to_link_view);
 
     // tips
     vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
@@ -127,6 +133,16 @@ TRACCC_DEVICE inline void find_tracks(
 
         if (chi2 < cfg.chi2_max) {
 
+            // Add measurement candidates to link
+            vecmem::device_atomic_ref<unsigned int> num_candidates(
+                n_candidates);
+            const unsigned int l_pos = num_candidates.fetch_add(1);
+
+            // @TODO; Consider max_num_branches_per_surface
+            links[l_pos] = {{last_iteration, in_param_id},
+                            {header_id, i + stride},
+                            module_id};
+
             // Create propagator state
             typename propagator_t::state propagation(
                 in_par, det.get_bfield(), det,
@@ -147,22 +163,13 @@ TRACCC_DEVICE inline void find_tracks(
             // Run propagation
             propagator.propagate_sync(propagation, std::tie(s0, s1, s2));
 
-            // Add measurement candidates to link
-            vecmem::device_atomic_ref<unsigned int> num_measurements_per_layer(
-                n_candidates);
-            const unsigned int l_pos = num_measurements_per_layer.fetch_add(1);
-
-            // @TODO; Consider max_num_branches_per_surface
-            links[l_pos] = {{last_iteration, in_param_id},
-                            {header_id, i + stride},
-                            module_id};
-
             if (s2.success) {
                 vecmem::device_atomic_ref<unsigned int> num_out_params(
                     n_out_params);
-                const unsigned int p_pos = num_out_params.fetch_add(1);
+                const unsigned int out_param_id = num_out_params.fetch_add(1);
 
-                out_params[p_pos] = propagation._stepping._bound_params;
+                out_params[out_param_id] = propagation._stepping._bound_params;
+                param_to_link[out_param_id] = {iteration, l_pos};
             }
             // Unless the track found a surface, it is considered a tip
             else if (!s2.success &&

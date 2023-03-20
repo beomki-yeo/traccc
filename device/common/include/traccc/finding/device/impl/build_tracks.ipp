@@ -14,6 +14,8 @@ TRACCC_DEVICE inline void build_tracks(
     measurement_container_types::const_view measurements_view,
     bound_track_parameters_collection_types::view seeds_view,
     vecmem::data::jagged_vector_view<candidate_link> link_view,
+    vecmem::data::jagged_vector_view<thrust::pair<unsigned int, unsigned int>>
+        param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     track_candidate_container_types::view track_candidates_view) {
@@ -23,6 +25,9 @@ TRACCC_DEVICE inline void build_tracks(
     bound_track_parameters_collection_types::device seeds(seeds_view);
 
     vecmem::jagged_device_vector<candidate_link> links(link_view);
+
+    vecmem::jagged_device_vector<thrust::pair<unsigned int, unsigned int>>
+        param_to_link(param_to_link_view);
 
     vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
         tips_view);
@@ -53,7 +58,10 @@ TRACCC_DEVICE inline void build_tracks(
             break;
         }
 
-        L = links[L.last_link.first][L.last_link.second];
+        const auto l_pos =
+            param_to_link[L.last_link.first][L.last_link.second].second;
+
+        L = links[L.last_link.first][l_pos];
     }
 }
 

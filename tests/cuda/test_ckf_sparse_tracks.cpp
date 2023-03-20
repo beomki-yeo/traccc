@@ -189,13 +189,6 @@ TEST_P(CkfSparseTrackTests, Run) {
     pull_value_tests(writer_cfg.file_path, pull_names);
 }
 
-/*
-INSTANTIATE_TEST_SUITE_P(CombinatorialKalmanFindingValidation,
-                         CkfSparseTrackTests,
-                         ::testing::Values(std::make_tuple("single_tracks", 1,
-                                                           10)));
-*/
-
 INSTANTIATE_TEST_SUITE_P(
     CombinatorialKalmanFindingValidation, CkfSparseTrackTests,
     ::testing::Values(std::make_tuple("single_tracks", 1, 5000),
