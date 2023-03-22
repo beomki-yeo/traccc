@@ -176,6 +176,6 @@ TEST_P(KalmanFittingTests, Run) {
 
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitValidation, KalmanFittingTests,
-    ::testing::Values(std::make_tuple("1_GeV_0_phi", 100, 100),
-                      std::make_tuple("10_GeV_0_phi", 100, 100),
-                      std::make_tuple("100_GeV_0_phi", 100, 100)));
+    ::testing::Values(std::make_tuple("1.000000_GeV_0.000000_phi", 100, 100),
+                      std::make_tuple("10.000000_GeV_0.000000_phi", 100, 100),
+                      std::make_tuple("100.000000_GeV_0.000000_phi", 100, 100)));

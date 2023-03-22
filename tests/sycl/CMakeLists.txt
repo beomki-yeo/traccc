@@ -12,6 +12,7 @@ traccc_add_test(
     sycl
 
     # Define the sources for the test.
+    test_kalman_filter.sycl
 
     LINK_LIBRARIES
     GTest::gtest_main
