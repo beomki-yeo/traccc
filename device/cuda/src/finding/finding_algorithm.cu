@@ -90,14 +90,14 @@ template <typename config_t>
 __global__ void count_threads(
     const config_t cfg,
     vecmem::data::vector_view<unsigned int> n_measurements_view,
-    vecmem::data::vector_view<unsigned int> n_threads_view,
     const unsigned int& n_total_measurements,
+    vecmem::data::vector_view<unsigned int> n_threads_view,
     unsigned int& n_measurements_per_thread, unsigned int& n_total_threads) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
     device::count_threads<config_t>(gid, cfg, n_measurements_view,
-                                    n_threads_view, n_total_measurements,
+                                    n_total_measurements, n_threads_view,
                                     n_measurements_per_thread, n_total_threads);
 }
 
@@ -294,8 +294,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         nThreads = WARP_SIZE * 2;
         nBlocks = (n_in_params + nThreads - 1) / nThreads;
         kernels::count_threads<<<nBlocks, nThreads>>>(
-            m_cfg, n_measurements_buffer, n_threads_buffer,
-            (*global_counter_device).n_total_measurements,
+            m_cfg, n_measurements_buffer,
+            (*global_counter_device).n_total_measurements, n_threads_buffer,
             (*global_counter_device).n_measurements_per_thread,
             (*global_counter_device).n_total_threads);
         CUDA_ERROR_CHECK(cudaGetLastError());
