@@ -16,12 +16,11 @@
 
 namespace traccc::device {
 
-/// Function applying the material interaction to tracks spawned by bound
-/// track parameters
+/// Function filling the module map in an unsorted manner
 ///
 /// @param[in] globalIndex         The index of the current thread
 /// @param[in] measurements_view   Measurement container view object
-/// @param[out] module_map_view    Unsorted module map of <module ID  header ID>
+/// @param[out] module_map_view    Unsorted module map of <module ID, header ID>
 ///
 TRACCC_DEVICE inline void make_module_map(
     std::size_t globalIndex,

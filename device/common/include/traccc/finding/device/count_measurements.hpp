@@ -14,7 +14,18 @@
 
 namespace traccc::device {
 
-// @TODO: usu detector_type as a template parameter
+/// Function counting the number of measurements on surface for every track and
+/// its total number
+///
+/// @param[in] globalIndex         The index of the current thread
+/// @param[in] det_data            Detector view object
+/// @param[in] measurements_view   Measurement container view object
+/// @param[in] module_map_view     Sorted module map of <module ID, header ID>
+/// @param[in] n_params            The number of input parameters
+/// @param[in] params_view         Input parameters view object
+/// @param[out] n_measurements_view   The number of measurements of tracks
+/// @param[out] n_total_measurements  Total number of meausurments
+///
 template <typename detector_t>
 TRACCC_DEVICE inline void count_measurements(
     std::size_t globalIndex, typename detector_t::detector_view_type det_data,

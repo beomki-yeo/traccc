@@ -51,9 +51,9 @@ TRACCC_DEVICE inline void count_measurements(
     const auto module_id = params.at(globalIndex).surface_link();
 
     // Search for measuremetns header ID
-    const auto lower = thrust::lower_bound(
-        thrust::seq, module_map.begin(), module_map.end(), module_id,
-        compare_pair_int<thrust::pair, unsigned int>());
+    const auto lower =
+        std::lower_bound(module_map.begin(), module_map.end(), module_id,
+                         compare_pair_int<thrust::pair, unsigned int>());
     const auto header_id = (*lower).second;
 
     n_measurements.at(globalIndex) = measurements.at(header_id).items.size();
