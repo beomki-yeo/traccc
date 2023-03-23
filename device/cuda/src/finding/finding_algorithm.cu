@@ -155,8 +155,8 @@ __global__ inline void build_tracks(
 
 template <typename stepper_t, typename navigator_t>
 finding_algorithm<stepper_t, navigator_t>::finding_algorithm(
-    const traccc::memory_resource& mr)
-    : m_mr(mr) {
+    const config_type& cfg, const traccc::memory_resource& mr)
+    : m_cfg(cfg), m_mr(mr) {
 
     // Initialize m_copy ptr based on memory resources that were given
     if (mr.host) {
@@ -343,7 +343,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         nThreads = WARP_SIZE * 2;
         nBlocks =
             (global_counter_host.n_total_threads + nThreads - 1) / nThreads;
-        kernels::find_tracks<propagator_for_propagation, config>
+        kernels::find_tracks<propagator_for_propagation, config_type>
             <<<nBlocks, nThreads>>>(
                 m_cfg, det_view, navigation_buffer, measurements,
                 module_map_buffer, in_params_buffer, n_threads_buffer, step,
