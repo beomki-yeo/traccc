@@ -11,7 +11,9 @@
 #include "traccc/definitions/qualifiers.hpp"
 #include "traccc/edm/measurement.hpp"
 #include "traccc/edm/track_candidate.hpp"
+#include "traccc/finding/finding_config.hpp"
 #include "traccc/utils/algorithm.hpp"
+#include "traccc/utils/memory_resource.hpp"
 
 // detray include(s).
 #include "detray/propagator/actor_chain.hpp"
@@ -24,9 +26,6 @@
 // VecMem include(s).
 #include <vecmem/utils/copy.hpp>
 #include <vecmem/utils/cuda/copy.hpp>
-
-// traccc library include(s).
-#include "traccc/utils/memory_resource.hpp"
 
 // Thrust Library
 #include <thrust/pair.h>
@@ -71,28 +70,17 @@ class finding_algorithm
         detray::propagator<stepper_t, navigator_t, actor_for_propagation>;
 
     public:
+    // Configuration type
+    using config_type = finding_config<scalar_type>;
+
     /// Constructor for the finding algorithm
     ///
     /// @param mr The memory resource to use
-    finding_algorithm(const traccc::memory_resource& mr);
-
-    struct config {
-        // @TODO: This variable should be removed
-        unsigned int max_num_branches_per_seed = 10;
-        unsigned int max_num_branches_per_surface = 10;
-        unsigned int max_track_candidates_per_track = 10;
-        unsigned int min_track_candidates_per_track = 6;
-        unsigned int n_avg_threads_per_track = 4;
-        scalar_type min_step_length_for_surface_aborter =
-            0.1f * detray::unit<scalar_type>::mm;
-        scalar_type chi2_max = 15.;
-    };
-
-    /// Get config object
-    config& get_config() { return m_cfg; }
+    finding_algorithm(const config_type& cfg,
+                      const traccc::memory_resource& mr);
 
     /// Get config object (const access)
-    const config& get_config() const { return m_cfg; }
+    const finding_config<scalar_type>& get_config() const { return m_cfg; }
 
     /// Run the algorithm
     track_candidate_container_types::buffer operator()(
@@ -108,7 +96,7 @@ class finding_algorithm
     /// Copy object used by the algorithm
     std::unique_ptr<vecmem::copy> m_copy;
     /// Config object
-    config m_cfg;
+    config_type m_cfg;
 };
 
 }  // namespace traccc::cuda
