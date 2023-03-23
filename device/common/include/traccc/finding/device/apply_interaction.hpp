@@ -12,6 +12,15 @@
 
 namespace traccc::device {
 
+/// Function applying the material interaction to tracks spawned by bound
+/// track parameters
+///
+/// @param[in] globalIndex     The index of the current thread
+/// @param[in] det_data        Detector view object
+/// @param[in] nav_candidates_buffer  Buffer for navigation candidates
+/// @param[in] n_params        The number of parameters (or tracks)
+/// @param[out] params_view    Collection of output bound track_parameters
+///
 template <typename propagator_t>
 TRACCC_DEVICE inline void apply_interaction(
     std::size_t globalIndex,
