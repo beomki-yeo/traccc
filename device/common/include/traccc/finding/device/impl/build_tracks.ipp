@@ -53,13 +53,13 @@ TRACCC_DEVICE inline void build_tracks(
         cand = {L.surface_link, measurements.at(L.meas_link)};
 
         if (it == cands_per_track.rend() - 1) {
-            seed = seeds.at(L.last_link.second);
+            seed = seeds.at(L.previous.second);
             break;
         }
 
-        const auto l_pos = param_to_link[L.last_link.first][L.last_link.second];
+        const auto l_pos = param_to_link[L.previous.first][L.previous.second];
 
-        L = links[L.last_link.first][l_pos];
+        L = links[L.previous.first][l_pos];
     }
 }
 
