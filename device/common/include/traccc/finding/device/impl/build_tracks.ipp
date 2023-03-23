@@ -12,23 +12,23 @@ namespace traccc::device {
 TRACCC_DEVICE inline void build_tracks(
     std::size_t globalIndex,
     measurement_container_types::const_view measurements_view,
-    bound_track_parameters_collection_types::view seeds_view,
-    vecmem::data::jagged_vector_view<candidate_link> link_view,
-    vecmem::data::jagged_vector_view<unsigned int> param_to_link_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    bound_track_parameters_collection_types::const_view seeds_view,
+    vecmem::data::jagged_vector_view<const candidate_link> links_view,
+    vecmem::data::jagged_vector_view<const unsigned int> param_to_link_view,
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         tips_view,
     track_candidate_container_types::view track_candidates_view) {
 
     measurement_container_types::const_device measurements(measurements_view);
 
-    bound_track_parameters_collection_types::device seeds(seeds_view);
+    bound_track_parameters_collection_types::const_device seeds(seeds_view);
 
-    vecmem::jagged_device_vector<candidate_link> links(link_view);
+    vecmem::jagged_device_vector<const candidate_link> links(links_view);
 
-    vecmem::jagged_device_vector<unsigned int> param_to_link(
+    vecmem::jagged_device_vector<const unsigned int> param_to_link(
         param_to_link_view);
 
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
+    vecmem::device_vector<const thrust::pair<unsigned int, unsigned int>> tips(
         tips_view);
 
     track_candidate_container_types::device track_candidates(

@@ -30,10 +30,10 @@ template <typename detector_t>
 TRACCC_DEVICE inline void count_measurements(
     std::size_t globalIndex, typename detector_t::detector_view_type det_data,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         module_map_view,
     const int n_params,
-    bound_track_parameters_collection_types::view params_view,
+    bound_track_parameters_collection_types::const_view params_view,
     vecmem::data::vector_view<unsigned int> n_measurements_view,
     unsigned int& n_total_measurements);
 

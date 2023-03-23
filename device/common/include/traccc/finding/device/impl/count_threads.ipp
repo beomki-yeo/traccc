@@ -15,12 +15,13 @@ namespace traccc::device {
 template <typename config_t>
 TRACCC_DEVICE inline void count_threads(
     std::size_t globalIndex, const config_t cfg,
-    vecmem::data::vector_view<unsigned int> n_measurements_view,
+    vecmem::data::vector_view<const unsigned int> n_measurements_view,
     const unsigned int& n_total_measurements,
     vecmem::data::vector_view<unsigned int> n_threads_view,
     unsigned int& n_measurements_per_thread, unsigned int& n_total_threads) {
 
-    vecmem::device_vector<unsigned int> n_measurements(n_measurements_view);
+    vecmem::device_vector<const unsigned int> n_measurements(
+        n_measurements_view);
     vecmem::device_vector<unsigned int> n_threads(n_threads_view);
 
     const unsigned int n_params = n_measurements.size();

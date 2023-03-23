@@ -27,7 +27,7 @@ namespace traccc::device {
 template <typename config_t>
 TRACCC_DEVICE inline void count_threads(
     std::size_t globalIndex, const config_t cfg,
-    vecmem::data::vector_view<unsigned int> n_measurements_view,
+    vecmem::data::vector_view<const unsigned int> n_measurements_view,
     const unsigned int& n_total_measurements,
     vecmem::data::vector_view<unsigned int> n_threads_view,
     unsigned int& n_measurements_per_thread, unsigned int& n_total_threads);

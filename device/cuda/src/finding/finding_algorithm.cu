@@ -44,6 +44,7 @@ namespace traccc::cuda {
 
 namespace kernels {
 
+/// CUDA kernel for running @c traccc::device::make_module_map
 __global__ void make_module_map(
     measurement_container_types::const_view measurements_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
@@ -54,6 +55,7 @@ __global__ void make_module_map(
     device::make_module_map(gid, measurements_view, module_map_view);
 }
 
+/// CUDA kernel for running @c traccc::device::apply_interaction
 template <typename propagator_t>
 __global__ void apply_interaction(
     typename propagator_t::detector_type::detector_view_type det_data,
@@ -68,14 +70,15 @@ __global__ void apply_interaction(
         gid, det_data, nav_candidates_buffer, n_params, params_view);
 }
 
+/// CUDA kernel for running @c traccc::device::count_measurements
 template <typename detector_t>
 __global__ void count_measurements(
     typename detector_t::detector_view_type det_data,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         module_map_view,
     const int n_params,
-    bound_track_parameters_collection_types::view params_view,
+    bound_track_parameters_collection_types::const_view params_view,
     vecmem::data::vector_view<unsigned int> n_measurements_view,
     unsigned int& n_total_measurements) {
 
@@ -86,10 +89,11 @@ __global__ void count_measurements(
         params_view, n_measurements_view, n_total_measurements);
 }
 
+/// CUDA kernel for running @c traccc::device::count_threads
 template <typename config_t>
 __global__ void count_threads(
     const config_t cfg,
-    vecmem::data::vector_view<unsigned int> n_measurements_view,
+    vecmem::data::vector_view<const unsigned int> n_measurements_view,
     const unsigned int& n_total_measurements,
     vecmem::data::vector_view<unsigned int> n_threads_view,
     unsigned int& n_measurements_per_thread, unsigned int& n_total_threads) {
@@ -101,6 +105,7 @@ __global__ void count_threads(
                                     n_measurements_per_thread, n_total_threads);
 }
 
+/// CUDA kernel for running @c traccc::device::find_tracks
 template <typename propagator_t, typename config_t>
 __global__ inline void find_tracks(
     const config_t cfg,
@@ -108,40 +113,41 @@ __global__ inline void find_tracks(
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         module_map_view,
-    bound_track_parameters_collection_types::view in_params_view,
+    bound_track_parameters_collection_types::const_view in_params_view,
+    vecmem::data::vector_view<const unsigned int> n_threads_view,
+    const unsigned int step, const unsigned int& n_measurements_per_thread,
+    const unsigned int& n_total_threads,
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<device::candidate_link> links_view,
     vecmem::data::vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
-    vecmem::data::vector_view<unsigned int> n_threads_view,
-    const unsigned int step, const unsigned int& n_measurements_per_thread,
-    const unsigned int& n_total_threads, unsigned int& n_candidates,
-    unsigned int& n_out_params) {
+    unsigned int& n_candidates, unsigned int& n_out_params) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
     device::find_tracks<propagator_t, config_t>(
         gid, cfg, det_data, nav_candidates_buffer, measurements_view,
-        module_map_view, in_params_view, out_params_view, links_view,
-        param_to_link_view, tips_view, n_threads_view, step,
-        n_measurements_per_thread, n_total_threads, n_candidates, n_out_params);
+        module_map_view, in_params_view, n_threads_view, step,
+        n_measurements_per_thread, n_total_threads, out_params_view, links_view,
+        param_to_link_view, tips_view, n_candidates, n_out_params);
 }
 
+/// CUDA kernel for running @c traccc::device::build_tracks
 __global__ inline void build_tracks(
     measurement_container_types::const_view measurements_view,
-    bound_track_parameters_collection_types::view seeds_view,
-    vecmem::data::jagged_vector_view<device::candidate_link> link_view,
-    vecmem::data::jagged_vector_view<unsigned int> param_to_link_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    bound_track_parameters_collection_types::const_view seeds_view,
+    vecmem::data::jagged_vector_view<const device::candidate_link> links_view,
+    vecmem::data::jagged_vector_view<const unsigned int> param_to_link_view,
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         tips_view,
     track_candidate_container_types::view track_candidates_view) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    device::build_tracks(gid, measurements_view, seeds_view, link_view,
+    device::build_tracks(gid, measurements_view, seeds_view, links_view,
                          param_to_link_view, tips_view, track_candidates_view);
 }
 
@@ -340,11 +346,10 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         kernels::find_tracks<propagator_for_propagation, config>
             <<<nBlocks, nThreads>>>(
                 m_cfg, det_view, navigation_buffer, measurements,
-                module_map_buffer, in_params_buffer, out_params_buffer,
-                link_map[step], param_to_link_map[step], tips_map[step],
-                n_threads_buffer, step,
+                module_map_buffer, in_params_buffer, n_threads_buffer, step,
                 (*global_counter_device).n_measurements_per_thread,
-                (*global_counter_device).n_total_threads,
+                (*global_counter_device).n_total_threads, out_params_buffer,
+                link_map[step], param_to_link_map[step], tips_map[step],
                 (*global_counter_device).n_candidates,
                 (*global_counter_device).n_out_params);
         CUDA_ERROR_CHECK(cudaGetLastError());

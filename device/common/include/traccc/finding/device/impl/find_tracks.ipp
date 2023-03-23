@@ -22,18 +22,18 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         module_map_view,
-    bound_track_parameters_collection_types::view in_params_view,
+    bound_track_parameters_collection_types::const_view in_params_view,
+    vecmem::data::vector_view<const unsigned int> n_threads_view,
+    const unsigned int step, const unsigned int& n_measurements_per_thread,
+    const unsigned int& n_total_threads,
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<candidate_link> links_view,
     vecmem::data::vector_view<unsigned int> param_to_link_view,
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
-    vecmem::data::vector_view<unsigned int> n_threads_view,
-    const unsigned int step, const unsigned int& n_measurements_per_thread,
-    const unsigned int& n_total_threads, unsigned int& n_candidates,
-    unsigned int& n_out_params) {
+    unsigned int& n_candidates, unsigned int& n_out_params) {
 
     if (globalIndex >= n_total_threads) {
         return;
@@ -50,11 +50,12 @@ TRACCC_DEVICE inline void find_tracks(
     measurement_container_types::const_device measurements(measurements_view);
 
     // module map
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> module_map(
-        module_map_view);
+    vecmem::device_vector<const thrust::pair<unsigned int, unsigned int>>
+        module_map(module_map_view);
 
     // Input parameters
-    bound_track_parameters_collection_types::device in_params(in_params_view);
+    bound_track_parameters_collection_types::const_device in_params(
+        in_params_view);
 
     // Output parameters
     bound_track_parameters_collection_types::device out_params(out_params_view);
@@ -70,7 +71,7 @@ TRACCC_DEVICE inline void find_tracks(
         tips_view);
 
     // n threads
-    vecmem::device_vector<unsigned int> n_threads(n_threads_view);
+    vecmem::device_vector<const unsigned int> n_threads(n_threads_view);
 
     // Search for out_param index
     const auto lo1 = thrust::lower_bound(thrust::seq, n_threads.begin(),

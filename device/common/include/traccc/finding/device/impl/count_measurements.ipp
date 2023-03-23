@@ -20,10 +20,10 @@ template <typename detector_t>
 TRACCC_DEVICE inline void count_measurements(
     std::size_t globalIndex, typename detector_t::detector_view_type det_data,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
         module_map_view,
     const int n_params,
-    bound_track_parameters_collection_types::view params_view,
+    bound_track_parameters_collection_types::const_view params_view,
     vecmem::data::vector_view<unsigned int> n_measurements_view,
     unsigned int& n_total_measurements) {
 
@@ -34,14 +34,14 @@ TRACCC_DEVICE inline void count_measurements(
     measurement_container_types::const_device measurements(measurements_view);
 
     // module map
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> module_map(
-        module_map_view);
+    vecmem::device_vector<const thrust::pair<unsigned int, unsigned int>>
+        module_map(module_map_view);
 
     // N measurements
     vecmem::device_vector<unsigned int> n_measurements(n_measurements_view);
 
     // Parameters
-    bound_track_parameters_collection_types::device params(params_view);
+    bound_track_parameters_collection_types::const_device params(params_view);
 
     if (globalIndex >= n_params) {
         return;
