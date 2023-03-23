@@ -31,8 +31,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
-    const unsigned int& iteration,
-    const unsigned int& n_measurements_per_thread,
+    const unsigned int& step, const unsigned int& n_measurements_per_thread,
     const unsigned int& n_total_threads, unsigned int& n_candidates,
     unsigned int& n_out_params) {
 
@@ -108,10 +107,9 @@ TRACCC_DEVICE inline void find_tracks(
     // Create propagator
     propagator_t propagator({}, {});
 
-    // Last iteration ID
-    const unsigned int last_iteration =
-        (iteration == 0) ? std::numeric_limits<unsigned int>::max()
-                         : iteration - 1;
+    // Last step ID
+    const unsigned int last_step =
+        (step == 0) ? std::numeric_limits<unsigned int>::max() : step - 1;
 
     for (unsigned int i = 0; i < n_measurements_per_thread; i++) {
         if (i + stride >= n_meas_on_surface) {
@@ -137,9 +135,8 @@ TRACCC_DEVICE inline void find_tracks(
             const unsigned int l_pos = num_candidates.fetch_add(1);
 
             // @TODO; Consider max_num_branches_per_surface
-            links[l_pos] = {{last_iteration, in_param_id},
-                            {header_id, i + stride},
-                            module_id};
+            links[l_pos] = {
+                {last_step, in_param_id}, {header_id, i + stride}, module_id};
 
             // Create propagator state
             typename propagator_t::state propagation(
@@ -171,8 +168,8 @@ TRACCC_DEVICE inline void find_tracks(
             }
             // Unless the track found a surface, it is considered a tip
             else if (!s2.success &&
-                     iteration >= cfg.min_track_candidates_per_track - 1) {
-                tips.push_back({iteration, l_pos});
+                     step >= cfg.min_track_candidates_per_track - 1) {
+                tips.push_back({step, l_pos});
             }
         }
     }

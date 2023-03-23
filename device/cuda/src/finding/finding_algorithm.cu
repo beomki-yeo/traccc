@@ -117,7 +117,7 @@ __global__ inline void find_tracks(
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
-    const unsigned int iteration, const unsigned int& n_measurements_per_thread,
+    const unsigned int step, const unsigned int& n_measurements_per_thread,
     const unsigned int& n_total_threads, unsigned int& n_candidates,
     unsigned int& n_out_params) {
 
@@ -126,7 +126,7 @@ __global__ inline void find_tracks(
     device::find_tracks<propagator_t, config_t>(
         gid, cfg, det_data, nav_candidates_buffer, measurements_view,
         module_map_view, in_params_view, out_params_view, links_view,
-        param_to_link_view, tips_view, n_threads_view, iteration,
+        param_to_link_view, tips_view, n_threads_view, step,
         n_measurements_per_thread, n_total_threads, n_candidates, n_out_params);
 }
 
@@ -194,11 +194,11 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         tips_map;
 
     // Link size
-    std::vector<std::size_t> n_candidates_per_iteration;
-    n_candidates_per_iteration.reserve(m_cfg.max_track_candidates_per_track);
+    std::vector<std::size_t> n_candidates_per_step;
+    n_candidates_per_step.reserve(m_cfg.max_track_candidates_per_track);
 
-    std::vector<std::size_t> n_parameters_per_iteration;
-    n_parameters_per_iteration.reserve(m_cfg.max_track_candidates_per_track);
+    std::vector<std::size_t> n_parameters_per_step;
+    n_parameters_per_step.reserve(m_cfg.max_track_candidates_per_track);
 
     // Global counter object in Device memory
     vecmem::unique_alloc_ptr<device::finding_global_counter>
@@ -227,8 +227,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         module_map_buffer);
     thrust::sort(thrust::device, module_map.begin(), module_map.end());
 
-    for (unsigned int iteration = 0;
-         iteration < m_cfg.max_track_candidates_per_track; iteration++) {
+    for (unsigned int step = 0; step < m_cfg.max_track_candidates_per_track;
+         step++) {
 
         // Global counter object: Device -> Host
         CUDA_ERROR_CHECK(cudaMemcpy(
@@ -236,7 +236,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             sizeof(device::finding_global_counter), cudaMemcpyDeviceToHost));
 
         // Set the number of input parameters
-        const unsigned int n_in_params = (iteration == 0)
+        const unsigned int n_in_params = (step == 0)
                                              ? in_params_buffer.size()
                                              : global_counter_host.n_out_params;
 
@@ -320,19 +320,19 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             n_in_params * m_cfg.max_num_branches_per_surface, m_mr.main);
 
         // Create the link map
-        link_map[iteration] = {n_in_params * m_cfg.max_num_branches_per_surface,
-                               m_mr.main};
-        m_copy->setup(link_map[iteration]);
+        link_map[step] = {n_in_params * m_cfg.max_num_branches_per_surface,
+                          m_mr.main};
+        m_copy->setup(link_map[step]);
 
         // Create the param to link ID map
-        param_to_link_map[iteration] = {
+        param_to_link_map[step] = {
             n_in_params * m_cfg.max_num_branches_per_surface, m_mr.main};
-        m_copy->setup(param_to_link_map[iteration]);
+        m_copy->setup(param_to_link_map[step]);
 
         // Create the tip map
-        tips_map[iteration] = {n_in_params * m_cfg.max_num_branches_per_surface,
-                               0, m_mr.main};
-        m_copy->setup(tips_map[iteration]);
+        tips_map[step] = {n_in_params * m_cfg.max_num_branches_per_surface, 0,
+                          m_mr.main};
+        m_copy->setup(tips_map[step]);
 
         nThreads = WARP_SIZE * 2;
         nBlocks =
@@ -341,8 +341,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             <<<nBlocks, nThreads>>>(
                 m_cfg, det_view, navigation_buffer, measurements,
                 module_map_buffer, in_params_buffer, out_params_buffer,
-                link_map[iteration], param_to_link_map[iteration],
-                tips_map[iteration], n_threads_buffer, iteration,
+                link_map[step], param_to_link_map[step], tips_map[step],
+                n_threads_buffer, step,
                 (*global_counter_device).n_measurements_per_thread,
                 (*global_counter_device).n_total_threads,
                 (*global_counter_device).n_candidates,
@@ -356,50 +356,50 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             sizeof(device::finding_global_counter), cudaMemcpyDeviceToHost));
 
         // Fill the candidate size vector
-        n_candidates_per_iteration.push_back(global_counter_host.n_candidates);
-        n_parameters_per_iteration.push_back(global_counter_host.n_out_params);
+        n_candidates_per_step.push_back(global_counter_host.n_candidates);
+        n_parameters_per_step.push_back(global_counter_host.n_out_params);
 
-        // Swap parameter buffer for the next iteration
+        // Swap parameter buffer for the next step
         in_params_buffer = std::move(out_params_buffer);
     }
 
     // Create link buffer
     vecmem::data::jagged_vector_buffer<device::candidate_link> links_buffer(
-        n_candidates_per_iteration, m_mr.main, m_mr.host);
+        n_candidates_per_step, m_mr.main, m_mr.host);
     m_copy->setup(links_buffer);
 
     // Copy link map to link buffer
-    const auto n_iterations = n_candidates_per_iteration.size();
-    for (unsigned int it = 0; it < n_iterations; it++) {
+    const auto n_steps = n_candidates_per_step.size();
+    for (unsigned int it = 0; it < n_steps; it++) {
 
         vecmem::device_vector<device::candidate_link> in(link_map[it]);
         vecmem::device_vector<device::candidate_link> out(
             *(links_buffer.host_ptr() + it));
 
         thrust::copy(thrust::device, in.begin(),
-                     in.begin() + n_candidates_per_iteration[it], out.begin());
+                     in.begin() + n_candidates_per_step[it], out.begin());
     }
 
     // Create param_to_link
     vecmem::data::jagged_vector_buffer<unsigned int> param_to_link_buffer(
-        n_parameters_per_iteration, m_mr.main, m_mr.host);
+        n_parameters_per_step, m_mr.main, m_mr.host);
     m_copy->setup(param_to_link_buffer);
 
     // Copy param_to_link map to param_to_link buffer
-    for (unsigned int it = 0; it < n_iterations; it++) {
+    for (unsigned int it = 0; it < n_steps; it++) {
 
         vecmem::device_vector<unsigned int> in(param_to_link_map[it]);
         vecmem::device_vector<unsigned int> out(
             *(param_to_link_buffer.host_ptr() + it));
 
         thrust::copy(thrust::device, in.begin(),
-                     in.begin() + n_parameters_per_iteration[it], out.begin());
+                     in.begin() + n_parameters_per_step[it], out.begin());
     }
 
     // Get the number of tips per step
     std::vector<unsigned int> n_tips_per_step;
-    n_tips_per_step.reserve(n_iterations);
-    for (unsigned int it = 0; it < n_iterations; it++) {
+    n_tips_per_step.reserve(n_steps);
+    for (unsigned int it = 0; it < n_steps; it++) {
         n_tips_per_step.push_back(m_copy->get_size(tips_map[it]));
     }
 
@@ -415,7 +415,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
     unsigned int prefix_sum = 0;
     for (unsigned int it = m_cfg.min_track_candidates_per_track - 1;
-         it < n_iterations; it++) {
+         it < n_steps; it++) {
 
         vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> in(
             tips_map[it]);
