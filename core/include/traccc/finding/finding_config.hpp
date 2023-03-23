@@ -26,8 +26,8 @@ struct finding_config {
     unsigned int max_track_candidates_per_track = 10;
 
     /// Minimum step length that track should make to reach the next surface. It
-    /// should be higher than the overstep tolerance not to make it stay on the
-    /// same surface
+    /// should be set higher than the overstep tolerance not to make it stay on
+    /// the same surface
     scalar_t min_step_length_for_surface_aborter =
         0.1f * detray::unit<scalar_t>::mm;
 
