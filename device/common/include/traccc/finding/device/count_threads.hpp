@@ -18,8 +18,7 @@ TRACCC_DEVICE inline void count_threads(
     vecmem::data::vector_view<unsigned int> n_measurements_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
     const unsigned int& n_total_measurements,
-    const unsigned int& n_measurements_per_thread,
-    unsigned int& n_total_threads);
+    unsigned int& n_measurements_per_thread, unsigned int& n_total_threads);
 
 }  // namespace traccc::device
 

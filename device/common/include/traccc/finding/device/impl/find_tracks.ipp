@@ -31,7 +31,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
         tips_view,
     vecmem::data::vector_view<unsigned int> n_threads_view,
-    const unsigned int& step, const unsigned int& n_measurements_per_thread,
+    const unsigned int step, const unsigned int& n_measurements_per_thread,
     const unsigned int& n_total_threads, unsigned int& n_candidates,
     unsigned int& n_out_params) {
 
