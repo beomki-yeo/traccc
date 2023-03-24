@@ -22,7 +22,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     bound_track_parameters_collection_types::const_view in_params_view,
     vecmem::data::vector_view<const unsigned int> n_threads_view,
@@ -31,7 +31,7 @@ TRACCC_DEVICE inline void find_tracks(
     bound_track_parameters_collection_types::view out_params_view,
     vecmem::data::vector_view<candidate_link> links_view,
     vecmem::data::vector_view<unsigned int> param_to_link_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<typename candidate_link::link_index_type>
         tips_view,
     unsigned int& n_candidates, unsigned int& n_out_params) {
 
@@ -50,7 +50,7 @@ TRACCC_DEVICE inline void find_tracks(
     measurement_container_types::const_device measurements(measurements_view);
 
     // module map
-    vecmem::device_vector<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::device_vector<const thrust::pair<geometry_id, unsigned int>>
         module_map(module_map_view);
 
     // Input parameters
@@ -67,7 +67,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::device_vector<unsigned int> param_to_link(param_to_link_view);
 
     // tips
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
+    vecmem::device_vector<typename candidate_link::link_index_type> tips(
         tips_view);
 
     // n threads
@@ -109,7 +109,7 @@ TRACCC_DEVICE inline void find_tracks(
     propagator_t propagator({}, {});
 
     // Last step ID
-    const unsigned int last_step =
+    const unsigned int previous_step =
         (step == 0) ? std::numeric_limits<unsigned int>::max() : step - 1;
 
     for (unsigned int i = 0; i < n_measurements_per_thread; i++) {
@@ -136,8 +136,9 @@ TRACCC_DEVICE inline void find_tracks(
             const unsigned int l_pos = num_candidates.fetch_add(1);
 
             // @TODO; Consider max_num_branches_per_surface
-            links[l_pos] = {
-                {last_step, in_param_id}, {header_id, i + stride}, module_id};
+            links[l_pos] = {{previous_step, in_param_id},
+                            {header_id, i + stride},
+                            module_id};
 
             // Create propagator state
             typename propagator_t::state propagation(

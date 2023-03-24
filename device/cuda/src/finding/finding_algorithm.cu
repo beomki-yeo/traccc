@@ -8,8 +8,9 @@
 // Project include(s).
 #include "traccc/cuda/finding/finding_algorithm.hpp"
 #include "traccc/cuda/utils/definitions.hpp"
-#include "traccc/edm/device/candidate_link.hpp"
+#include "traccc/definitions/primitives.hpp"
 #include "traccc/edm/device/finding_global_counter.hpp"
+#include "traccc/finding/candidate_link.hpp"
 #include "traccc/finding/device/apply_interaction.hpp"
 #include "traccc/finding/device/build_tracks.hpp"
 #include "traccc/finding/device/count_measurements.hpp"
@@ -47,7 +48,7 @@ namespace kernels {
 /// CUDA kernel for running @c traccc::device::make_module_map
 __global__ void make_module_map(
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<thrust::pair<geometry_id, unsigned int>>
         module_map_view) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -75,7 +76,7 @@ template <typename detector_t>
 __global__ void count_measurements(
     typename detector_t::detector_view_type det_data,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     const int n_params,
     bound_track_parameters_collection_types::const_view params_view,
@@ -107,22 +108,22 @@ __global__ void count_threads(
 
 /// CUDA kernel for running @c traccc::device::find_tracks
 template <typename propagator_t, typename config_t>
-__global__ inline void find_tracks(
+__global__ void find_tracks(
     const config_t cfg,
     typename propagator_t::detector_type::detector_view_type det_data,
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     bound_track_parameters_collection_types::const_view in_params_view,
     vecmem::data::vector_view<const unsigned int> n_threads_view,
     const unsigned int step, const unsigned int& n_measurements_per_thread,
     const unsigned int& n_total_threads,
     bound_track_parameters_collection_types::view out_params_view,
-    vecmem::data::vector_view<device::candidate_link> links_view,
+    vecmem::data::vector_view<candidate_link> links_view,
     vecmem::data::vector_view<unsigned int> param_to_link_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<typename candidate_link::link_index_type>
         tips_view,
     unsigned int& n_candidates, unsigned int& n_out_params) {
 
@@ -136,12 +137,12 @@ __global__ inline void find_tracks(
 }
 
 /// CUDA kernel for running @c traccc::device::build_tracks
-__global__ inline void build_tracks(
+__global__ void build_tracks(
     measurement_container_types::const_view measurements_view,
     bound_track_parameters_collection_types::const_view seeds_view,
-    vecmem::data::jagged_vector_view<const device::candidate_link> links_view,
+    vecmem::data::jagged_vector_view<const candidate_link> links_view,
     vecmem::data::jagged_vector_view<const unsigned int> param_to_link_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const typename candidate_link::link_index_type>
         tips_view,
     track_candidate_container_types::view track_candidates_view) {
 
@@ -187,7 +188,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     thrust::copy(thrust::device, seeds.begin(), seeds.end(), in_params.begin());
 
     // Create a map for links
-    std::map<unsigned int, vecmem::data::vector_buffer<device::candidate_link>>
+    std::map<unsigned int, vecmem::data::vector_buffer<candidate_link>>
         link_map;
 
     // Create a map for parameter ID to link ID
@@ -196,7 +197,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
     // Create a map for tip links
     std::map<unsigned int, vecmem::data::vector_buffer<
-                               thrust::pair<unsigned int, unsigned int>>>
+                               typename candidate_link::link_index_type>>
         tips_map;
 
     // Link size
@@ -219,7 +220,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
      * Kernel1: Create module map
      *****************************************************************/
 
-    vecmem::data::vector_buffer<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_buffer<thrust::pair<geometry_id, unsigned int>>
         module_map_buffer{measurements.headers.size(), m_mr.main};
 
     unsigned int nThreads = WARP_SIZE * 2;
@@ -229,7 +230,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());
 
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> module_map(
+    vecmem::device_vector<thrust::pair<geometry_id, unsigned int>> module_map(
         module_map_buffer);
     thrust::sort(thrust::device, module_map.begin(), module_map.end());
 
@@ -369,7 +370,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     }
 
     // Create link buffer
-    vecmem::data::jagged_vector_buffer<device::candidate_link> links_buffer(
+    vecmem::data::jagged_vector_buffer<candidate_link> links_buffer(
         n_candidates_per_step, m_mr.main, m_mr.host);
     m_copy->setup(links_buffer);
 
@@ -377,8 +378,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     const auto n_steps = n_candidates_per_step.size();
     for (unsigned int it = 0; it < n_steps; it++) {
 
-        vecmem::device_vector<device::candidate_link> in(link_map[it]);
-        vecmem::device_vector<device::candidate_link> out(
+        vecmem::device_vector<candidate_link> in(link_map[it]);
+        vecmem::device_vector<candidate_link> out(
             *(links_buffer.host_ptr() + it));
 
         thrust::copy(thrust::device, in.begin(),
@@ -411,18 +412,18 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     // Copy tips_map into the tips vector (D->D)
     unsigned int n_tips_total =
         std::accumulate(n_tips_per_step.begin(), n_tips_per_step.end(), 0);
-    vecmem::data::vector_buffer<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_buffer<typename candidate_link::link_index_type>
         tips_buffer{n_tips_total, m_mr.main};
     m_copy->setup(tips_buffer);
 
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> tips(
+    vecmem::device_vector<typename candidate_link::link_index_type> tips(
         tips_buffer);
 
     unsigned int prefix_sum = 0;
     for (unsigned int it = m_cfg.min_track_candidates_per_track - 1;
          it < n_steps; it++) {
 
-        vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> in(
+        vecmem::device_vector<typename candidate_link::link_index_type> in(
             tips_map[it]);
 
         const unsigned int n_tips = n_tips_per_step[it];
