@@ -8,6 +8,7 @@
 #pragma once
 
 // Project include(s).
+#include "traccc/definitions/primitives.hpp"
 #include "traccc/definitions/qualifiers.hpp"
 #include "traccc/edm/measurement.hpp"
 #include "traccc/edm/track_parameters.hpp"

@@ -8,6 +8,7 @@
 // Project include(s).
 #include "traccc/cuda/finding/finding_algorithm.hpp"
 #include "traccc/cuda/utils/definitions.hpp"
+#include "traccc/definitions/primitives.hpp"
 #include "traccc/edm/device/finding_global_counter.hpp"
 #include "traccc/finding/candidate_link.hpp"
 #include "traccc/finding/device/apply_interaction.hpp"
