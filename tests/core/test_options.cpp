@@ -13,16 +13,16 @@
 #include <gtest/gtest.h>
 
 // System include(s).
-#include <ostream>
+#include <sstream>
 
 TEST(options, parsing) {
 
-    traccc::Reals<float, 3> parsed_vars;
+    traccc::Reals<int, 3> parsed_vars;
 
     std::istringstream I("100:200:300");
     I >> parsed_vars;
 
-    ASSERT_FLOAT_EQ(parsed_vars[0], 100);
-    ASSERT_FLOAT_EQ(parsed_vars[1], 200);
-    ASSERT_FLOAT_EQ(parsed_vars[2], 300);
+    ASSERT_EQ(parsed_vars[0], 100);
+    ASSERT_EQ(parsed_vars[1], 200);
+    ASSERT_EQ(parsed_vars[2], 300);
 }
