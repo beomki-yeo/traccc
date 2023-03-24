@@ -107,7 +107,7 @@ __global__ void count_threads(
 
 /// CUDA kernel for running @c traccc::device::find_tracks
 template <typename propagator_t, typename config_t>
-__global__ inline void find_tracks(
+__global__ void find_tracks(
     const config_t cfg,
     typename propagator_t::detector_type::detector_view_type det_data,
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
@@ -136,7 +136,7 @@ __global__ inline void find_tracks(
 }
 
 /// CUDA kernel for running @c traccc::device::build_tracks
-__global__ inline void build_tracks(
+__global__ void build_tracks(
     measurement_container_types::const_view measurements_view,
     bound_track_parameters_collection_types::const_view seeds_view,
     vecmem::data::jagged_vector_view<const device::candidate_link> links_view,
