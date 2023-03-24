@@ -109,7 +109,7 @@ TRACCC_DEVICE inline void find_tracks(
     propagator_t propagator({}, {});
 
     // Last step ID
-    const unsigned int last_step =
+    const unsigned int previous_step =
         (step == 0) ? std::numeric_limits<unsigned int>::max() : step - 1;
 
     for (unsigned int i = 0; i < n_measurements_per_thread; i++) {
@@ -136,8 +136,9 @@ TRACCC_DEVICE inline void find_tracks(
             const unsigned int l_pos = num_candidates.fetch_add(1);
 
             // @TODO; Consider max_num_branches_per_surface
-            links[l_pos] = {
-                {last_step, in_param_id}, {header_id, i + stride}, module_id};
+            links[l_pos] = {{previous_step, in_param_id},
+                            {header_id, i + stride},
+                            module_id};
 
             // Create propagator state
             typename propagator_t::state propagation(
