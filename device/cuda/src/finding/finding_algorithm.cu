@@ -47,7 +47,7 @@ namespace kernels {
 /// CUDA kernel for running @c traccc::device::make_module_map
 __global__ void make_module_map(
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<thrust::pair<geometry_id, unsigned int>>
         module_map_view) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -75,7 +75,7 @@ template <typename detector_t>
 __global__ void count_measurements(
     typename detector_t::detector_view_type det_data,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     const int n_params,
     bound_track_parameters_collection_types::const_view params_view,
@@ -113,7 +113,7 @@ __global__ void find_tracks(
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     bound_track_parameters_collection_types::const_view in_params_view,
     vecmem::data::vector_view<const unsigned int> n_threads_view,
@@ -219,7 +219,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
      * Kernel1: Create module map
      *****************************************************************/
 
-    vecmem::data::vector_buffer<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_buffer<thrust::pair<geometry_id, unsigned int>>
         module_map_buffer{measurements.headers.size(), m_mr.main};
 
     unsigned int nThreads = WARP_SIZE * 2;
@@ -229,7 +229,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());
 
-    vecmem::device_vector<thrust::pair<unsigned int, unsigned int>> module_map(
+    vecmem::device_vector<thrust::pair<geometry_id, unsigned int>> module_map(
         module_map_buffer);
     thrust::sort(thrust::device, module_map.begin(), module_map.end());
 

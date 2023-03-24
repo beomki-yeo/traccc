@@ -25,7 +25,7 @@ namespace traccc::device {
 TRACCC_DEVICE inline void make_module_map(
     std::size_t globalIndex,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<thrust::pair<geometry_id, unsigned int>>
         module_map_view);
 
 }  // namespace traccc::device

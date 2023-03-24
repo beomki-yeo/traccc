@@ -22,7 +22,7 @@ TRACCC_DEVICE inline void find_tracks(
     vecmem::data::jagged_vector_view<typename propagator_t::intersection_type>
         nav_candidates_buffer,
     measurement_container_types::const_view measurements_view,
-    vecmem::data::vector_view<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::data::vector_view<const thrust::pair<geometry_id, unsigned int>>
         module_map_view,
     bound_track_parameters_collection_types::const_view in_params_view,
     vecmem::data::vector_view<const unsigned int> n_threads_view,
@@ -50,7 +50,7 @@ TRACCC_DEVICE inline void find_tracks(
     measurement_container_types::const_device measurements(measurements_view);
 
     // module map
-    vecmem::device_vector<const thrust::pair<unsigned int, unsigned int>>
+    vecmem::device_vector<const thrust::pair<geometry_id, unsigned int>>
         module_map(module_map_view);
 
     // Input parameters
