@@ -24,21 +24,21 @@ namespace traccc::device {
 /// we can know which links in the link container are the final measurements of
 /// full tracks
 ///
-/// @param[in] globalIndex       The index of the current thread
-/// @param[in] cfg               Track finding config object
-/// @param[in] det_data          Detector view object
+/// @param[in] globalIndex        The index of the current thread
+/// @param[in] cfg                Track finding config object
+/// @param[in] det_data           Detector view object
 /// @param[in] nav_candidates_buffer Navgation buffer
-/// @param[in] measurements_view Measurements container view
-/// @param[in] module_map_view   Module map view
-/// @param[in] in_params_view    Input parameters
-/// @param[in] n_threads_view    The number of threads per tracks
-/// @param[in] step              Step index
+/// @param[in] measurements_view  Measurements container view
+/// @param[in] module_map_view    Module map view
+/// @param[in] in_params_view     Input parameters
+/// @param[in] n_threads_view     The number of threads per tracks
+/// @param[in] step               Step index
 /// @param[in] n_measurements_per_thread  Number of measurements per thread
-/// @param[in] n_total_threads   Number of total threads
-/// @param[out] out_params_view  Output parameters
-/// @param[out] links_view       link container for the current step
+/// @param[in] n_total_threads    Number of total threads
+/// @param[out] out_params_view   Output parameters
+/// @param[out] links_view        link container for the current step
 /// @param[out] param_to_link_view  Container for param index -> link index
-/// @param[out] tips_view        Tip link container for the current step
+/// @param[out] tips_view         Tip link container for the current step
 ///
 template <typename propagator_t, typename config_t>
 TRACCC_DEVICE inline void find_tracks(
