@@ -13,14 +13,17 @@
 // Thrust include(s).
 #include <thrust/pair.h>
 
-namespace traccc::device {
+namespace traccc {
 
 // A link that contains the index of corresponding measurement and the index of
 // a link from a previous step of track finding
 struct candidate_link {
 
+    // Type of index
+    using link_index_type = thrust::pair<unsigned int, unsigned int>;
+
     // Index of link from the previous step
-    thrust::pair<unsigned int, unsigned int> previous;
+    link_index_type previous;
 
     // Measurement link
     typename measurement_container_types::host::link_type meas_link;
@@ -29,4 +32,4 @@ struct candidate_link {
     std::size_t surface_link;
 };
 
-}  // namespace traccc::device
+}  // namespace traccc

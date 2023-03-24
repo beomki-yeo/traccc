@@ -52,6 +52,7 @@ traccc_add_library( traccc_core core TYPE SHARED
   "include/traccc/clusterization/measurement_creation.hpp"
   "src/clusterization/measurement_creation.cpp"
   # Finding algorithmic code
+  "include/traccc/finding/candidate_link.hpp"
   "include/traccc/finding/finding_config.hpp"
   # Fitting algorithmic code
   "include/traccc/fitting/kalman_filter/gain_matrix_smoother.hpp"
