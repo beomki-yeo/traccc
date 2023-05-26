@@ -15,7 +15,7 @@
 
 // Test include(s).
 #include "tests/combinatorial_kalman_finding_test.hpp"
-#include "tests/seed_generator.hpp"
+#include "traccc/utils/seed_generator.hpp"
 
 // detray include(s).
 #include "detray/detectors/create_telescope_detector.hpp"

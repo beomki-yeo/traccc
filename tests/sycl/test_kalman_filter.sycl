@@ -9,7 +9,7 @@
 #include <CL/sycl.hpp>
 
 // Project include(s).
-#include "tests/seed_generator.hpp"
+#include "traccc/utils/seed_generator.hpp"
 #include "traccc/device/container_d2h_copy_alg.hpp"
 #include "traccc/device/container_h2d_copy_alg.hpp"
 #include "traccc/edm/track_state.hpp"

@@ -6,7 +6,7 @@
  */
 
 // Project include(s).
-#include "tests/seed_generator.hpp"
+#include "traccc/utils/seed_generator.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/io/utils.hpp"

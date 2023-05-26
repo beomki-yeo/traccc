@@ -37,6 +37,7 @@ traccc_add_library( traccc_core core TYPE SHARED
   "include/traccc/utils/compare.hpp"
   "include/traccc/utils/type_traits.hpp"
   "include/traccc/utils/memory_resource.hpp"
+  "include/traccc/utils/seed_generator.hpp"
   # Clusterization algorithmic code.
   "include/traccc/clusterization/detail/measurement_creation_helper.hpp"
   "include/traccc/clusterization/detail/sparse_ccl.hpp"
