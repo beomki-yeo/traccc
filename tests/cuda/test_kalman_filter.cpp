@@ -6,7 +6,6 @@
  */
 
 // Project include(s).
-#include "traccc/utils/seed_generator.hpp"
 #include "traccc/cuda/fitting/fitting_algorithm.hpp"
 #include "traccc/device/container_d2h_copy_alg.hpp"
 #include "traccc/device/container_h2d_copy_alg.hpp"
@@ -17,6 +16,7 @@
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/memory_resource.hpp"
 #include "traccc/utils/ranges.hpp"
+#include "traccc/utils/seed_generator.hpp"
 
 // Test include(s).
 #include "tests/kalman_fitting_test.hpp"

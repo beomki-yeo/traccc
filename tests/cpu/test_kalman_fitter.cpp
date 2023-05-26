@@ -6,12 +6,12 @@
  */
 
 // Project include(s).
-#include "traccc/utils/seed_generator.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/io/utils.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/ranges.hpp"
+#include "traccc/utils/seed_generator.hpp"
 
 // Test include(s).
 #include "tests/kalman_fitting_test.hpp"

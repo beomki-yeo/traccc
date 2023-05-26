@@ -6,7 +6,6 @@
  */
 
 // Project include(s).
-#include "traccc/utils/seed_generator.hpp"
 #include "traccc/cuda/finding/finding_algorithm.hpp"
 #include "traccc/cuda/fitting/fitting_algorithm.hpp"
 #include "traccc/definitions/common.hpp"
@@ -16,10 +15,12 @@
 #include "traccc/finding/finding_algorithm.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
+#include "traccc/io/read_measurements.hpp"
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/finding_input_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
+#include "traccc/utils/seed_generator.hpp"
 
 // detray include(s).
 #include "detray/detectors/create_toy_geometry.hpp"
@@ -140,14 +141,17 @@ int seq_run(const traccc::finding_input_config& i_cfg,
          event < common_opts.events + common_opts.skip; ++event) {
 
         // Truth Track Candidates
-        traccc::event_map2 evt_map(event, path, path, path);
+        traccc::event_map2 evt_map(event, common_opts.input_directory,
+                                   common_opts.input_directory,
+                                   common_opts.input_directory);
 
         traccc::track_candidate_container_types::host truth_track_candidates =
             evt_map.generate_truth_candidates(sg, host_mr);
 
         // Prepare truth seeds
         traccc::bound_track_parameters_collection_types::host seeds(mr.host);
-        for (unsigned int i_trk = 0; i_trk < n_truth_tracks; i_trk++) {
+        const unsigned int n_tracks = truth_track_candidates.size();
+        for (unsigned int i_trk = 0; i_trk < n_tracks; i_trk++) {
             seeds.push_back(truth_track_candidates.at(i_trk).header);
         }
 
@@ -160,7 +164,8 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         // Read measurements
         traccc::measurement_container_types::host measurements_per_event =
             traccc::io::read_measurements_container(
-                event, path, traccc::data_format::csv, &host_mr);
+                event, common_opts.input_directory, traccc::data_format::csv,
+                &host_mr);
         traccc::measurement_container_types::buffer measurements_buffer =
             measurement_h2d(traccc::get_data(measurements_per_event));
 
@@ -197,7 +202,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         traccc::track_state_container_types::host track_states_cuda =
             track_state_d2h(track_states_cuda_buffer);
 
-        for (unsigned int i = 0; i < n_truth_tracks; i++) {
+        for (unsigned int i = 0; i < n_tracks; i++) {
             const auto& trk_states_per_track = track_states_cuda.at(i).items;
             const auto& fit_info = track_states_cuda[i].header;
 
