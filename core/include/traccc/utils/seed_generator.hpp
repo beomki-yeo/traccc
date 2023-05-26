@@ -86,7 +86,7 @@ struct seed_generator {
         /// Actor states
         typename transporter::state m_transporter_state{};
         typename resetter::state m_resetter_state{};
-        typename detray::next_surface_aborter::state m_aborter_state{};
+        typename detray::next_surface_aborter::state m_aborter_state{0.1f};
 
         auto actor_states =
             std::tie(m_transporter_state, m_resetter_state, m_aborter_state);
