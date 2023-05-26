@@ -8,6 +8,8 @@
 #pragma once
 
 // Project include(s).
+#include <iostream>
+
 #include "traccc/edm/measurement.hpp"
 #include "traccc/edm/particle.hpp"
 #include "traccc/edm/spacepoint.hpp"
@@ -54,20 +56,24 @@ struct event_map2 {
 
             auto seed_params = sg(vertex);
 
-            // Candidate objects
-            vecmem::vector<track_candidate> candidates;
+            if (seed_params.surface_link().value() !=
+                detray::detail::invalid_value<std::size_t>()) {
 
-            for (const auto& meas_link : measurements) {
+                // Candidate objects
+                vecmem::vector<track_candidate> candidates;
 
-                track_candidate cand = {
-                    detray::geometry::barcode{meas_link.surface_link},
-                    meas_link.meas};
+                for (const auto& meas_link : measurements) {
 
-                candidates.push_back(cand);
+                    track_candidate cand = {
+                        detray::geometry::barcode{meas_link.surface_link},
+                        meas_link.meas};
+
+                    candidates.push_back(cand);
+                }
+
+                track_candidates.push_back(std::move(seed_params),
+                                           std::move(candidates));
             }
-
-            track_candidates.push_back(std::move(seed_params),
-                                       std::move(candidates));
         }
 
         return track_candidates;

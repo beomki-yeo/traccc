@@ -41,7 +41,7 @@
 
 namespace po = boost::program_options;
 
-int seq_run(const traccc::finding_input_config& i_cfg,
+int seq_run(const traccc::finding_input_config& /*i_cfg*/,
             const traccc::common_options& common_opts, bool run_cpu) {
 
     /// Type declarations
@@ -130,10 +130,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     cfg.chi2_max = 30.f;
 
     // Finding algorithm object
+    traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
+        host_finding(cfg, mr);
     traccc::cuda::finding_algorithm<rk_stepper_type, device_navigator_type>
         device_finding(cfg, mr);
 
     // Fitting algorithm object
+    traccc::fitting_algorithm<host_fitter_type> host_fitting;
     traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(mr);
 
     // Iterate over events
@@ -202,8 +205,44 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         traccc::track_state_container_types::host track_states_cuda =
             track_state_d2h(track_states_cuda_buffer);
 
-        for (unsigned int i = 0; i < n_tracks; i++) {
+        // CPU containers
+        traccc::finding_algorithm<
+            rk_stepper_type, host_navigator_type>::output_type track_candidates;
+        traccc::fitting_algorithm<host_fitter_type>::output_type track_states;
+
+        std::cout << "Event ID: " << event << std::endl;
+
+        if (run_cpu) {
+
+            // Run finding
+            track_candidates =
+                host_finding(host_det, measurements_per_event, seeds);
+
+            std::cout << "Number of found tracks: " << track_candidates.size()
+                      << std::endl;
+
+            // Run fitting
+            track_states = host_fitting(host_det, track_candidates);
+
+            std::cout << "Number of fitted tracks: " << track_states.size()
+                      << std::endl;
+        }
+
+        /*
+        std::cout << "Number of truth candidates: "
+                  << truth_track_candidates.size() << std::endl;
+        std::cout << "CUDA" << std::endl;
+        std::cout << "Number of seeds: " << seeds.size() << std::endl;
+        std::cout << "Number of found tracks: " << track_candidates_cuda.size()
+                  << std::endl;
+        std::cout << "Number of fitted tracks: " << track_states_cuda.size()
+                  << std::endl;
+        */
+
+        const unsigned int n_fitted_tracks = track_states_cuda.size();
+        for (unsigned int i = 0; i < n_fitted_tracks; i++) {
             const auto& trk_states_per_track = track_states_cuda.at(i).items;
+
             const auto& fit_info = track_states_cuda[i].header;
 
             fit_performance_writer.write(trk_states_per_track, fit_info,
@@ -212,6 +251,8 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     }
 
     fit_performance_writer.finalize();
+
+    return 1;
 }
 
 // The main routine

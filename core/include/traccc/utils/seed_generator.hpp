@@ -12,6 +12,7 @@
 
 // detray include(s).
 #include "detray/propagator/actor_chain.hpp"
+#include "detray/propagator/actors/aborters.hpp"
 #include "detray/propagator/actors/parameter_resetter.hpp"
 #include "detray/propagator/actors/parameter_transporter.hpp"
 #include "detray/propagator/base_actor.hpp"
@@ -30,15 +31,18 @@ struct seed_generator {
 
     /// Aborter actor which stops the propagation when the track reaches the
     /// first sensitive surface
+    /*
     struct aborter : detray::actor {
-        struct state {};
+        struct state {
+            bool found_surface = true;
+        };
 
         /// Actor operation
         ///
         /// @param actor_state the actor state
         /// @param propagation the propagator state
         template <typename propagator_state_t>
-        void operator()(state& /*actor_state*/,
+        void operator()(state& actor_state,
                         propagator_state_t& propagation) const {
 
             auto& navigation = propagation._navigation;
@@ -49,6 +53,7 @@ struct seed_generator {
             }
         }
     };
+    */
 
     /// Type declarations
     using transform3_type = typename stepper_t::transform3_type;
@@ -56,7 +61,8 @@ struct seed_generator {
     using transporter = detray::parameter_transporter<transform3_type>;
     using resetter = detray::parameter_resetter<transform3_type>;
     using actor_chain_type =
-        detray::actor_chain<std::tuple, transporter, resetter, aborter>;
+        detray::actor_chain<std::tuple, transporter, resetter,
+                            detray::next_surface_aborter>;
     using propagator_type =
         detray::propagator<stepper_t, navigator_t, actor_chain_type>;
 
@@ -77,6 +83,11 @@ struct seed_generator {
     /// @param stddevs standard deviations for track parameter smearing
     bound_track_parameters operator()(const free_track_parameters& vertex) {
         propagator_type propagator({}, {});
+        /// Actor states
+        typename transporter::state m_transporter_state{};
+        typename resetter::state m_resetter_state{};
+        typename detray::next_surface_aborter::state m_aborter_state{};
+
         auto actor_states =
             std::tie(m_transporter_state, m_resetter_state, m_aborter_state);
         typename propagator_type::state propagation(
@@ -119,10 +130,6 @@ struct seed_generator {
     std::unique_ptr<detector_type> m_detector;
     /// Standard deviations for parameter smearing
     std::array<scalar, e_bound_size> m_stddevs;
-    /// Actor states
-    typename transporter::state m_transporter_state{};
-    typename resetter::state m_resetter_state{};
-    typename aborter::state m_aborter_state{};
 };
 
 }  // namespace traccc

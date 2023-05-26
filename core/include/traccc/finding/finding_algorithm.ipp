@@ -179,9 +179,13 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     typename detray::next_surface_aborter::state s4{
                         m_cfg.min_step_length_for_surface_aborter};
 
+                    std::cout << "hi0" << std::endl;
+
                     // Propagate to the next surface
                     propagator.propagate_sync(propagation,
                                               std::tie(s0, s1, s2, s3, s4));
+
+                    std::cout << "hi1" << std::endl;
 
                     // If a surface found, add the parameter for the next
                     // step

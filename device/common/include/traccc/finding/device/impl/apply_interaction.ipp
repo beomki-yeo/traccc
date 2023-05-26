@@ -49,9 +49,12 @@ TRACCC_DEVICE inline void apply_interaction(
     // Get intersection at surface
     const auto free_vec = det.bound_to_free_vector(bound_param.surface_link(),
                                                    bound_param.vector());
+
     const auto& mask_store = det.mask_store();
+
     intersection_type sfi;
     sfi.surface = det.surfaces(bound_param.surface_link());
+
     mask_store.template visit<detray::intersection_update>(
         sfi.surface.mask(), detray::detail::ray<transform3_type>(free_vec), sfi,
         det.transform_store());
