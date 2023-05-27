@@ -90,7 +90,7 @@ TEST_P(KalmanFittingTests, Run) {
      ***************/
 
     // Seed generator
-    seed_generator<rk_stepper_type, host_navigator_type> sg(det, stddevs);
+    seed_generator<host_detector_type> sg(det, stddevs);
 
     // Fitting algorithm object
     fitting_algorithm<host_fitter_type> fitting;

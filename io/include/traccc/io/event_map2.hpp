@@ -50,30 +50,36 @@ struct event_map2 {
             &resource);
 
         for (auto const& [ptc, measurements] : ptc_meas_map) {
+            /*
             // Make a seed parameter
             free_track_parameters vertex(ptc.pos, ptc.time, ptc.mom,
                                          ptc.charge);
 
             auto seed_params = sg(vertex);
+            */
 
-            if (seed_params.surface_link().value() !=
-                detray::detail::invalid_value<std::size_t>()) {
+            const auto& xp = meas_xp_map[measurements[0]];
+            const free_track_parameters free_param(xp.first, 0.f, xp.second,
+                                                   ptc.charge);
 
-                // Candidate objects
-                vecmem::vector<track_candidate> candidates;
+            auto seed_params = sg(measurements[0].surface_link, free_param);
 
-                for (const auto& meas_link : measurements) {
+            // Candidate objects
+            vecmem::vector<track_candidate> candidates;
 
-                    track_candidate cand = {
-                        detray::geometry::barcode{meas_link.surface_link},
-                        meas_link.meas};
+            for (const auto& meas_link : measurements) {
 
-                    candidates.push_back(cand);
-                }
+                track_candidate cand = {
+                    detray::geometry::barcode{meas_link.surface_link},
+                    meas_link.meas};
 
-                track_candidates.push_back(std::move(seed_params),
-                                           std::move(candidates));
+                candidates.push_back(cand);
             }
+
+            std::cout << "n measurements: " << measurements.size() << std::endl;
+
+            track_candidates.push_back(std::move(seed_params),
+                                       std::move(candidates));
         }
 
         /*

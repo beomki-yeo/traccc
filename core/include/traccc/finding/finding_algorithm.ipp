@@ -94,7 +94,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             unsigned int cur_link_id =
                 static_cast<unsigned int>(links[step].size());
 
-            bound_track_parameters in_param = in_params[in_param_id];
+            bound_track_parameters& in_param = in_params[in_param_id];
 
             /*************************
              * Material interaction
@@ -179,7 +179,10 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     break;
                 }
 
-                bound_track_parameters bound_param = in_param;
+                // bound_track_parameters bound_param = in_param;
+                bound_track_parameters bound_param(in_param.surface_link(),
+                                                   in_param.vector(),
+                                                   in_param.covariance());
                 const auto& meas = measurements_on_surface[item_id];
 
                 track_state<transform3_type> trk_state({module_id, meas});

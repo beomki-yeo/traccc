@@ -112,7 +112,7 @@ TEST_P(KalmanFittingTests, Run) {
         track_state_d2h{mr, copy};
 
     // Seed generator
-    seed_generator<rk_stepper_type, host_navigator_type> sg(host_det, stddevs);
+    seed_generator<host_detector_type> sg(host_det, stddevs);
 
     // Fitting algorithm object
     traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(mr);

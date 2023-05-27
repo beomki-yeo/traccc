@@ -120,8 +120,7 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
          1 * detray::unit<traccc::scalar>::ns};
 
     // Seed generator
-    traccc::seed_generator<rk_stepper_type, host_navigator_type> sg(host_det,
-                                                                    stddevs);
+    traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
 
     // Finding algorithm configuration
     typename traccc::cuda::finding_algorithm<

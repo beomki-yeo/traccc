@@ -118,7 +118,7 @@ TEST_P(CkfSparseTrackTests, Run) {
         track_state_d2h{mr, copy};
 
     // Seed generator
-    seed_generator<rk_stepper_type, host_navigator_type> sg(host_det, stddevs);
+    seed_generator<host_detector_type> sg(host_det, stddevs);
 
     // Finding algorithm configuration
     typename traccc::cuda::finding_algorithm<
