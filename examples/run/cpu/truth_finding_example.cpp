@@ -34,7 +34,7 @@
 
 namespace po = boost::program_options;
 
-int seq_run(const traccc::finding_input_config& /*i_cfg*/,
+int seq_run(const traccc::finding_input_config& i_cfg,
             const traccc::common_options& common_opts) {
 
     /// Type declarations
@@ -95,6 +95,9 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
                                        host_navigator_type>::config_type cfg;
+    cfg.min_track_candidates_per_track = i_cfg.track_candidates_range[0];
+    cfg.max_track_candidates_per_track = i_cfg.track_candidates_range[1];
+
     // few tracks (~1 out of 1000 tracks) are missed when chi2_max = 15
     cfg.chi2_max = 30.f;
 
@@ -124,6 +127,8 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
             seeds.push_back(truth_track_candidates.at(i_trk).header);
         }
 
+        // std::cout << seeds.size() << std::endl;
+
         // Read measurements
         traccc::measurement_container_types::host measurements_per_event =
             traccc::io::read_measurements_container(
@@ -142,7 +147,19 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
 
         std::cout << "Number of fitted tracks: " << track_states.size()
                   << std::endl;
+
+        const unsigned int n_fitted_tracks = track_states.size();
+        for (unsigned int i = 0; i < n_fitted_tracks; i++) {
+            const auto& trk_states_per_track = track_states.at(i).items;
+
+            const auto& fit_info = track_states[i].header;
+
+            fit_performance_writer.write(trk_states_per_track, fit_info,
+                                         host_det, evt_map);
+        }
     }
+
+    fit_performance_writer.finalize();
 
     return 1;
 }

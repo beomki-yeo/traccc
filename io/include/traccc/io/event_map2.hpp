@@ -76,6 +76,11 @@ struct event_map2 {
             }
         }
 
+        /*
+        std::cout << "Particles: " << ptc_meas_map.size()
+                  << "  Seeds: " << track_candidates.size() << std::endl;
+        */
+
         return track_candidates;
     }
 
