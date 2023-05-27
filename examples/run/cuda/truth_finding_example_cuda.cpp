@@ -229,8 +229,6 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
         }
 
         /*
-        std::cout << "Number of truth candidates: "
-                  << truth_track_candidates.size() << std::endl;
         std::cout << "CUDA" << std::endl;
         std::cout << "Number of seeds: " << seeds.size() << std::endl;
         std::cout << "Number of found tracks: " << track_candidates_cuda.size()

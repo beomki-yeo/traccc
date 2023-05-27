@@ -72,6 +72,9 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         // Iterate over input parameters
         const std::size_t n_in_params = in_params.size();
 
+        std::cout << "Step: " << step << "  n params: " << n_in_params
+                  << std::endl;
+
         // Terminate if there is no parameter to proceed
         if (n_in_params == 0) {
             break;
@@ -178,14 +181,22 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     typename interaction_register<interactor>::state s2{s3};
                     typename detray::next_surface_aborter::state s4{
                         m_cfg.min_step_length_for_surface_aborter};
+                    typename propagation::print_inspector::state s5{};
 
-                    std::cout << "hi0" << std::endl;
-
+                    /*
                     // Propagate to the next surface
                     propagator.propagate_sync(propagation,
                                               std::tie(s0, s1, s2, s3, s4));
+                    */
+                    // @TODO: Should be removed once detray is fixed to set the
+                    // volume in the constructor
+                    propagation._navigation.set_volume(
+                        trk_state.filtered().surface_link().volume());
 
-                    std::cout << "hi1" << std::endl;
+                    // Propagate to the next surface
+                    propagator.propagate_sync(propagation,
+                                              std::tie(s0, s1, s2, s3, s4, s5));
+                    std::cout << s5.to_string();
 
                     // If a surface found, add the parameter for the next
                     // step
@@ -214,6 +225,31 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
     // Number of found tracks = number of tips
     output_candidates.reserve(tips.size());
+
+    std::cout << "Tip size: " << tips.size() << std::endl;
+
+    for (std::size_t i = 0; i < links.size(); i++) {
+        if (links[i].size() == 0)
+            continue;
+
+        for (std::size_t j = 0; j < links[i].size(); j++) {
+            const auto L = links[i][j];
+
+            std::cout << "(" << L.previous.first << " " << L.previous.second
+                      << " " << i << " " << j << ") ";
+        }
+        std::cout << std::endl;
+    }
+
+    for (std::size_t i = 0; i < param_to_link.size(); i++) {
+        if (param_to_link[i].size() == 0)
+            continue;
+        for (std::size_t j = 0; j < param_to_link[i].size(); j++) {
+
+            std::cout << param_to_link[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     for (const auto& tip : tips) {
 

@@ -23,7 +23,7 @@ struct finding_config {
 
     /// Min/Max number of track candidates per track
     unsigned int min_track_candidates_per_track = 2;
-    unsigned int max_track_candidates_per_track = 10;
+    unsigned int max_track_candidates_per_track = 30;
 
     /// Minimum step length that track should make to reach the next surface. It
     /// should be set higher than the overstep tolerance not to make it stay on

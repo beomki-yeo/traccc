@@ -169,6 +169,10 @@ class kalman_fitter {
             seed_params, m_detector.get_bfield(), m_detector,
             std::move(nav_candidates));
 
+        // @TODO: Should be removed once detray is fixed to set the
+        // volume in the constructor
+        propagation._navigation.set_volume(seed_params.surface_link().volume());
+
         // Set overstep tolerance and stepper constraint
         propagation._stepping().set_overstep_tolerance(
             m_cfg.overstep_tolerance);

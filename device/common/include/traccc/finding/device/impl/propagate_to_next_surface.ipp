@@ -79,6 +79,10 @@ TRACCC_DEVICE inline void propagate_to_next_surface(
     typename detray::detail::tuple_element<4, actor_list_type>::type::state s4{
         cfg.min_step_length_for_surface_aborter};
 
+    // @TODO: Should be removed once detray is fixed to set the volume in the
+    // constructor
+    propagation._navigation.set_volume(in_par.surface_link().volume());
+
     // Propagate to the next surface
     propagator.propagate_sync(propagation, std::tie(s0, s1, s2, s3, s4));
 
