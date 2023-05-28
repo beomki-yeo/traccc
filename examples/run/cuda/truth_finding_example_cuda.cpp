@@ -64,6 +64,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     using device_fitter_type =
         traccc::kalman_fitter<rk_stepper_type, device_navigator_type>;
 
+    // Output Stats
+    uint64_t n_found_tracks = 0;
+    uint64_t n_found_tracks_cuda = 0;
+    uint64_t n_fitted_tracks = 0;
+    uint64_t n_fitted_tracks_cuda = 0;
+
     // Memory resources used by the application.
     vecmem::host_memory_resource host_mr;
     vecmem::cuda::host_memory_resource cuda_host_mr;
@@ -222,12 +228,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
             rk_stepper_type, host_navigator_type>::output_type track_candidates;
         traccc::fitting_algorithm<host_fitter_type>::output_type track_states;
 
-        std::cout << std::endl;
-        std::cout << "Event ID: " << event << std::endl;
-
         if (run_cpu) {
-
-            std::cout << "CPU" << std::endl;
 
             {
                 traccc::performance::timer t("Track finding  (cpu)",
@@ -238,9 +239,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                     host_finding(host_det, measurements_per_event, seeds);
             }
 
-            std::cout << "Number of found tracks: " << track_candidates.size()
-                      << std::endl;
-
             {
                 traccc::performance::timer t("Track fitting  (cpu)",
                                              elapsedTimes);
@@ -248,30 +246,53 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                 // Run fitting
                 track_states = host_fitting(host_det, track_candidates);
             }
-
-            std::cout << "Number of fitted tracks: " << track_states.size()
-                      << std::endl;
         }
 
-        std::cout << "CUDA" << std::endl;
-        std::cout << "Number of found tracks: " << track_candidates_cuda.size()
-                  << std::endl;
-        std::cout << "Number of fitted tracks: " << track_states_cuda.size()
-                  << std::endl;
+        if (run_cpu) {
+            // Show which event we are currently presenting the results for.
+            std::cout << "===>>> Event " << event << " <<<===" << std::endl;
+            /*
+            // Compare the track candidates made on the host and on the device.
+            traccc::collection_comparator<traccc::seed> compare_seeds{
+                "seeds", traccc::details::comparator_factory<traccc::seed>{
+                             vecmem::get_data(spacepoints_per_event),
+                             vecmem::get_data(spacepoints_per_event_cuda)}};
+            compare_seeds(vecmem::get_data(seeds),
+                          vecmem::get_data(seeds_cuda));
+            */
+            /// Statistics
+            n_found_tracks += track_candidates.size();
+            n_fitted_tracks += track_states.size();
+            n_found_tracks_cuda += track_candidates_cuda.size();
+            n_fitted_tracks_cuda += track_states_cuda.size();
+        }
 
-        const unsigned int n_fitted_tracks = track_states_cuda.size();
-        for (unsigned int i = 0; i < n_fitted_tracks; i++) {
-            const auto& trk_states_per_track = track_states_cuda.at(i).items;
+        if (i_cfg.check_performance) {
+            for (unsigned int i = 0; i < track_states_cuda.size(); i++) {
+                const auto& trk_states_per_track =
+                    track_states_cuda.at(i).items;
 
-            const auto& fit_info = track_states_cuda[i].header;
+                const auto& fit_info = track_states_cuda[i].header;
 
-            fit_performance_writer.write(trk_states_per_track, fit_info,
-                                         host_det, evt_map);
+                fit_performance_writer.write(trk_states_per_track, fit_info,
+                                             host_det, evt_map);
+            }
         }
     }
 
-    fit_performance_writer.finalize();
+    if (i_cfg.check_performance) {
+        fit_performance_writer.finalize();
+    }
 
+    std::cout << "==> Statistics ... " << std::endl;
+    std::cout << "- created (cuda) " << n_found_tracks_cuda << " found tracks"
+              << std::endl;
+    std::cout << "- created (cuda) " << n_fitted_tracks_cuda << " fitted tracks"
+              << std::endl;
+    std::cout << "- created  (cpu) " << n_found_tracks << " found tracks"
+              << std::endl;
+    std::cout << "- created  (cpu) " << n_fitted_tracks << " fitted tracks"
+              << std::endl;
     std::cout << "==>Elapsed times...\n" << elapsedTimes << std::endl;
 
     return 1;
