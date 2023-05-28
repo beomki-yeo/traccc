@@ -12,6 +12,7 @@
 #include "traccc/definitions/primitives.hpp"
 #include "traccc/device/container_d2h_copy_alg.hpp"
 #include "traccc/device/container_h2d_copy_alg.hpp"
+#include "traccc/efficiency/finding_performance_writer.hpp"
 #include "traccc/finding/finding_algorithm.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
@@ -80,6 +81,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     traccc::memory_resource mr{device_mr, &cuda_host_mr};
 
     // Performance writer
+    traccc::finding_performance_writer find_performance_writer(
+        traccc::finding_performance_writer::config{});
+
+    if (i_cfg.check_performance) {
+        find_performance_writer.add_cache("CPU");
+    }
+
     traccc::fitting_performance_writer::config writer_cfg;
     writer_cfg.file_path = "performance_track_fitting.root";
     traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
@@ -157,12 +165,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
          event < common_opts.events + common_opts.skip; ++event) {
 
         // Truth Track Candidates
-        traccc::event_map2 evt_map(event, common_opts.input_directory,
-                                   common_opts.input_directory,
-                                   common_opts.input_directory);
+        traccc::event_map2 evt_map2(event, common_opts.input_directory,
+                                    common_opts.input_directory,
+                                    common_opts.input_directory);
 
         traccc::track_candidate_container_types::host truth_track_candidates =
-            evt_map.generate_truth_candidates(sg, host_mr);
+            evt_map2.generate_truth_candidates(sg, host_mr);
 
         // Prepare truth seeds
         traccc::bound_track_parameters_collection_types::host seeds(mr.host);
@@ -254,29 +262,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
             // Show which event we are currently presenting the results for.
             std::cout << "===>>> Event " << event << " <<<===" << std::endl;
-            /*
-            // Compare track candidates
-            // @TODO: Use the comparator
-            std::cout << "Cuda cand " << std::endl;
-            for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
-                const auto& cands = track_candidates_cuda.at(i).items;
-                for (const auto& cand : cands) {
-                    std::cout << " (" << cand.meas.local[0] << ","
-                              << cand.meas.local[1] << ") ";
-                }
-                std::cout << std::endl;
-            }
-
-            std::cout << "Cpu cand " << std::endl;
-            for (unsigned int i = 0; i < track_candidates.size(); i++) {
-                const auto& cands = track_candidates.at(i).items;
-                for (const auto& cand : cands) {
-                    std::cout << " (" << cand.meas.local[0] << ","
-                              << cand.meas.local[1] << ") ";
-                }
-                std::cout << std::endl;
-            }
-            */
             unsigned int n_matches = 0;
             for (unsigned int i = 0; i < track_candidates.size(); i++) {
                 auto iso = traccc::details::is_same_object(
@@ -285,8 +270,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                 for (unsigned int j = 0; j < track_candidates_cuda.size();
                      j++) {
                     if (iso(track_candidates_cuda.at(j).items)) {
-                        // std::cout << i << "  " << j << std::endl;
-
                         n_matches++;
                         break;
                     }
@@ -296,21 +279,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                       << float(n_matches) / track_candidates.size()
                       << std::endl;
 
-            /*
-            for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
-                auto iso = traccc::details::is_same_object(
-                    track_candidates_cuda.at(i).items);
-
-                for (unsigned int j = 0; j < track_candidates.size(); j++) {
-                    if (iso(track_candidates.at(j).items)) {
-                        n_matches++;
-                        break;
-                    }
-                }
-            }
-            std::cout << float(n_matches) / track_candidates_cuda.size()
-                      << std::endl;
-            */
             /// Statistics
             n_found_tracks += track_candidates.size();
             n_fitted_tracks += track_states.size();
@@ -319,6 +287,9 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         }
 
         if (i_cfg.check_performance) {
+            find_performance_writer.write(
+                "CPU", traccc::get_data(track_candidates), evt_map2);
+
             for (unsigned int i = 0; i < track_states_cuda.size(); i++) {
                 const auto& trk_states_per_track =
                     track_states_cuda.at(i).items;
@@ -326,12 +297,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                 const auto& fit_info = track_states_cuda[i].header;
 
                 fit_performance_writer.write(trk_states_per_track, fit_info,
-                                             host_det, evt_map);
+                                             host_det, evt_map2);
             }
         }
     }
 
     if (i_cfg.check_performance) {
+        find_performance_writer.finalize();
         fit_performance_writer.finalize();
     }
 
