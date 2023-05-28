@@ -93,7 +93,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
              * Material interaction
              *************************/
 
-            // Get intersection at surface`
+            // Get intersection at surface
             const auto free_vec = det.bound_to_free_vector(
                 in_param.surface_link(), in_param.vector());
             const auto& mask_store = det.mask_store();
@@ -189,13 +189,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     typename interaction_register<interactor>::state s2{s3};
                     typename detray::next_surface_aborter::state s4{
                         m_cfg.min_step_length_for_surface_aborter};
-                    typename propagation::print_inspector::state s5{};
+                    // typename propagation::print_inspector::state s5{};
 
-                    /*
-                    // Propagate to the next surface
-                    propagator.propagate_sync(propagation,
-                                              std::tie(s0, s1, s2, s3, s4));
-                    */
                     // @TODO: Should be removed once detray is fixed to set the
                     // volume in the constructor
                     propagation._navigation.set_volume(
@@ -203,8 +198,12 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
                     // Propagate to the next surface
                     propagator.propagate_sync(propagation,
-                                              std::tie(s0, s1, s2, s3, s4, s5));
+                                              std::tie(s0, s1, s2, s3, s4));
 
+                    /*
+                    propagator.propagate_sync(propagation,
+                                              std::tie(s0, s1, s2, s3, s4, s5));
+                    */
                     // If a surface found, add the parameter for the next
                     // step
                     if (s4.success) {
