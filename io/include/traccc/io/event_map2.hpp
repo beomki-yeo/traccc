@@ -76,7 +76,8 @@ struct event_map2 {
                 candidates.push_back(cand);
             }
 
-            std::cout << "n measurements: " << measurements.size() << std::endl;
+            // std::cout << "n measurements: " << measurements.size() <<
+            // std::endl;
 
             track_candidates.push_back(std::move(seed_params),
                                        std::move(candidates));

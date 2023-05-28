@@ -50,7 +50,7 @@ int simulate(std::string output_directory, unsigned int events,
 
     // B field value and its type
     // @TODO: Set B field as argument
-    const vector3 B{2 * detray::unit<scalar>::T, 0, 0};
+    const vector3 B{0, 0, 2 * detray::unit<scalar>::T};
     using field_type = typename detector_type::bfield_type;
 
     // Create the toy geometry

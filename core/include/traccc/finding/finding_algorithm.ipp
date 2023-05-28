@@ -72,8 +72,10 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         // Iterate over input parameters
         const std::size_t n_in_params = in_params.size();
 
+        /*
         std::cout << "Step: " << step << "  n params: " << n_in_params
                   << std::endl;
+        */
 
         // Terminate if there is no parameter to proceed
         if (n_in_params == 0) {
@@ -100,7 +102,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
              * Material interaction
              *************************/
 
-            // Get intersection at surface
+            // Get intersection at surface`
             const auto free_vec = det.bound_to_free_vector(
                 in_param.surface_link(), in_param.vector());
             const auto& mask_store = det.mask_store();
@@ -170,11 +172,12 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             const unsigned int n_meas = measurements_on_surface.size();
             unsigned int n_branches = 0;
 
+            /*
             std::cout << "n meas: " << n_meas << std::endl;
+            */
 
             // Iterate over the measurements
             for (unsigned int item_id = 0; item_id < n_meas; item_id++) {
-                n_branches++;
                 if (n_branches > m_cfg.max_num_branches_per_surface) {
                     break;
                 }
@@ -194,11 +197,14 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                 // Get the chi-square
                 const auto chi2 = trk_state.filtered_chi2();
 
+                /*
                 std::cout << "(" << item_id << "  " << chi2 << ") "
                           << std::endl;
+                */
 
                 // Found a good measurement
                 if (chi2 < m_cfg.chi2_max) {
+                    n_branches++;
 
                     /*
                     unsigned int prev_link_id =

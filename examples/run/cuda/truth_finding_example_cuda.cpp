@@ -19,6 +19,7 @@
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/finding_input_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
+#include "traccc/performance/timer.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/seed_generator.hpp"
 
@@ -41,7 +42,7 @@
 
 namespace po = boost::program_options;
 
-int seq_run(const traccc::finding_input_config& /*i_cfg*/,
+int seq_run(const traccc::finding_input_config& i_cfg,
             const traccc::common_options& common_opts, bool run_cpu) {
 
     /// Type declarations
@@ -81,7 +82,7 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
 
     // B field value and its type
     // @TODO: Set B field as argument
-    const traccc::vector3 B{2 * detray::unit<traccc::scalar>::T, 0, 0};
+    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
 
     // Create the toy geometry
     host_detector_type host_det =
@@ -125,6 +126,9 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
     // Finding algorithm configuration
     typename traccc::cuda::finding_algorithm<
         rk_stepper_type, device_navigator_type>::config_type cfg;
+    cfg.min_track_candidates_per_track = i_cfg.track_candidates_range[0];
+    cfg.max_track_candidates_per_track = i_cfg.track_candidates_range[1];
+
     // few tracks (~1 out of 1000 tracks) are missed when chi2_max = 15
     cfg.chi2_max = 30.f;
 
@@ -137,6 +141,8 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
     // Fitting algorithm object
     traccc::fitting_algorithm<host_fitter_type> host_fitting;
     traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(mr);
+
+    traccc::performance::timing_info elapsedTimes;
 
     // Iterate over events
     for (unsigned int event = common_opts.skip;
@@ -185,10 +191,14 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
                 seeds.size(),
             mr.main, mr.host);
 
-        // Run finding
-        track_candidates_cuda_buffer =
-            device_finding(det_view, navigation_buffer, measurements_buffer,
-                           std::move(seeds_buffer));
+        {
+            traccc::performance::timer t("Track finding  (cuda)", elapsedTimes);
+
+            // Run finding
+            track_candidates_cuda_buffer =
+                device_finding(det_view, navigation_buffer, measurements_buffer,
+                               std::move(seeds_buffer));
+        }
 
         traccc::track_candidate_container_types::host track_candidates_cuda =
             track_candidate_d2h(track_candidates_cuda_buffer);
@@ -197,10 +207,13 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
         traccc::track_state_container_types::buffer track_states_cuda_buffer{
             {{}, *(mr.host)}, {{}, *(mr.host), mr.host}};
 
-        // Run fitting
-        track_states_cuda_buffer = device_fitting(det_view, navigation_buffer,
-                                                  track_candidates_cuda_buffer);
+        {
+            traccc::performance::timer t("Track fitting  (cuda)", elapsedTimes);
 
+            // Run fitting
+            track_states_cuda_buffer = device_fitting(
+                det_view, navigation_buffer, track_candidates_cuda_buffer);
+        }
         traccc::track_state_container_types::host track_states_cuda =
             track_state_d2h(track_states_cuda_buffer);
 
@@ -209,32 +222,42 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
             rk_stepper_type, host_navigator_type>::output_type track_candidates;
         traccc::fitting_algorithm<host_fitter_type>::output_type track_states;
 
+        std::cout << std::endl;
         std::cout << "Event ID: " << event << std::endl;
 
         if (run_cpu) {
 
-            // Run finding
-            track_candidates =
-                host_finding(host_det, measurements_per_event, seeds);
+            std::cout << "CPU" << std::endl;
+
+            {
+                traccc::performance::timer t("Track finding  (cpu)",
+                                             elapsedTimes);
+
+                // Run finding
+                track_candidates =
+                    host_finding(host_det, measurements_per_event, seeds);
+            }
 
             std::cout << "Number of found tracks: " << track_candidates.size()
                       << std::endl;
 
-            // Run fitting
-            track_states = host_fitting(host_det, track_candidates);
+            {
+                traccc::performance::timer t("Track fitting  (cpu)",
+                                             elapsedTimes);
+
+                // Run fitting
+                track_states = host_fitting(host_det, track_candidates);
+            }
 
             std::cout << "Number of fitted tracks: " << track_states.size()
                       << std::endl;
         }
 
-        /*
         std::cout << "CUDA" << std::endl;
-        std::cout << "Number of seeds: " << seeds.size() << std::endl;
         std::cout << "Number of found tracks: " << track_candidates_cuda.size()
                   << std::endl;
         std::cout << "Number of fitted tracks: " << track_states_cuda.size()
                   << std::endl;
-        */
 
         const unsigned int n_fitted_tracks = track_states_cuda.size();
         for (unsigned int i = 0; i < n_fitted_tracks; i++) {
@@ -248,6 +271,8 @@ int seq_run(const traccc::finding_input_config& /*i_cfg*/,
     }
 
     fit_performance_writer.finalize();
+
+    std::cout << "==>Elapsed times...\n" << elapsedTimes << std::endl;
 
     return 1;
 }

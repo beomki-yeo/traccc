@@ -102,7 +102,7 @@ struct gain_matrix_updater {
             printf("\n");
         }
         */
-       
+
         // Set the stepper parameter
         bound_params.set_vector(filtered_vec);
         bound_params.set_covariance(filtered_cov);

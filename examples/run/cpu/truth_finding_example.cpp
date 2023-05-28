@@ -66,7 +66,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // B field value and its type
     // @TODO: Set B field as argument
-    const traccc::vector3 B{2 * detray::unit<traccc::scalar>::T, 0, 0};
+    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
 
     // Create the toy geometry
     host_detector_type host_det =
