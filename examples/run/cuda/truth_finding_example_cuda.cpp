@@ -19,6 +19,8 @@
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/finding_input_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
+#include "traccc/performance/collection_comparator.hpp"
+#include "traccc/performance/container_comparator.hpp"
 #include "traccc/performance/timer.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/seed_generator.hpp"
@@ -251,15 +253,45 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         if (run_cpu) {
             // Show which event we are currently presenting the results for.
             std::cout << "===>>> Event " << event << " <<<===" << std::endl;
-            /*
-            // Compare the track candidates made on the host and on the device.
-            traccc::collection_comparator<traccc::seed> compare_seeds{
-                "seeds", traccc::details::comparator_factory<traccc::seed>{
-                             vecmem::get_data(spacepoints_per_event),
-                             vecmem::get_data(spacepoints_per_event_cuda)}};
-            compare_seeds(vecmem::get_data(seeds),
-                          vecmem::get_data(seeds_cuda));
-            */
+
+            // Compare track candidates
+            // @TODO: Use the comparator
+
+            std::cout << "Cuda cand " << std::endl;
+            for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
+                const auto& cands = track_candidates_cuda.at(i).items;
+                for (const auto& cand : cands) {
+                    std::cout << " (" << cand.meas.local[0] << ","
+                              << cand.meas.local[1] << ") ";
+                }
+                std::cout << std::endl;
+            }
+
+            std::cout << "Cpu cand " << std::endl;
+            for (unsigned int i = 0; i < track_candidates.size(); i++) {
+                const auto& cands = track_candidates.at(i).items;
+                for (const auto& cand : cands) {
+                    std::cout << " (" << cand.meas.local[0] << ","
+                              << cand.meas.local[1] << ") ";
+                }
+                std::cout << std::endl;
+            }
+
+            unsigned int n_matches = 0;
+            for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
+                auto iso = traccc::details::is_same_object(
+                    track_candidates_cuda.at(i).items);
+
+                for (unsigned int j = 0; j < track_candidates.size(); j++) {
+                    if (iso(track_candidates.at(j).items)) {
+                        n_matches++;
+                        break;
+                    }
+                }
+            }
+            std::cout << float(n_matches) / track_candidates_cuda.size()
+                      << std::endl;
+
             /// Statistics
             n_found_tracks += track_candidates.size();
             n_fitted_tracks += track_states.size();

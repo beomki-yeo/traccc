@@ -8,6 +8,8 @@
 // Library include(s).
 #include "traccc/performance/details/is_same_object.hpp"
 
+#include <iostream>
+
 #include "traccc/performance/details/is_same_angle.hpp"
 #include "traccc/performance/details/is_same_scalar.hpp"
 
@@ -99,6 +101,48 @@ bool is_same_object<bound_track_parameters>::operator()(
             is_same_scalar(obj.theta(), m_ref.get().theta(), m_unc) &&
             is_same_scalar(obj.time(), m_ref.get().time(), m_unc) &&
             is_same_scalar(obj.qop(), m_ref.get().qop(), m_unc));
+}
+
+/// @}
+
+/// @name Implementation for
+///       @c
+///       traccc::details::is_same_object<track_candidate_collection_types::host>
+/// @{
+
+is_same_object<track_candidate_collection_types::host>::is_same_object(
+    const track_candidate_collection_types::host& ref, scalar unc)
+    : m_ref(ref), m_unc(unc) {}
+
+bool is_same_object<track_candidate_collection_types::host>::operator()(
+    const track_candidate_collection_types::host& obj) const {
+
+    unsigned int n_cands = 0;
+    for (unsigned int i = 0; i < m_ref.get().size(); i++) {
+        // @TODO: Default surface link value is zero in traccc but this is
+        // error-prone
+        if (m_ref.get()[i].meas == measurement{}) {
+            break;
+        }
+        n_cands++;
+    }
+
+    if (n_cands == obj.size()) {
+        for (unsigned int i = 0; i < n_cands; i++) {
+
+            const bool is_same = m_ref.get()[i] == obj[i];
+
+            if (!is_same) {
+                return false;
+            }
+        }
+    }
+    // return false if the size is different
+    else {
+        return false;
+    }
+
+    return true;
 }
 
 /// @}
