@@ -139,6 +139,7 @@ TEST(thrust, copy) {
     ASSERT_EQ(jagged_vec[2].size(), 2);
     ASSERT_EQ(jagged_vec[2][0], 1);
     ASSERT_EQ(jagged_vec[2][1], 1);
+}
 
 TEST(thrust, fill) {
 
