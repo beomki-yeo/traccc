@@ -112,6 +112,8 @@ TEST(CUDAContainerCopy, DeviceToHostResizableBuffer) {
 
     const auto& host_items = host_copy.get_items();
     ASSERT_EQ(host_items.size(), 3u);
+
+    // The test fails
     ASSERT_EQ(host_items[0].size(), 0u);
     ASSERT_EQ(host_items[1].size(), 0u);
     ASSERT_EQ(host_items[2].size(), 0u);

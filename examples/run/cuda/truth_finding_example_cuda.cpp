@@ -251,12 +251,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         }
 
         if (run_cpu) {
+
             // Show which event we are currently presenting the results for.
             std::cout << "===>>> Event " << event << " <<<===" << std::endl;
-
+            /*
             // Compare track candidates
             // @TODO: Use the comparator
-
             std::cout << "Cuda cand " << std::endl;
             for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
                 const auto& cands = track_candidates_cuda.at(i).items;
@@ -276,8 +276,27 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                 }
                 std::cout << std::endl;
             }
-
+            */
             unsigned int n_matches = 0;
+            for (unsigned int i = 0; i < track_candidates.size(); i++) {
+                auto iso = traccc::details::is_same_object(
+                    track_candidates.at(i).items);
+
+                for (unsigned int j = 0; j < track_candidates_cuda.size();
+                     j++) {
+                    if (iso(track_candidates_cuda.at(j).items)) {
+                        // std::cout << i << "  " << j << std::endl;
+
+                        n_matches++;
+                        break;
+                    }
+                }
+            }
+            std::cout << "Track candidate matching Rate: "
+                      << float(n_matches) / track_candidates.size()
+                      << std::endl;
+
+            /*
             for (unsigned int i = 0; i < track_candidates_cuda.size(); i++) {
                 auto iso = traccc::details::is_same_object(
                     track_candidates_cuda.at(i).items);
@@ -291,7 +310,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
             }
             std::cout << float(n_matches) / track_candidates_cuda.size()
                       << std::endl;
-
+            */
             /// Statistics
             n_found_tracks += track_candidates.size();
             n_fitted_tracks += track_states.size();

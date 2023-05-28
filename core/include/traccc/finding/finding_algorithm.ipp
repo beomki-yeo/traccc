@@ -72,11 +72,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         // Iterate over input parameters
         const std::size_t n_in_params = in_params.size();
 
-        /*
-        std::cout << "Step: " << step << "  n params: " << n_in_params
-                  << std::endl;
-        */
-
         // Terminate if there is no parameter to proceed
         if (n_in_params == 0) {
             break;
@@ -91,10 +86,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
         for (unsigned int in_param_id = 0; in_param_id < n_in_params;
              in_param_id++) {
-
-            // Current link ID
-            unsigned int cur_link_id =
-                static_cast<unsigned int>(links[step].size());
 
             bound_track_parameters& in_param = in_params[in_param_id];
 
@@ -130,18 +121,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             // Get module id
             const auto module_id = in_param.surface_link();
 
-            // Search for measuremetns header ID
-            /*
-            const auto lo2 = std::lower_bound(
-                module_map.begin(), module_map.end(), module_id.value(),
-                compare_pair_int<std::pair, unsigned int>());
-            const auto header_id = (*lo2).second;
-
-            if (lo2 == module_map.end()) {
-                break;
-            }
-            */
-
             unsigned int header_id;
             if (std::binary_search(
                     module_map.begin(), module_map.end(), module_id.value(),
@@ -151,19 +130,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     compare_pair_int<std::pair, unsigned int>());
                 header_id = (*lo2).second;
             } else {
-                // std::cout << "Module not found" << std::endl;
                 continue;
             }
-            /*
-            for (const auto& a : module_map) {
-                std::cout << "(" << a.first << "," <<  a.second << ") ";
-            }
-            std::cout << std::endl;
-
-            std::cout << module_map.size() << " " << header_id << " "
-                      << module_id.value() << " " << measurements.size()
-                      << std::endl;
-            */
 
             // Get measurements on surface
             const auto measurements_on_surface =
@@ -171,10 +139,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
             const unsigned int n_meas = measurements_on_surface.size();
             unsigned int n_branches = 0;
-
-            /*
-            std::cout << "n meas: " << n_meas << std::endl;
-            */
 
             // Iterate over the measurements
             for (unsigned int item_id = 0; item_id < n_meas; item_id++) {
@@ -197,24 +161,15 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                 // Get the chi-square
                 const auto chi2 = trk_state.filtered_chi2();
 
-                /*
-                std::cout << "(" << item_id << "  " << chi2 << ") "
-                          << std::endl;
-                */
-
                 // Found a good measurement
                 if (chi2 < m_cfg.chi2_max) {
+
+                    // Current link ID
+                    unsigned int cur_link_id =
+                        static_cast<unsigned int>(links[step].size());
+
                     n_branches++;
 
-                    /*
-                    unsigned int prev_link_id =
-                        (step == 0) ? in_param_id
-                                    : param_to_link[previous_step][in_param_id];
-
-                    links[step].push_back({{previous_step, prev_link_id},
-                                           {header_id, item_id},
-                                           module_id});
-                    */
                     links[step].push_back({{previous_step, in_param_id},
                                            {header_id, item_id},
                                            module_id});
@@ -249,7 +204,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     // Propagate to the next surface
                     propagator.propagate_sync(propagation,
                                               std::tie(s0, s1, s2, s3, s4, s5));
-                    // std::cout << s5.to_string();
 
                     // If a surface found, add the parameter for the next
                     // step
@@ -263,11 +217,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     else if (!s4.success &&
                              step >= m_cfg.min_track_candidates_per_track - 1) {
                         tips.push_back({step, cur_link_id});
-
-                        /*
-                        std::cout << "step: " << step
-                                  << " Tip size: " << tips.size() << std::endl;
-                        */
                     }
                 }
             }
@@ -284,31 +233,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     // Number of found tracks = number of tips
     output_candidates.reserve(tips.size());
 
-    /*
-    std::cout << "Tip size: " << tips.size() << std::endl;
-    for (std::size_t i = 0; i < links.size(); i++) {
-        if (links[i].size() == 0)
-            continue;
-
-        for (std::size_t j = 0; j < links[i].size(); j++) {
-            const auto L = links[i][j];
-
-            std::cout << "(" << L.previous.first << " " << L.previous.second
-                      << " " << i << " " << j << ") ";
-        }
-        std::cout << std::endl;
-    }
-
-    for (std::size_t i = 0; i < param_to_link.size(); i++) {
-        if (param_to_link[i].size() == 0)
-            continue;
-        for (std::size_t j = 0; j < param_to_link[i].size(); j++) {
-
-            std::cout << param_to_link[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    */
     for (const auto& tip : tips) {
 
         // Skip if the number of tracks candidates is too small
@@ -343,11 +267,6 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 
             const auto l_pos =
                 param_to_link[L.previous.first][L.previous.second];
-
-            /*
-            std::cout << l_pos << " " << L.previous.first << "  "
-                      << L.previous.second << std::endl;
-            */
 
             L = links[L.previous.first][l_pos];
         }
