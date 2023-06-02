@@ -106,7 +106,8 @@ TEST_P(CkfSparseTrackTests, Run) {
         host_finding(cfg, mr);
 
     // Fitting algorithm object
-    traccc::fitting_algorithm<host_fitter_type> host_fitting;
+    typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
+    traccc::fitting_algorithm<host_fitter_type> host_fitting(fit_cfg);
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

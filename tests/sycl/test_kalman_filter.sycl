@@ -136,7 +136,10 @@ TEST_P(KalmanFittingTests, Run) {
     seed_generator<host_detector_type> sg(host_det, stddevs);
 
     // Fitting algorithm object
-    traccc::sycl::fitting_algorithm<device_fitter_type> device_fitting(mr, &q);
+    typename traccc::sycl::fitting_algorithm<device_fitter_type>::config_type
+        fit_cfg;
+    traccc::sycl::fitting_algorithm<device_fitter_type> device_fitting(fit_cfg,
+                                                                       mr, &q);
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

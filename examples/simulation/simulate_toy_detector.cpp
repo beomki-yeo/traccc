@@ -13,6 +13,7 @@
 #include "traccc/options/handle_argument_errors.hpp"
 #include "traccc/options/options.hpp"
 #include "traccc/options/particle_gen_options.hpp"
+#include "traccc/options/propagation_options.hpp"
 
 // detray include(s).
 #include "detray/detectors/create_toy_geometry.hpp"
@@ -29,7 +30,8 @@ using namespace traccc;
 namespace po = boost::program_options;
 
 int simulate(std::string output_directory, unsigned int events,
-             const traccc::particle_gen_options<scalar>& pg_opts) {
+             const traccc::particle_gen_options<scalar>& pg_opts,
+             const traccc::propagation_options<scalar>& propagation_opts) {
 
     // Use deterministic random number generator for testing
     using uniform_gen_t =
@@ -83,6 +85,8 @@ int simulate(std::string output_directory, unsigned int events,
 
     auto sim = detray::simulator(events, det, std::move(generator),
                                  meas_smearer, full_path);
+    sim.get_config().step_constraint = propagation_opts.step_constraint;
+    sim.get_config().overstep_tolerance = propagation_opts.overstep_tolerance;
 
     sim.run();
 
@@ -102,6 +106,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()("events", po::value<unsigned int>()->required(),
                        "number of events");
     traccc::particle_gen_options<scalar> pg_opts(desc);
+    traccc::propagation_options<scalar> propagation_opts(desc);
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -113,9 +118,10 @@ int main(int argc, char* argv[]) {
     auto output_directory = vm["output_directory"].as<std::string>();
     auto events = vm["events"].as<unsigned int>();
     pg_opts.read(vm);
+    propagation_opts.read(vm);
 
     std::cout << "Running " << argv[0] << " " << output_directory << " "
               << events << std::endl;
 
-    return simulate(output_directory, events, pg_opts);
+    return simulate(output_directory, events, pg_opts, propagation_opts);
 }

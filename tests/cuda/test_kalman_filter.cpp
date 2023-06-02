@@ -115,7 +115,10 @@ TEST_P(KalmanFittingTests, Run) {
     seed_generator<host_detector_type> sg(host_det, stddevs);
 
     // Fitting algorithm object
-    traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(mr);
+    typename traccc::cuda::fitting_algorithm<device_fitter_type>::config_type
+        fit_cfg;
+    traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(fit_cfg,
+                                                                       mr);
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

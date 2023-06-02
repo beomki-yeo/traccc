@@ -93,7 +93,8 @@ TEST_P(KalmanFittingTests, Run) {
     seed_generator<host_detector_type> sg(det, stddevs);
 
     // Fitting algorithm object
-    fitting_algorithm<host_fitter_type> fitting;
+    typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
+    fitting_algorithm<host_fitter_type> fitting(fit_cfg);
 
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {

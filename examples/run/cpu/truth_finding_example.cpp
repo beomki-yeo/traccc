@@ -15,6 +15,7 @@
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/finding_input_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
+#include "traccc/options/propagation_options.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/seed_generator.hpp"
 
@@ -32,9 +33,11 @@
 #include <iomanip>
 #include <iostream>
 
+using namespace traccc;
 namespace po = boost::program_options;
 
 int seq_run(const traccc::finding_input_config& i_cfg,
+            const traccc::propagation_options<scalar>& propagation_opts,
             const traccc::common_options& common_opts) {
 
     /// Type declarations
@@ -96,6 +99,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                                        host_navigator_type>::config_type cfg;
     cfg.min_track_candidates_per_track = i_cfg.track_candidates_range[0];
     cfg.max_track_candidates_per_track = i_cfg.track_candidates_range[1];
+    cfg.constrained_step_size = propagation_opts.step_constraint;
 
     // few tracks (~1 out of 1000 tracks) are missed when chi2_max = 15
     cfg.chi2_max = 30.f;
@@ -105,7 +109,9 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         host_finding(cfg, mr);
 
     // Fitting algorithm object
-    traccc::fitting_algorithm<host_fitter_type> host_fitting;
+    typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
+    fit_cfg.step_constraint = propagation_opts.step_constraint;
+    traccc::fitting_algorithm<host_fitter_type> host_fitting(fit_cfg);
 
     // Iterate over events
     for (unsigned int event = common_opts.skip;
@@ -173,6 +179,7 @@ int main(int argc, char* argv[]) {
     desc.add_options()("help,h", "Give some help with the program's options");
     traccc::common_options common_opts(desc);
     traccc::finding_input_config finding_input_cfg(desc);
+    traccc::propagation_options<scalar> propagation_opts(desc);
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -187,5 +194,5 @@ int main(int argc, char* argv[]) {
     std::cout << "Running " << argv[0] << " " << common_opts.input_directory
               << " " << common_opts.events << std::endl;
 
-    return seq_run(finding_input_cfg, common_opts);
+    return seq_run(finding_input_cfg, propagation_opts, common_opts);
 }
