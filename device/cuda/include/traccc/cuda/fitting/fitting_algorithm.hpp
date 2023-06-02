@@ -35,7 +35,7 @@ class fitting_algorithm
     public:
     using transform3_type = typename fitter_t::transform3_type;
     /// Configuration type
-    using config_type = fitting_config<typename fitter_t::scalar_type>;
+    using config_type = typename fitter_t::config_type;
 
     /// Constructor for the fitting algorithm
     ///
