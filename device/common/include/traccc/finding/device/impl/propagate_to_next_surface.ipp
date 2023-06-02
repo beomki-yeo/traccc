@@ -62,6 +62,9 @@ TRACCC_DEVICE inline void propagate_to_next_surface(
     typename propagator_t::state propagation(
         in_par, det.get_bfield(), det,
         std::move(nav_candidates.at(globalIndex)));
+    propagation._stepping
+        .template set_constraint<detray::step::constraint::e_accuracy>(
+            cfg.constrained_step_size);
 
     // Actor state
     // @TODO: simplify the syntax here

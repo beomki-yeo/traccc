@@ -190,6 +190,7 @@ int main(int argc, char* argv[]) {
     // Read options
     common_opts.read(vm);
     finding_input_cfg.read(vm);
+    propagation_opts.read(vm);
 
     std::cout << "Running " << argv[0] << " " << common_opts.input_directory
               << " " << common_opts.events << std::endl;

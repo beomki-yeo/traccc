@@ -352,6 +352,7 @@ int main(int argc, char* argv[]) {
     // Read options
     common_opts.read(vm);
     finding_input_cfg.read(vm);
+    propagation_opts.read(vm);
     auto run_cpu = vm["run_cpu"].as<bool>();
 
     std::cout << "Running " << argv[0] << " " << common_opts.input_directory

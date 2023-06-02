@@ -181,6 +181,9 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                     // Create propagator state
                     typename propagator_type::state propagation(
                         trk_state.filtered(), det.get_bfield(), det);
+                    propagation._stepping.template set_constraint<
+                        detray::step::constraint::e_accuracy>(
+                        m_cfg.constrained_step_size);
 
                     typename detray::pathlimit_aborter::state s0;
                     typename detray::parameter_transporter<
