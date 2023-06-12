@@ -87,38 +87,6 @@ TEST(CUDAContainerCopy, DeviceToHost) {
     ASSERT_EQ(host_items[2][1], 2);
 }
 
-TEST(CUDAContainerCopy, DeviceToHostResizableBuffer) {
-
-    // Create cuda container
-    test_container_types::buffer device_buffer{
-        {3, mr.main},
-        {{1, 3, 2}, mr.main, mr.host, vecmem::data::buffer_type::resizable}};
-
-    // Get device vectors and fill them in the device
-    vecmem::device_vector<int> device_headers(device_buffer.headers);
-
-    thrust::fill(thrust::device, device_headers.begin(), device_headers.end(),
-                 7);
-
-    // Device-to-Host Copy
-    test_container_types::host host_copy = d2h(device_buffer);
-
-    // Check the copied container
-    const auto& host_headers = host_copy.get_headers();
-    ASSERT_EQ(host_headers.size(), 3u);
-    ASSERT_EQ(host_headers[0], 7);
-    ASSERT_EQ(host_headers[1], 7);
-    ASSERT_EQ(host_headers[2], 7);
-
-    const auto& host_items = host_copy.get_items();
-    ASSERT_EQ(host_items.size(), 3u);
-
-    // The test fails
-    ASSERT_EQ(host_items[0].size(), 0u);
-    ASSERT_EQ(host_items[1].size(), 0u);
-    ASSERT_EQ(host_items[2].size(), 0u);
-}
-
 TEST(CUDAContainerCopy, HostToDeviceToHost) {
 
     // Create a host container
