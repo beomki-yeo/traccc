@@ -13,7 +13,6 @@
 #include "traccc/edm/track_candidate.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/finding/finding_config.hpp"
-#include "traccc/finding/inspector.hpp"
 #include "traccc/finding/interaction_register.hpp"
 #include "traccc/fitting/kalman_filter/gain_matrix_updater.hpp"
 #include "traccc/utils/algorithm.hpp"
