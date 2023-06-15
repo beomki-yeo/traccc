@@ -30,10 +30,6 @@ struct finding_config {
     /// the same surface
     scalar_t min_step_length_for_surface_aborter =
         0.1f * detray::unit<scalar_t>::mm;
-    /*
-    scalar_t min_step_length_for_surface_aborter =
-        0.1f * detray::unit<scalar_t>::mm;
-    */
     /// Maximum Chi-square that is allowed for branching
     scalar_t chi2_max = 15.f;
 
