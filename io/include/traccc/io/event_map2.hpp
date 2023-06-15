@@ -8,8 +8,6 @@
 #pragma once
 
 // Project include(s).
-#include <iostream>
-
 #include "traccc/edm/measurement.hpp"
 #include "traccc/edm/particle.hpp"
 #include "traccc/edm/spacepoint.hpp"

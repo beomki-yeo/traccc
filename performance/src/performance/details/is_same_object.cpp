@@ -8,8 +8,6 @@
 // Library include(s).
 #include "traccc/performance/details/is_same_object.hpp"
 
-#include <iostream>
-
 #include "traccc/performance/details/is_same_angle.hpp"
 #include "traccc/performance/details/is_same_scalar.hpp"
 

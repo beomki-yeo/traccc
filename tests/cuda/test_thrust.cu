@@ -15,7 +15,6 @@
 #include <vecmem/utils/cuda/copy.hpp>
 
 // Thrust include(s).
-#include <thrust/copy.h>
 #include <thrust/execution_policy.h>
 #include <thrust/fill.h>
 #include <thrust/scan.h>
@@ -24,8 +23,7 @@
 // GTest include(s).
 #include <gtest/gtest.h>
 
-// System include(s).
-#include <vector>
+// This defines the local frame test suite
 
 namespace {
 vecmem::cuda::copy copy;
