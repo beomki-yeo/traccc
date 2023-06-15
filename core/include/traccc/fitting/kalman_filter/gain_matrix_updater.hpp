@@ -94,15 +94,6 @@ struct gain_matrix_updater {
         const matrix_type<1, 1> chi2 = matrix_operator().transpose(residual) *
                                        matrix_operator().inverse(R) * residual;
 
-        /*
-        for (std::size_t i = 0; i < 6; i++) {
-            for (std::size_t j = 0; j < 6; j++) {
-                printf("%f ", getter::element(predicted_cov, i, j));
-            }
-            printf("\n");
-        }
-        */
-
         // Set the stepper parameter
         bound_params.set_vector(filtered_vec);
         bound_params.set_covariance(filtered_cov);

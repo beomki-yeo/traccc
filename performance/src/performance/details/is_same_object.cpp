@@ -127,32 +127,6 @@ bool is_same_object<track_candidate_collection_types::host>::operator()(
         }
     }
 
-    /*
-    unsigned int n_cands = 0;
-    for (unsigned int i = 0; i < m_ref.get().size(); i++) {
-        // @TODO: Default surface link value is zero in traccc but this is
-        // error-prone
-        if (m_ref.get()[i].meas == measurement{}) {
-            break;
-        }
-        n_cands++;
-    }
-
-    if (n_cands == obj.size()) {
-        for (unsigned int i = 0; i < n_cands; i++) {
-
-            const bool is_same = m_ref.get()[i] == obj[i];
-
-            if (!is_same) {
-                return false;
-            }
-        }
-    }
-    // return false if the size is different
-    else {
-        return false;
-    }
-    */
     return true;
 }
 
