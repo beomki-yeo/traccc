@@ -13,6 +13,9 @@ traccc::seeding_input_config::seeding_input_config(
 
     desc.add_options()("detector_file", po::value<std::string>()->required(),
                        "specify detector file");
+    desc.add_options()("run_detray_geometry",
+                       po::value<bool>()->default_value(false),
+                       "generate performance result");                       
     desc.add_options()("check_performance",
                        po::value<bool>()->default_value(false),
                        "generate performance result");
