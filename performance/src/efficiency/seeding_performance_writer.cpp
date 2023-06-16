@@ -62,10 +62,11 @@ void seeding_performance_writer::add_cache(std::string_view name) {
         name, m_data->m_duplication_plot_caches[name.data()]);
 }
 
+template <typename event_map_t>
 void seeding_performance_writer::write(
     std::string_view name, const seed_collection_types::const_view& seeds_view,
     const spacepoint_collection_types::const_view& spacepoints_view,
-    const event_map& evt_map) {
+    const event_map_t& evt_map) {
 
     std::map<particle_id, std::size_t> match_counter;
 
@@ -132,5 +133,15 @@ void seeding_performance_writer::finalize() {
         m_data->m_duplication_plot_tool.write(cache);
     }
 }
+
+template void seeding_performance_writer::write<event_map>(
+    std::string_view name, const seed_collection_types::const_view& seeds_view,
+    const spacepoint_collection_types::const_view& spacepoints_view,
+    const event_map& evt_map);
+
+template void seeding_performance_writer::write<event_map2>(
+    std::string_view name, const seed_collection_types::const_view& seeds_view,
+    const spacepoint_collection_types::const_view& spacepoints_view,
+    const event_map2& evt_map);
 
 }  // namespace traccc

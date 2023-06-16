@@ -38,6 +38,11 @@ namespace po = boost::program_options;
 int seq_run(const traccc::seeding_input_config& i_cfg,
             const traccc::common_options& common_opts) {
 
+    // Declare detector type
+    using detector_t =
+        detray::detector<detray::detector_registry::toy_detector>;
+    detector_t det{host_mr};
+
     // Memory resource used by the EDM.
     vecmem::host_memory_resource host_mr;
 
@@ -47,38 +52,16 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     if (i_cfg.run_detray_geometry == false) {
         surface_transforms = traccc::io::read_geometry(i_cfg.detector_file);
     } else if (i_cfg.run_detray_geometry == true) {
-        using detector_t =
-            detray::detector<detray::detector_registry::toy_detector>;
-        typename detector_t::name_map volume_name_map = {{0u, "toy_detector"}};
-    
+
         // Read the detector
-        detector_t det{host_mr};
         detray::json_geometry_reader<detector_t> geo_reader;
+        typename detector_t::name_map volume_name_map = {{0u, "toy_detector"}};
 
-        // std::cout << i_cfg.detector_file << std::endl;
-        std::cout << traccc::io::data_directory() + i_cfg.detector_file
-                  << std::endl;
-        /*
-        geo_reader.read(det, volume_name_map,
-                        traccc::io::data_directory() + i_cfg.detector_file);
-        */
         geo_reader.read(det, volume_name_map,
                         traccc::io::data_directory() + i_cfg.detector_file);
 
-
-        std::cout << "hi1" << std::endl;
-
-        // const auto transforms = det.transform_store();
-        const auto surfaces = det.surfaces();
-
-        for (const auto& sf : surfaces) {
-            std::cout << sf.barcode().value() << std::endl;
-        }
-
-        return 1;
+        surface_transforms = traccc::io::alt_read_geometry(det);
     }
-
-    std::cout << "hi" << std::endl;
 
     // Output stats
     uint64_t n_spacepoints = 0;
@@ -130,12 +113,22 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
           ------------*/
 
         if (i_cfg.check_performance) {
-            traccc::event_map evt_map(event, i_cfg.detector_file,
-                                      common_opts.input_directory,
-                                      common_opts.input_directory, host_mr);
-            sd_performance_writer.write("CPU", vecmem::get_data(seeds),
-                                        vecmem::get_data(spacepoints_per_event),
-                                        evt_map);
+            if (i_cfg.run_detray_geometry == false) {
+
+                traccc::event_map evt_map(event, i_cfg.detector_file,
+                                          common_opts.input_directory,
+                                          common_opts.input_directory, host_mr);
+                sd_performance_writer.write(
+                    "CPU", vecmem::get_data(seeds),
+                    vecmem::get_data(spacepoints_per_event), evt_map);
+            } else if (i_cfg.run_detray_geometry == true) {
+                traccc::event_map2 evt_map(
+                    event, i_cfg.detector_file, common_opts.input_directory,
+                    common_opts.input_directory, host_mr);
+                sd_performance_writer.write(
+                    "CPU", vecmem::get_data(seeds),
+                    vecmem::get_data(spacepoints_per_event), evt_map);
+            }
         }
     }
 
