@@ -126,7 +126,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                     event, i_cfg.detector_file, common_opts.input_directory,
                     common_opts.input_directory, host_mr);
                 sd_performance_writer.write(
-                    "CPU", vecmem::get_data(seeds),
+                    "CPU", vecmem::get_data(seeds), readOut.modules,
                     vecmem::get_data(spacepoints_per_event), evt_map);
             }
         }
