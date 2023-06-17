@@ -26,7 +26,7 @@ void read_spacepoints(spacepoint_reader_output& out, std::string_view filename,
     measurement_reader_output meas_reader_out;
     read_measurements(meas_reader_out, meas_filename);
 
-    // Meas hit id reader
+    // Measurement hit id reader
     auto mhid_reader =
         io::csv::make_measurement_hit_id_reader(meas_hit_map_filename);
     std::vector<traccc::io::csv::measurement_hit_id> meas_hit_ids;
