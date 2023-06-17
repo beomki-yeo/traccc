@@ -37,14 +37,13 @@ namespace po = boost::program_options;
 
 int seq_run(const traccc::seeding_input_config& i_cfg,
             const traccc::common_options& common_opts) {
+    // Memory resource used by the EDM.
+    vecmem::host_memory_resource host_mr;
 
     // Declare detector type
     using detector_t =
         detray::detector<detray::detector_registry::toy_detector>;
     detector_t det{host_mr};
-
-    // Memory resource used by the EDM.
-    vecmem::host_memory_resource host_mr;
 
     // Read the surface transforms
     traccc::geometry surface_transforms;
@@ -122,12 +121,13 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                     "CPU", vecmem::get_data(seeds),
                     vecmem::get_data(spacepoints_per_event), evt_map);
             } else if (i_cfg.run_detray_geometry == true) {
-                traccc::event_map2 evt_map(
-                    event, i_cfg.detector_file, common_opts.input_directory,
-                    common_opts.input_directory, host_mr);
+                traccc::event_map2 evt_map(event, common_opts.input_directory,
+                                           common_opts.input_directory,
+                                           common_opts.input_directory);
                 sd_performance_writer.write(
-                    "CPU", vecmem::get_data(seeds), readOut.modules,
-                    vecmem::get_data(spacepoints_per_event), evt_map);
+                    "CPU", vecmem::get_data(seeds),
+                    vecmem::get_data(spacepoints_per_event), readOut.modules,
+                    evt_map);
             }
         }
     }

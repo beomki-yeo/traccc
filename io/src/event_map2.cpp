@@ -8,12 +8,13 @@
 // Local include(s).
 #include "traccc/io/event_map2.hpp"
 
+#include <iostream>
+
 #include "csv/make_hit_reader.hpp"
 #include "csv/make_measurement_hit_id_reader.hpp"
 #include "csv/make_measurement_reader.hpp"
 #include "csv/make_particle_reader.hpp"
 #include "traccc/io/utils.hpp"
-
 namespace traccc {
 
 event_map2::event_map2(std::size_t event, const std::string& measurement_dir,
@@ -110,7 +111,11 @@ event_map2::event_map2(std::size_t event, const std::string& measurement_dir,
 
         // Fill measurement to particle map
         auto& contributing_particles = meas_ptc_map[meas_link];
+        std::cout << "meas link " << meas_link.surface_link << " "
+                  << meas_link.meas.local[0] << "  " << meas_link.meas.local[1]
+                  << std::endl;
         contributing_particles[ptc]++;
+        std::cout << contributing_particles[ptc] << std::endl;
     }
 
     /*
