@@ -100,9 +100,23 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         auto seeds = sa(spacepoints_per_event);
 
-        /*----------------
-             Statistics
-          ---------------*/
+        /*----------------------------
+           Track Parameter Estimation
+          ----------------------------*/
+
+        auto params = tp(spacepoints_per_event, seeds);
+
+        /*------------------------
+           Track Finding with CKF
+          ------------------------*/
+
+        /*------------------------
+           Track Fitting with KF
+          ------------------------*/
+
+        /*------------
+           Statistics
+          ------------*/
 
         n_spacepoints += spacepoints_per_event.size();
         n_seeds += seeds.size();
