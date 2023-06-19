@@ -54,7 +54,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         // Read the detector
         detray::json_geometry_reader<detector_t> geo_reader;
-        typename detector_t::name_map volume_name_map = {{0u, "toy_detector"}};
+        typename detector_t::name_map volume_name_map = {{0u, "detector"}};
 
         geo_reader.read(det, volume_name_map,
                         traccc::io::data_directory() + i_cfg.detector_file);
