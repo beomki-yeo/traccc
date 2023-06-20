@@ -87,7 +87,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     traccc::finding_performance_writer find_performance_writer(
         traccc::finding_performance_writer::config{});
 
-    if (i_cfg.check_performance) {
+    if (common_opts.check_performance) {
         find_performance_writer.add_cache("CPU");
     }
 
@@ -294,7 +294,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
             n_fitted_tracks_cuda += track_states_cuda.size();
         }
 
-        if (i_cfg.check_performance) {
+        if (common_opts.check_performance) {
             find_performance_writer.write(
                 "CPU", traccc::get_data(track_candidates), evt_map2);
 
@@ -310,7 +310,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         }
     }
 
-    if (i_cfg.check_performance) {
+    if (common_opts.check_performance) {
         find_performance_writer.finalize();
         fit_performance_writer.finalize();
     }

@@ -88,7 +88,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
     // performance writer
     traccc::seeding_performance_writer sd_performance_writer(
         traccc::seeding_performance_writer::config{});
-    if (i_cfg.check_performance) {
+    if (common_opts.check_performance) {
         sd_performance_writer.add_cache("CPU");
         sd_performance_writer.add_cache("CUDA");
     }
@@ -226,7 +226,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         traccc::spacepoint_collection_types::host spacepoints_per_event_cuda;
         traccc::seed_collection_types::host seeds_cuda;
         traccc::bound_track_parameters_collection_types::host params_cuda;
-        if (run_cpu || i_cfg.check_performance) {
+        if (run_cpu || common_opts.check_performance) {
             copy(spacepoints_cuda_buffer, spacepoints_per_event_cuda)->wait();
             copy(seeds_cuda_buffer, seeds_cuda)->wait();
             copy(params_cuda_buffer, params_cuda)->wait();
@@ -266,7 +266,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
             n_seeds_cuda += seeds_cuda.size();
             n_seeds += seeds.size();
         }
-        if (i_cfg.check_performance) {
+        if (common_opts.check_performance) {
 
             traccc::event_map evt_map(
                 event, i_cfg.detector_file, i_cfg.digitization_config_file,
@@ -284,7 +284,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         }
     }
 
-    if (i_cfg.check_performance) {
+    if (common_opts.check_performance) {
         sd_performance_writer.finalize();
     }
 
