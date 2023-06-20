@@ -60,14 +60,7 @@ class finding_algorithm
         detray::actor_chain<std::tuple, detray::pathlimit_aborter, transporter,
                             interaction_register<interactor>, interactor,
                             detray::next_surface_aborter>;
-    /*
-    // Actor with print inspector
-    using actor_type =
-        detray::actor_chain<std::tuple, detray::pathlimit_aborter, transporter,
-                            interaction_register<interactor>, interactor,
-                            detray::next_surface_aborter,
-                            propagation::print_inspector>;
-    */
+
     using propagator_type =
         detray::propagator<stepper_t, navigator_t, actor_type>;
 
