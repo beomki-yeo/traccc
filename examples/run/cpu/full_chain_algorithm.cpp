@@ -29,7 +29,8 @@ full_chain_algorithm::output_type full_chain_algorithm::operator()(
 
     const spacepoint_formation::output_type spacepoints =
         m_spacepoint_formation(m_clusterization(cells, modules), modules);
-    return m_track_parameter_estimation(spacepoints, m_seeding(spacepoints));
+    return m_track_parameter_estimation(spacepoints, m_seeding(spacepoints),
+                                        modules);
 }
 
 }  // namespace traccc

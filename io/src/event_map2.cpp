@@ -111,11 +111,7 @@ event_map2::event_map2(std::size_t event, const std::string& measurement_dir,
 
         // Fill measurement to particle map
         auto& contributing_particles = meas_ptc_map[meas_link];
-        std::cout << "meas link " << meas_link.surface_link << " "
-                  << meas_link.meas.local[0] << "  " << meas_link.meas.local[1]
-                  << std::endl;
         contributing_particles[ptc]++;
-        std::cout << contributing_particles[ptc] << std::endl;
     }
 
     /*

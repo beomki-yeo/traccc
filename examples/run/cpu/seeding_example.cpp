@@ -89,6 +89,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // Output stats
     uint64_t n_spacepoints = 0;
     uint64_t n_seeds = 0;
+    uint64_t n_found_tracks = 0;
+    uint64_t n_fitted_tracks = 0;
 
     // Seeding algorithm
     traccc::seedfinder_config finder_config;
@@ -102,6 +104,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
                                        navigator_type>::config_type cfg;
+
     cfg.min_track_candidates_per_track = finding_cfg.track_candidates_range[0];
     cfg.max_track_candidates_per_track = finding_cfg.track_candidates_range[1];
     cfg.constrained_step_size = propagation_opts.step_constraint;
@@ -151,7 +154,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
            Track Parameter Estimation
           ----------------------------*/
 
-        auto params = tp(spacepoints_per_event, seeds);
+        auto params = tp(spacepoints_per_event, seeds, readOut.modules);
 
         // Run CKF and KF if we are using a detray geometry
         track_candidate_container_types::host track_candidates;
@@ -171,12 +174,14 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
             track_candidates =
                 host_finding(det, measurements_per_event, params);
+            n_found_tracks += track_candidates.size();
 
             /*------------------------
                Track Fitting with KF
               ------------------------*/
 
             track_states = host_fitting(det, track_candidates);
+            n_fitted_tracks += track_states.size();
         }
         /*------------
            Statistics
@@ -206,13 +211,12 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                     "CPU", vecmem::get_data(seeds),
                     vecmem::get_data(spacepoints_per_event), readOut.modules,
                     evt_map);
-            
+
                 find_performance_writer.write(
-                    "CPU", traccc::get_data(track_candidates), evt_map);
+                    "AAA", traccc::get_data(track_candidates), evt_map);
 
                 for (unsigned int i = 0; i < track_states.size(); i++) {
-                    const auto& trk_states_per_track =
-                        track_states.at(i).items;
+                    const auto& trk_states_per_track = track_states.at(i).items;
 
                     const auto& fit_info = track_states[i].header;
 
@@ -232,6 +236,10 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " << n_spacepoints << " spacepoints" << std::endl;
     std::cout << "- created (cpu)  " << n_seeds << " seeds" << std::endl;
+    std::cout << "- created (cpu)  " << n_found_tracks << " found tracks"
+              << std::endl;
+    std::cout << "- created (cpu)  " << n_fitted_tracks << " fitted tracks"
+              << std::endl;
 
     return 0;
 }
@@ -258,6 +266,8 @@ int main(int argc, char* argv[]) {
     // Read options
     common_opts.read(vm);
     seeding_input_cfg.read(vm);
+    finding_input_cfg.read(vm);
+    propagation_opts.read(vm);
 
     std::cout << "Running " << argv[0] << " " << seeding_input_cfg.detector_file
               << " " << common_opts.input_directory << " " << common_opts.events

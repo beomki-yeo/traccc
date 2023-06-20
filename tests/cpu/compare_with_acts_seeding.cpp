@@ -125,7 +125,7 @@ TEST_P(CompareWithActsSeedingTests, Run) {
       TRACCC track params estimation
       --------------------------------*/
 
-    auto tp_output = tp(spacepoints_per_event, seeds);
+    auto tp_output = tp(spacepoints_per_event, seeds, modules_per_event);
     auto& traccc_params = tp_output;
 
     /*--------------------------------
