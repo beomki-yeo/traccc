@@ -154,7 +154,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Finding algorithm object
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
-        host_finding(cfg, mr);
+        host_finding(cfg);
     traccc::cuda::finding_algorithm<rk_stepper_type, device_navigator_type>
         device_finding(cfg, mr);
 
