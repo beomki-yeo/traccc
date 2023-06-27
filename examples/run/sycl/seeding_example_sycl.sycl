@@ -82,10 +82,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // performance writer
     traccc::seeding_performance_writer sd_performance_writer(
         traccc::seeding_performance_writer::config{});
-    if (common_opts.check_performance) {
-        sd_performance_writer.add_cache("CPU");
-        sd_performance_writer.add_cache("SYCL");
-    }
 
     traccc::performance::timing_info elapsedTimes;
 
@@ -157,14 +153,16 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                 traccc::performance::timer t("Track params (sycl)",
                                              elapsedTimes);
                 params_sycl_buffer =
-                    tp_sycl(spacepoints_sycl_buffer, seeds_sycl_buffer);
+                    tp_sycl(spacepoints_sycl_buffer, seeds_sycl_buffer,
+                            {0.f, 0.f, finder_config.bFieldInZ});
             }  // stop measuring track params sycl timer
 
             // CPU
             if (run_cpu) {
                 traccc::performance::timer t("Track params  (cpu)",
                                              elapsedTimes);
-                params = tp(spacepoints_per_event, seeds);
+                params = tp(spacepoints_per_event, seeds,
+                            {0.f, 0.f, finder_config.bFieldInZ});
             }  // stop measuring track params cpu timer
 
         }  // Stop measuring wall time
@@ -179,7 +177,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
         copy(seeds_sycl_buffer, seeds_sycl)->wait();
         copy(params_sycl_buffer, params_sycl)->wait();
 
-        if (run_cpu && common_opts.check_performance) {
+        if (run_cpu) {
             // Show which event we are currently presenting the results for.
             std::cout << "===>>> Event " << event << " <<<===" << std::endl;
 
@@ -203,6 +201,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
           ---------------*/
 
         n_spacepoints += reader_output.spacepoints.size();
+        n_modules += reader_output.modules.size();
         n_seeds_sycl += seeds_sycl.size();
         n_seeds += seeds.size();
 
@@ -215,13 +214,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                                       common_opts.input_directory,
                                       common_opts.input_directory, host_mr);
             sd_performance_writer.write(
-                "SYCL", vecmem::get_data(seeds_sycl),
+                vecmem::get_data(seeds_sycl),
                 vecmem::get_data(reader_output.spacepoints), evt_map);
-            if (run_cpu) {
-                sd_performance_writer.write(
-                    "CPU", vecmem::get_data(seeds),
-                    vecmem::get_data(reader_output.spacepoints), evt_map);
-            }
         }
     }
 

@@ -87,10 +87,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     traccc::finding_performance_writer find_performance_writer(
         traccc::finding_performance_writer::config{});
 
-    if (common_opts.check_performance) {
-        find_performance_writer.add_cache("CPU");
-    }
-
     traccc::fitting_performance_writer::config writer_cfg;
     writer_cfg.file_path = "performance_track_fitting.root";
     traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
@@ -154,7 +150,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Finding algorithm object
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
-        host_finding(cfg, mr);
+        host_finding(cfg);
     traccc::cuda::finding_algorithm<rk_stepper_type, device_navigator_type>
         device_finding(cfg, mr);
 
@@ -295,8 +291,8 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         }
 
         if (common_opts.check_performance) {
-            find_performance_writer.write(
-                "CPU", traccc::get_data(track_candidates), evt_map2);
+            find_performance_writer.write(traccc::get_data(track_candidates),
+                                          evt_map2);
 
             for (unsigned int i = 0; i < track_states_cuda.size(); i++) {
                 const auto& trk_states_per_track =

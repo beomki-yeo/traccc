@@ -113,15 +113,6 @@ event_map2::event_map2(std::size_t event, const std::string& measurement_dir,
         auto& contributing_particles = meas_ptc_map[meas_link];
         contributing_particles[ptc]++;
     }
-
-    /*
-    // Fill measurement to particle map
-    for (auto const& [ptc, measurements] : ptc_meas_map) {
-        for (const auto& meas : measurements) {
-            meas_ptc_map[meas][ptc]++;
-        }
-    }
-    */
 }
 
 }  // namespace traccc

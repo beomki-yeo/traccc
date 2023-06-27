@@ -109,8 +109,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     cfg.max_track_candidates_per_track = finding_cfg.track_candidates_range[1];
     cfg.constrained_step_size = propagation_opts.step_constraint;
 
-    traccc::finding_algorithm<rk_stepper_type, navigator_type> host_finding(cfg,
-                                                                            mr);
+    traccc::finding_algorithm<rk_stepper_type, navigator_type> host_finding(
+        cfg);
 
     // Fitting algorithm object
     typename traccc::fitting_algorithm<fitter_type>::config_type fit_cfg;
@@ -122,11 +122,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
         traccc::seeding_performance_writer::config{});
     traccc::finding_performance_writer find_performance_writer(
         traccc::finding_performance_writer::config{});
-
-    if (common_opts.check_performance) {
-        sd_performance_writer.add_cache("CPU");
-        find_performance_writer.add_cache("CPU");
-    }
 
     traccc::fitting_performance_writer::config writer_cfg;
     writer_cfg.file_path = "performance_track_fitting.root";
@@ -201,14 +196,17 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                                           common_opts.input_directory,
                                           common_opts.input_directory, host_mr);
                 sd_performance_writer.write(
-                    "CPU", vecmem::get_data(seeds),
+                    vecmem::get_data(seeds),
                     vecmem::get_data(spacepoints_per_event), evt_map);
-            } else if (i_cfg.run_detray_geometry == true) {
+
+            }
+
+            else if (i_cfg.run_detray_geometry == true) {
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,
                                            common_opts.input_directory);
                 sd_performance_writer.write(
-                    "CPU", vecmem::get_data(seeds),
+                    vecmem::get_data(seeds),
                     vecmem::get_data(spacepoints_per_event), readOut.modules,
                     evt_map);
 

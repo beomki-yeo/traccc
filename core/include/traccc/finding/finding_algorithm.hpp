@@ -60,14 +60,7 @@ class finding_algorithm
         detray::actor_chain<std::tuple, detray::pathlimit_aborter, transporter,
                             interaction_register<interactor>, interactor,
                             detray::next_surface_aborter>;
-    /*
-    // Actor with print inspector
-    using actor_type =
-        detray::actor_chain<std::tuple, detray::pathlimit_aborter, transporter,
-                            interaction_register<interactor>, interactor,
-                            detray::next_surface_aborter,
-                            propagation::print_inspector>;
-    */
+
     using propagator_type =
         detray::propagator<stepper_t, navigator_t, actor_type>;
 
@@ -86,8 +79,7 @@ class finding_algorithm
     ///
     /// @param cfg  Configuration object
     /// @param mr   The memory resource to use
-    finding_algorithm(const config_type& cfg, const traccc::memory_resource& mr)
-        : m_cfg(cfg), m_mr(mr) {}
+    finding_algorithm(const config_type& cfg) : m_cfg(cfg) {}
 
     /// Get config object (const access)
     const finding_config<scalar_type>& get_config() const { return m_cfg; }
@@ -105,8 +97,6 @@ class finding_algorithm
     private:
     /// Config object
     config_type m_cfg;
-    /// Memory resource used by the algorithm
-    traccc::memory_resource m_mr;
 };
 
 }  // namespace traccc

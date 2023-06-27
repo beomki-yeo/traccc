@@ -64,10 +64,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // performance writer
     traccc::seeding_performance_writer sd_performance_writer(
         traccc::seeding_performance_writer::config{});
-    if (common_opts.check_performance) {
-        sd_performance_writer.add_cache("CPU");
-        sd_performance_writer.add_cache("KOKKOS");
-    }
 
     traccc::performance::timing_info elapsedTimes;
 
@@ -123,7 +119,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
             if (run_cpu) {
                 traccc::performance::timer t("Track params  (cpu)",
                                              elapsedTimes);
-                params = tp(std::move(spacepoints_per_event), seeds);
+                params = tp(std::move(spacepoints_per_event), seeds,
+                            {0.f, 0.f, finder_config.bFieldInZ});
             }  // stop measuring track params cpu timer
 
         }  // Stop measuring wall time

@@ -56,7 +56,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Memory resources used by the application.
     vecmem::host_memory_resource host_mr;
-    traccc::memory_resource mr{host_mr};
 
     // Performance writer
     traccc::fitting_performance_writer::config writer_cfg;
@@ -106,7 +105,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Finding algorithm object
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
-        host_finding(cfg, mr);
+        host_finding(cfg);
 
     // Fitting algorithm object
     typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;

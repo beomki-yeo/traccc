@@ -35,7 +35,7 @@ struct finding_config {
 
     /// Constrained step size for propagation
     /// @TODO: Make a separate file for propagation config?
-    scalar_t constrained_step_size{std::numeric_limits<scalar_t>::max()};
+    scalar_t constrained_step_size = std::numeric_limits<scalar_t>::max();
 
     /// GPU-specific parameter to evaluate the number of measurements to be
     /// iterated per track
