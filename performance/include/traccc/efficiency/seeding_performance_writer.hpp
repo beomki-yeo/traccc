@@ -61,15 +61,11 @@ class seeding_performance_writer {
     /// Destructor
     ~seeding_performance_writer();
 
-    void add_cache(std::string_view name);
-
-    void write(std::string_view name,
-               const seed_collection_types::const_view& seeds_view,
+    void write(const seed_collection_types::const_view& seeds_view,
                const spacepoint_collection_types::const_view& spacepoints_view,
                const event_map& evt_map);
 
-    void write(std::string_view name,
-               const seed_collection_types::const_view& seeds_view,
+    void write(const seed_collection_types::const_view& seeds_view,
                const spacepoint_collection_types::const_view& spacepoints_view,
                const cell_module_collection_types::host& modules,
                const event_map2& evt_map);

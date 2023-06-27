@@ -40,16 +40,6 @@ struct seed {
         measurement measM = {alt_measM.local, alt_measM.variance};
         measurement measT = {alt_measT.local, alt_measT.variance};
 
-        std::cout << "seed" << std::endl;
-        std::cout << modules[alt_measB.module_link].module << "  "
-                  << measB.local[0] << "  " << measB.local[1] << std::endl;
-
-        std::cout << modules[alt_measM.module_link].module << "  "
-                  << measM.local[0] << "  " << measM.local[1] << std::endl;
-
-        std::cout << modules[alt_measT.module_link].module << "  "
-                  << measT.local[0] << "  " << measT.local[1] << std::endl;
-        std::cout << "-----" << std::endl;
         return {measurement_link{modules[alt_measB.module_link].module, measB},
                 measurement_link{modules[alt_measM.module_link].module, measM},
                 measurement_link{modules[alt_measT.module_link].module, measT}};

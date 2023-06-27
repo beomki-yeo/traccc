@@ -59,7 +59,6 @@ TEST_P(CkfSparseTrackTests, Run) {
 
     // Memory resources used by the application.
     vecmem::host_memory_resource host_mr;
-    traccc::memory_resource mr{host_mr};
 
     host_detector_type host_det = create_telescope_detector(
         host_mr,
@@ -103,7 +102,7 @@ TEST_P(CkfSparseTrackTests, Run) {
 
     // Finding algorithm object
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
-        host_finding(cfg, mr);
+        host_finding(cfg);
 
     // Fitting algorithm object
     typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
