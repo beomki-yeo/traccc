@@ -254,16 +254,16 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
             compare_track_parameters(vecmem::get_data(params),
                                      vecmem::get_data(params_cuda));
         }
-        if (common_opts.check_performance) {
+        /// Statistics
+        n_modules += read_out_per_event.modules.size();
+        n_cells += read_out_per_event.cells.size();
+        n_measurements += measurements_per_event.size();
+        n_spacepoints += spacepoints_per_event.size();
+        n_seeds += seeds.size();
+        n_spacepoints_cuda += spacepoints_per_event_cuda.size();
+        n_seeds_cuda += seeds_cuda.size();
 
-            /// Statistics
-            n_modules += read_out_per_event.modules.size();
-            n_cells += read_out_per_event.cells.size();
-            n_measurements += measurements_per_event.size();
-            n_spacepoints += spacepoints_per_event.size();
-            n_seeds += seeds.size();
-            n_spacepoints_cuda += spacepoints_per_event_cuda.size();
-            n_seeds_cuda += seeds_cuda.size();
+        if (common_opts.check_performance) {
 
             traccc::event_map evt_map(
                 event, i_cfg.detector_file, i_cfg.digitization_config_file,

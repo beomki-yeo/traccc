@@ -149,7 +149,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
            Track Parameter Estimation
           ----------------------------*/
 
-        auto params = tp(spacepoints_per_event, seeds, readOut.modules);
+        auto params = tp(spacepoints_per_event, seeds, readOut.modules,
+                         {0.f, 0.f, finder_config.bFieldInZ});
 
         // Run CKF and KF if we are using a detray geometry
         track_candidate_container_types::host track_candidates;
@@ -191,14 +192,12 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         if (common_opts.check_performance) {
             if (i_cfg.run_detray_geometry == false) {
-
                 traccc::event_map evt_map(event, i_cfg.detector_file,
                                           common_opts.input_directory,
                                           common_opts.input_directory, host_mr);
                 sd_performance_writer.write(
                     vecmem::get_data(seeds),
                     vecmem::get_data(spacepoints_per_event), evt_map);
-
             }
 
             else if (i_cfg.run_detray_geometry == true) {
@@ -211,7 +210,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                     evt_map);
 
                 find_performance_writer.write(
-                    "AAA", traccc::get_data(track_candidates), evt_map);
+                    traccc::get_data(track_candidates), evt_map);
 
                 for (unsigned int i = 0; i < track_states.size(); i++) {
                     const auto& trk_states_per_track = track_states.at(i).items;

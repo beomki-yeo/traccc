@@ -119,6 +119,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
             }  // stop measuring hit reading timer
 
             auto& spacepoints_per_event = reader_output.spacepoints;
+            auto& modules_per_event = reader_output.modules;
 
             /*----------------------------
                 Seeding algorithm
@@ -164,7 +165,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
             if (run_cpu) {
                 traccc::performance::timer t("Track params  (cpu)",
                                              elapsedTimes);
-                params = tp(spacepoints_per_event, seeds,
+                params = tp(spacepoints_per_event, seeds, modules_per_event,
                             {0.f, 0.f, finder_config.bFieldInZ});
             }  // stop measuring track params cpu timer
 
