@@ -30,7 +30,8 @@ namespace traccc::sycl {
 struct track_params_estimation
     : public algorithm<bound_track_parameters_collection_types::buffer(
           const spacepoint_collection_types::const_view&,
-          const seed_collection_types::const_view&, const vector3&)> {
+          const seed_collection_types::const_view&,
+          const cell_module_collection_types::const_view&, const vector3&)> {
 
     public:
     /// Constructor for track_params_estimation
@@ -53,6 +54,7 @@ struct track_params_estimation
     output_type operator()(
         const spacepoint_collection_types::const_view& spacepoints_view,
         const seed_collection_types::const_view& seeds_view,
+        const cell_module_collection_types::const_view& modules_view,
         const vector3& bfield) const override;
 
     private:

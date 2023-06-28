@@ -56,7 +56,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
             const traccc::common_options& common_opts) {
     // Memory resource used by the EDM.
     vecmem::host_memory_resource host_mr;
-    traccc::memory_resource mr{host_mr};
 
     // Declare detector type
     using detector_type =
