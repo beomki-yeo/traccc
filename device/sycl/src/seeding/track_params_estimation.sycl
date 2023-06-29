@@ -32,7 +32,8 @@ track_params_estimation::output_type track_params_estimation::operator()(
     const spacepoint_collection_types::const_view& spacepoints_view,
     const seed_collection_types::const_view& seeds_view,
     const cell_module_collection_types::const_view& modules_view,
-    const vector3& bfield) const {
+    const vector3& bfield,
+    const std::array<traccc::scalar, traccc::e_bound_size>& stddev) const {
 
     // Get the size of the seeds view
     auto seeds_size = m_copy.get_size(seeds_view);
@@ -62,11 +63,11 @@ track_params_estimation::output_type track_params_estimation::operator()(
         .submit([&](::sycl::handler& h) {
             h.parallel_for<kernels::estimate_track_params>(
                 trackParamsNdRange,
-                [spacepoints_view, seeds_view, modules_view, params_view,
-                 bfield](::sycl::nd_item<1> item) {
+                [spacepoints_view, seeds_view, modules_view, bfield, stddev,
+                 params_view](::sycl::nd_item<1> item) {
                     device::estimate_track_params(
                         item.get_global_linear_id(), spacepoints_view,
-                        seeds_view, modules_view, bfield, params_view);
+                        seeds_view, modules_view, bfield, stddev, params_view);
                 });
         })
         .wait_and_throw();

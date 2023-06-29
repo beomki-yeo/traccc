@@ -30,7 +30,8 @@ class track_params_estimation
     : public algorithm<bound_track_parameters_collection_types::host(
           const spacepoint_collection_types::host&,
           const seed_collection_types::host&,
-          const cell_module_collection_types::host&, const vector3&)> {
+          const cell_module_collection_types::host&, const vector3&,
+          const std::array<traccc::scalar, traccc::e_bound_size>&)> {
 
     public:
     /// Constructor for track_params_estimation
@@ -44,10 +45,16 @@ class track_params_estimation
     /// @param seeds The reconstructed track seeds of the event
     /// @return A vector of bound track parameters
     ///
-    output_type operator()(const spacepoint_collection_types::host& spacepoints,
-                           const seed_collection_types::host& seeds,
-                           const cell_module_collection_types::host& modules,
-                           const vector3& bfield) const override;
+    output_type operator()(
+        const spacepoint_collection_types::host& spacepoints,
+        const seed_collection_types::host& seeds,
+        const cell_module_collection_types::host& modules,
+        const vector3& bfield,
+        const std::array<traccc::scalar, traccc::e_bound_size>& stddev = {
+            0.03 * detray::unit<traccc::scalar>::mm,
+            0.03 * detray::unit<traccc::scalar>::mm, 0.017, 0.017,
+            0.001 / detray::unit<traccc::scalar>::GeV,
+            1 * detray::unit<traccc::scalar>::ns}) const override;
 
     private:
     /// The memory resource to use in the algorithm

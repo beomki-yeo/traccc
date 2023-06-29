@@ -151,24 +151,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
         auto params = tp(spacepoints_per_event, seeds, readOut.modules,
                          {0.f, 0.f, finder_config.bFieldInZ});
 
-        // Standard deviations for the covariance of bound track parameters
-        // @note: Efficiency drops significantly unless the covariance is set
-        // @todo: Set stddev as an input option
-        static constexpr std::array<traccc::scalar, traccc::e_bound_size>
-            stddevs = {0.03 * detray::unit<traccc::scalar>::mm,
-                       0.03 * detray::unit<traccc::scalar>::mm,
-                       0.017,
-                       0.017,
-                       0.001 / detray::unit<traccc::scalar>::GeV,
-                       1 * detray::unit<traccc::scalar>::ns};
-
-        for (auto& param : params) {
-            for (std::size_t i = 0; i < e_bound_size; i++) {
-                getter::element(param.covariance(), i, i) =
-                    stddevs[i] * stddevs[i];
-            }
-        }
-
         // Run CKF and KF if we are using a detray geometry
         track_candidate_container_types::host track_candidates;
         track_state_container_types::host track_states;

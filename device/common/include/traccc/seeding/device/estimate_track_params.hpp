@@ -29,6 +29,7 @@ inline void estimate_track_params(
     const seed_collection_types::const_view& seeds_view,
     const cell_module_collection_types::const_view& modules_view,
     const vector3& bfield,
+    const std::array<traccc::scalar, traccc::e_bound_size>& stddev,
     bound_track_parameters_collection_types::view params_view);
 
 }  // namespace traccc::device
