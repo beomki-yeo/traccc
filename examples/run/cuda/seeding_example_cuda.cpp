@@ -50,9 +50,6 @@
 #include <vecmem/utils/cuda/async_copy.hpp>
 #include <vecmem/utils/cuda/copy.hpp>
 
-// ACTS include(s).
-#include <Acts/Definitions/Units.hpp>
-
 // System include(s).
 #include <exception>
 #include <iomanip>
