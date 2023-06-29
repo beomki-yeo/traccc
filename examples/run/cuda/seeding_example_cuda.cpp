@@ -494,13 +494,13 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
               << n_modules << " modules" << std::endl;
     std::cout << "- created  (cpu)  " << n_seeds << " seeds" << std::endl;
     std::cout << "- created (cuda)  " << n_seeds_cuda << " seeds" << std::endl;
-    std::cout << "- created (cuda) " << n_found_tracks_cuda << " found tracks"
-              << std::endl;
-    std::cout << "- created (cuda) " << n_fitted_tracks_cuda << " fitted tracks"
-              << std::endl;
     std::cout << "- created  (cpu) " << n_found_tracks << " found tracks"
               << std::endl;
+    std::cout << "- created (cuda) " << n_found_tracks_cuda << " found tracks"
+              << std::endl;
     std::cout << "- created  (cpu) " << n_fitted_tracks << " fitted tracks"
+              << std::endl;
+    std::cout << "- created (cuda) " << n_fitted_tracks_cuda << " fitted tracks"
               << std::endl;
     std::cout << "==>Elapsed times...\n" << elapsedTimes << std::endl;
 
