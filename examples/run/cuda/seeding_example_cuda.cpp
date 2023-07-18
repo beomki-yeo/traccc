@@ -432,30 +432,8 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
           ------------*/
 
         if (common_opts.check_performance) {
-            if (i_cfg.run_detray_geometry == false) {
 
-                traccc::event_map evt_map(event, i_cfg.detector_file,
-                                          common_opts.input_directory,
-                                          common_opts.input_directory, host_mr);
-
-                std::vector<traccc::nseed<3>> nseeds;
-
-                std::transform(
-                    seeds_cuda.cbegin(), seeds_cuda.cend(),
-                    std::back_inserter(nseeds),
-                    [](const traccc::seed& s) { return traccc::nseed<3>(s); });
-
-                nsd_performance_writer.register_event(
-                    event, nseeds.begin(), nseeds.end(),
-                    reader_output.spacepoints.begin(), evt_map);
-
-                sd_performance_writer.write(
-                    vecmem::get_data(seeds_cuda),
-                    vecmem::get_data(reader_output.spacepoints), evt_map);
-
-            }
-
-            else if (i_cfg.run_detray_geometry == true) {
+            if (i_cfg.run_detray_geometry) {
 
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,
@@ -477,6 +455,25 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                     fit_performance_writer.write(trk_states_per_track, fit_info,
                                                  host_det, evt_map);
                 }
+            } else {
+                traccc::event_map evt_map(event, i_cfg.detector_file,
+                                          common_opts.input_directory,
+                                          common_opts.input_directory, host_mr);
+
+                std::vector<traccc::nseed<3>> nseeds;
+
+                std::transform(
+                    seeds_cuda.cbegin(), seeds_cuda.cend(),
+                    std::back_inserter(nseeds),
+                    [](const traccc::seed& s) { return traccc::nseed<3>(s); });
+
+                nsd_performance_writer.register_event(
+                    event, nseeds.begin(), nseeds.end(),
+                    reader_output.spacepoints.begin(), evt_map);
+
+                sd_performance_writer.write(
+                    vecmem::get_data(seeds_cuda),
+                    vecmem::get_data(reader_output.spacepoints), evt_map);
             }
         }
     }
