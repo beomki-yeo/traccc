@@ -58,7 +58,7 @@
 using namespace traccc;
 namespace po = boost::program_options;
 
-int seq_run(const traccc::seeding_input_config& i_cfg,
+int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
             const traccc::finding_input_config& finding_cfg,
             const traccc::propagation_options<scalar>& propagation_opts,
             const traccc::common_options& common_opts, bool run_cpu) {
@@ -89,21 +89,29 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     using device_fitter_type =
         traccc::kalman_fitter<rk_stepper_type, device_navigator_type>;
 
-    host_detector_type host_det{mng_mr};
+    // B field value and its type
+    // @TODO: Set B field as argument
+    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
+
+    host_detector_type host_det{
+        mng_mr,
+        b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]})};
 
     // Read the surface transforms
     traccc::geometry surface_transforms;
-    if (i_cfg.run_detray_geometry == false) {
-        surface_transforms = traccc::io::read_geometry(i_cfg.detector_file);
-    } else if (i_cfg.run_detray_geometry == true) {
+    if (common_opts.run_detray_geometry == false) {
+        surface_transforms =
+            traccc::io::read_geometry(common_opts.detector_file);
+    } else if (common_opts.run_detray_geometry == true) {
 
         // Read the detector
         detray::json_geometry_reader<host_detector_type> geo_reader;
         typename host_detector_type::name_map volume_name_map = {
             {0u, "detector"}};
 
-        geo_reader.read(host_det, volume_name_map,
-                        traccc::io::data_directory() + i_cfg.detector_file);
+        geo_reader.read(
+            host_det, volume_name_map,
+            traccc::io::data_directory() + common_opts.detector_file);
 
         surface_transforms = traccc::io::alt_read_geometry(host_det);
     }
@@ -306,7 +314,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                             {0.f, 0.f, finder_config.bFieldInZ});
             }  // stop measuring track params cpu timer
 
-            if (i_cfg.run_detray_geometry == true) {
+            if (common_opts.run_detray_geometry == true) {
 
                 // Navigation buffer
                 auto navigation_buffer = detray::create_candidates_buffer(
@@ -392,7 +400,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
             compare_track_parameters(vecmem::get_data(params),
                                      vecmem::get_data(params_cuda));
 
-            if (i_cfg.run_detray_geometry == true) {
+            if (common_opts.run_detray_geometry == true) {
                 // Compare the track candidates made on the host and on the
                 // device
                 unsigned int n_matches = 0;
@@ -433,7 +441,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         if (common_opts.check_performance) {
 
-            if (i_cfg.run_detray_geometry) {
+            if (common_opts.run_detray_geometry) {
 
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,
@@ -456,7 +464,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                                                  host_det, evt_map);
                 }
             } else {
-                traccc::event_map evt_map(event, i_cfg.detector_file,
+                traccc::event_map evt_map(event, common_opts.detector_file,
                                           common_opts.input_directory,
                                           common_opts.input_directory, host_mr);
 
@@ -532,7 +540,7 @@ int main(int argc, char* argv[]) {
     propagation_opts.read(vm);
     auto run_cpu = vm["run_cpu"].as<bool>();
 
-    std::cout << "Running " << argv[0] << " " << seeding_input_cfg.detector_file
+    std::cout << "Running " << argv[0] << " " << common_opts.detector_file
               << " " << common_opts.input_directory << " " << common_opts.events
               << std::endl;
 

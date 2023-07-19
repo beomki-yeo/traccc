@@ -50,7 +50,7 @@
 using namespace traccc;
 namespace po = boost::program_options;
 
-int seq_run(const traccc::seeding_input_config& i_cfg,
+int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
             const traccc::finding_input_config& finding_cfg,
             const traccc::propagation_options<scalar>& propagation_opts,
             const traccc::common_options& common_opts) {
@@ -60,7 +60,6 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // Declare detector type
     using detector_type =
         detray::detector<detray::detector_registry::toy_detector>;
-    detector_type det{host_mr};
     using b_field_t = typename detector_type::bfield_type;
     using rk_stepper_type =
         detray::rk_stepper<b_field_t::view_t, traccc::transform3,
@@ -71,16 +70,25 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     // Read the surface transforms
     traccc::geometry surface_transforms;
 
-    if (i_cfg.run_detray_geometry == false) {
-        surface_transforms = traccc::io::read_geometry(i_cfg.detector_file);
-    } else if (i_cfg.run_detray_geometry == true) {
+    // B field value and its type
+    // @TODO: Set B field as argument
+    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
+
+    detector_type det{host_mr, b_field_t(b_field_t::backend_t::configuration_t{
+                                   B[0], B[1], B[2]})};
+
+    if (common_opts.run_detray_geometry == false) {
+        surface_transforms =
+            traccc::io::read_geometry(common_opts.detector_file);
+    } else if (common_opts.run_detray_geometry == true) {
 
         // Read the detector
         detray::json_geometry_reader<detector_type> geo_reader;
         typename detector_type::name_map volume_name_map = {{0u, "detector"}};
 
-        geo_reader.read(det, volume_name_map,
-                        traccc::io::data_directory() + i_cfg.detector_file);
+        geo_reader.read(
+            det, volume_name_map,
+            traccc::io::data_directory() + common_opts.detector_file);
 
         surface_transforms = traccc::io::alt_read_geometry(det);
     }
@@ -155,7 +163,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
         track_candidate_container_types::host track_candidates;
         track_state_container_types::host track_states;
 
-        if (i_cfg.run_detray_geometry == true) {
+        if (common_opts.run_detray_geometry == true) {
 
             // Read measurements
             traccc::measurement_container_types::host measurements_per_event =
@@ -191,7 +199,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         if (common_opts.check_performance) {
 
-            if (i_cfg.run_detray_geometry) {
+            if (common_opts.run_detray_geometry) {
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,
                                            common_opts.input_directory);
@@ -212,7 +220,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
                                                  det, evt_map);
                 }
             } else {
-                traccc::event_map evt_map(event, i_cfg.detector_file,
+                traccc::event_map evt_map(event, common_opts.detector_file,
                                           common_opts.input_directory,
                                           common_opts.input_directory, host_mr);
                 sd_performance_writer.write(
@@ -264,7 +272,7 @@ int main(int argc, char* argv[]) {
     finding_input_cfg.read(vm);
     propagation_opts.read(vm);
 
-    std::cout << "Running " << argv[0] << " " << seeding_input_cfg.detector_file
+    std::cout << "Running " << argv[0] << " " << common_opts.detector_file
               << " " << common_opts.input_directory << " " << common_opts.events
               << std::endl;
 

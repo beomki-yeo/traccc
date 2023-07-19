@@ -13,6 +13,7 @@
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
 #include "traccc/io/read_measurements.hpp"
+#include "traccc/io/utils.hpp"
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/finding_input_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
@@ -22,6 +23,8 @@
 
 // detray include(s).
 #include "detray/detectors/create_toy_geometry.hpp"
+#include "detray/io/json/json_reader.hpp"
+#include "detray/io/json/json_writer.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -74,12 +77,15 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     // @TODO: Set B field as argument
     const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
 
-    // Create the toy geometry
-    host_detector_type host_det =
-        detray::create_toy_geometry<detray::host_container_types>(
-            host_mr,
-            b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]}),
-            4u, 7u);
+    // Read the detector
+    host_detector_type host_det{
+        host_mr,
+        b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]})};
+    detray::json_geometry_reader<host_detector_type> geo_reader;
+    typename host_detector_type::name_map volume_name_map = {{0u, "detector"}};
+
+    geo_reader.read(host_det, volume_name_map,
+                    traccc::io::data_directory() + common_opts.detector_file);
 
     /*****************************
      * Do the reconstruction
