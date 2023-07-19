@@ -128,15 +128,21 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Standard deviations for seed track parameters
     static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
+        {1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-4,
+         1e-4,
+         1e-4 / detray::unit<traccc::scalar>::GeV,
+         1e-4 * detray::unit<traccc::scalar>::ns};
+    /*
+    static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
         {0.03 * detray::unit<traccc::scalar>::mm,
          0.03 * detray::unit<traccc::scalar>::mm,
          0.017,
          0.017,
          0.001 / detray::unit<traccc::scalar>::GeV,
          1 * detray::unit<traccc::scalar>::ns};
-
-    // Seed generator
-    traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
+    */
 
     // Finding algorithm configuration
     typename traccc::cuda::finding_algorithm<
@@ -167,6 +173,9 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     // Iterate over events
     for (unsigned int event = common_opts.skip;
          event < common_opts.events + common_opts.skip; ++event) {
+
+        // Seed generator
+        traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
 
         // Truth Track Candidates
         traccc::event_map2 evt_map2(event, common_opts.input_directory,

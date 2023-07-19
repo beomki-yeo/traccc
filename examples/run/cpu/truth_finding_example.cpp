@@ -8,6 +8,7 @@
 // Project include(s).
 #include "traccc/definitions/common.hpp"
 #include "traccc/definitions/primitives.hpp"
+#include "traccc/efficiency/finding_performance_writer.hpp"
 #include "traccc/finding/finding_algorithm.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
@@ -58,6 +59,9 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     vecmem::host_memory_resource host_mr;
 
     // Performance writer
+    traccc::finding_performance_writer find_performance_writer(
+        traccc::finding_performance_writer::config{});
+
     traccc::fitting_performance_writer::config writer_cfg;
     writer_cfg.file_path = "performance_track_fitting.root";
     traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
@@ -83,15 +87,21 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Standard deviations for seed track parameters
     static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
+        {1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-4,
+         1e-4,
+         1e-4 / detray::unit<traccc::scalar>::GeV,
+         1e-4 * detray::unit<traccc::scalar>::ns};
+    /*
+    static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
         {0.03 * detray::unit<traccc::scalar>::mm,
          0.03 * detray::unit<traccc::scalar>::mm,
          0.017,
          0.017,
          0.001 / detray::unit<traccc::scalar>::GeV,
          1 * detray::unit<traccc::scalar>::ns};
-
-    // Seed generator
-    traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
+    */
 
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
@@ -116,13 +126,16 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     for (unsigned int event = common_opts.skip;
          event < common_opts.events + common_opts.skip; ++event) {
 
+        // Seed generator
+        traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
+
         // Truth Track Candidates
-        traccc::event_map2 evt_map(event, common_opts.input_directory,
-                                   common_opts.input_directory,
-                                   common_opts.input_directory);
+        traccc::event_map2 evt_map2(event, common_opts.input_directory,
+                                    common_opts.input_directory,
+                                    common_opts.input_directory);
 
         traccc::track_candidate_container_types::host truth_track_candidates =
-            evt_map.generate_truth_candidates(sg, host_mr);
+            evt_map2.generate_truth_candidates(sg, host_mr);
 
         // Prepare truth seeds
         traccc::bound_track_parameters_collection_types::host seeds(&host_mr);
@@ -130,8 +143,6 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         for (unsigned int i_trk = 0; i_trk < n_tracks; i_trk++) {
             seeds.push_back(truth_track_candidates.at(i_trk).header);
         }
-
-        // std::cout << seeds.size() << std::endl;
 
         // Read measurements
         traccc::measurement_container_types::host measurements_per_event =
@@ -153,17 +164,26 @@ int seq_run(const traccc::finding_input_config& i_cfg,
                   << std::endl;
 
         const unsigned int n_fitted_tracks = track_states.size();
-        for (unsigned int i = 0; i < n_fitted_tracks; i++) {
-            const auto& trk_states_per_track = track_states.at(i).items;
 
-            const auto& fit_info = track_states[i].header;
+        if (common_opts.check_performance) {
+            find_performance_writer.write(traccc::get_data(track_candidates),
+                                          evt_map2);
 
-            fit_performance_writer.write(trk_states_per_track, fit_info,
-                                         host_det, evt_map);
+            for (unsigned int i = 0; i < n_fitted_tracks; i++) {
+                const auto& trk_states_per_track = track_states.at(i).items;
+
+                const auto& fit_info = track_states[i].header;
+
+                fit_performance_writer.write(trk_states_per_track, fit_info,
+                                             host_det, evt_map2);
+            }
         }
     }
 
-    fit_performance_writer.finalize();
+    if (common_opts.check_performance) {
+        find_performance_writer.finalize();
+        fit_performance_writer.finalize();
+    }
 
     return 1;
 }
