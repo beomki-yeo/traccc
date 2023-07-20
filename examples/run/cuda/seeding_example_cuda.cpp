@@ -320,7 +320,7 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
                 auto navigation_buffer = detray::create_candidates_buffer(
                     host_det,
                     device_finding.get_config().max_num_branches_per_seed *
-                        seeds.size(),
+                        copy.get_size(seeds_cuda_buffer),
                     mr.main, mr.host);
 
                 /*------------------------
