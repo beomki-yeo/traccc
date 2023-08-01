@@ -34,9 +34,9 @@
 #include "traccc/options/seeding_input_options.hpp"
 
 // Detray include(s).
-#include "detray/detectors/create_toy_geometry.hpp"
+#include "detray/core/detector.hpp"
+#include "detray/detectors/toy_metadata.hpp"
 #include "detray/io/json/json_reader.hpp"
-#include "detray/io/json/json_writer.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -58,13 +58,14 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
     vecmem::host_memory_resource host_mr;
 
     // Declare detector type
-    using detector_type =
-        detray::detector<detray::detector_registry::toy_detector>;
-    using b_field_t = typename detector_type::bfield_type;
+    using detector_t = detray::detector<detray::toy_metadata<>>;
+    detector_t det{host_mr};
+
+    using b_field_t = typename detector_t::bfield_type;
     using rk_stepper_type =
         detray::rk_stepper<b_field_t::view_t, traccc::transform3,
                            detray::constrained_step<>>;
-    using navigator_type = detray::navigator<const detector_type>;
+    using navigator_type = detray::navigator<const detector_t>;
     using fitter_type = traccc::kalman_fitter<rk_stepper_type, navigator_type>;
 
     // Read the surface transforms
@@ -83,12 +84,14 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
     } else if (common_opts.run_detray_geometry == true) {
 
         // Read the detector
-        detray::json_geometry_reader<detector_type> geo_reader;
-        typename detector_type::name_map volume_name_map = {{0u, "detector"}};
+        detray::json_geometry_reader<detector_t> geo_reader;
+        detray::detector_builder<typename detector_t::metadata,
+                                 detray::volume_builder>
+            det_builder;
+        typename detector_t::name_map volume_name_map = {{0u, "detector"}};
 
-        geo_reader.read(
-            det, volume_name_map,
-            traccc::io::data_directory() + common_opts.detector_file);
+        geo_reader.read(det_builder, volume_name_map,
+                        traccc::io::data_directory() + i_cfg.detector_file);
 
         surface_transforms = traccc::io::alt_read_geometry(det);
     }
@@ -200,6 +203,7 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
         if (common_opts.check_performance) {
 
             if (common_opts.run_detray_geometry) {
+
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,
                                            common_opts.input_directory);

@@ -35,9 +35,9 @@
 #include "traccc/seeding/track_params_estimation.hpp"
 
 // Detray include(s).
-#include "detray/detectors/create_toy_geometry.hpp"
+#include "detray/core/detector.hpp"
+#include "detray/detectors/toy_metadata.hpp"
 #include "detray/io/json/json_reader.hpp"
-#include "detray/io/json/json_writer.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -71,9 +71,8 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
     traccc::memory_resource mr{device_mr, &cuda_host_mr};
 
     // Declare detector type
-    using host_detector_type =
-        detray::detector<detray::detector_registry::toy_detector, covfie::field,
-                         detray::host_container_types>;
+    using host_detector_type = detray::detector<detray::toy_metadata<>>;
+
     using device_detector_type =
         detray::detector<detray::detector_registry::toy_detector,
                          covfie::field_view, detray::device_container_types>;
@@ -106,12 +105,13 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
 
         // Read the detector
         detray::json_geometry_reader<host_detector_type> geo_reader;
-        typename host_detector_type::name_map volume_name_map = {
-            {0u, "detector"}};
+        detray::detector_builder<typename host_detector_type::metadata,
+                                 detray::volume_builder>
+            det_builder;
+        typename detector_t::name_map volume_name_map = {{0u, "detector"}};
 
-        geo_reader.read(
-            host_det, volume_name_map,
-            traccc::io::data_directory() + common_opts.detector_file);
+        geo_reader.read(det_builder, volume_name_map,
+                        traccc::io::data_directory() + i_cfg.detector_file);
 
         surface_transforms = traccc::io::alt_read_geometry(host_det);
     }
@@ -440,8 +440,12 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
           ------------*/
 
         if (common_opts.check_performance) {
+<<<<<<< HEAD
 
             if (common_opts.run_detray_geometry) {
+=======
+            if (i_cfg.run_detray_geometry) {
+>>>>>>> update-detray-v35
 
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,

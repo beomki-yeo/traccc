@@ -56,11 +56,11 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     /// Type declarations
     using host_detector_type =
-        detray::detector<detray::detector_registry::toy_detector, covfie::field,
+        detray::detector<detray::toy_metadata<>, covfie::field,
                          detray::host_container_types>;
     using device_detector_type =
-        detray::detector<detray::detector_registry::toy_detector,
-                         covfie::field_view, detray::device_container_types>;
+        detray::detector<detray::toy_metadata<>, covfie::field_view,
+                         detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;
     using rk_stepper_type =
@@ -107,9 +107,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         mng_mr,
         b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]})};
     detray::json_geometry_reader<host_detector_type> geo_reader;
+    detray::detector_builder<typename host_detector_type::metadata,
+                             detray::volume_builder>
+        det_builder;
+
     typename host_detector_type::name_map volume_name_map = {{0u, "detector"}};
 
-    geo_reader.read(host_det, volume_name_map,
+    geo_reader.read(det_builder, volume_name_map,
                     traccc::io::data_directory() + common_opts.detector_file);
 
     // Detector view object

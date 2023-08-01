@@ -46,9 +46,7 @@ int simulate(std::string output_directory, unsigned int events,
      *****************************/
 
     // Detector type
-    using detector_type =
-        detray::detector<detray::detector_registry::toy_detector,
-                         covfie::field>;
+    using detector_type = detray::detector<detray::toy_metadata<>>;
 
     // B field value and its type
     // @TODO: Set B field as argument
@@ -56,7 +54,7 @@ int simulate(std::string output_directory, unsigned int events,
     using field_type = typename detector_type::bfield_type;
 
     // Create the toy geometry
-    detector_type det =
+    auto [det, name_map] =
         detray::create_toy_geometry<detray::host_container_types>(
             host_mr,
             field_type(
