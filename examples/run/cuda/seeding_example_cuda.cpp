@@ -25,7 +25,7 @@
 
 // Detray include(s).
 #include "detray/core/detector.hpp"
-#include "detray/detectors/detector_metadata.hpp"
+#include "detray/detectors/toy_metadata.hpp"
 #include "detray/io/json/json_reader.hpp"
 
 // VecMem include(s).
@@ -54,8 +54,7 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
     traccc::memory_resource mr{device_mr, &cuda_host_mr};
 
     // Declare detector type
-    using detector_t =
-        detray::detector<detray::detector_registry::toy_detector>;
+    using detector_t = detray::detector<detray::toy_metadata<>>;
     detector_t det{host_mr};
 
     // Read the surface transforms
@@ -66,9 +65,12 @@ int seq_run(const traccc::seeding_input_config& i_cfg,
 
         // Read the detector
         detray::json_geometry_reader<detector_t> geo_reader;
+        detray::detector_builder<typename detector_t::metadata,
+                                 detray::volume_builder>
+            det_builder;
         typename detector_t::name_map volume_name_map = {{0u, "detector"}};
 
-        geo_reader.read(det, volume_name_map,
+        geo_reader.read(det_builder, volume_name_map,
                         traccc::io::data_directory() + i_cfg.detector_file);
 
         surface_transforms = traccc::io::alt_read_geometry(det);
