@@ -16,6 +16,7 @@
 
 // detray include(s).
 #include "detray/detectors/create_telescope_detector.hpp"
+#include "detray/io/common/detector_writer.hpp"
 #include "detray/masks/unbounded.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
 #include "detray/simulation/simulator.hpp"
@@ -69,7 +70,7 @@ int simulate(std::string output_directory, unsigned int events,
     tel_cfg.pilot_track(traj);
     tel_cfg.bfield_vec(B);
 
-    auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
+    const auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
 
     /***************************
      * Generate simulation data
@@ -94,6 +95,12 @@ int simulate(std::string output_directory, unsigned int events,
     auto sim = detray::simulator(events, det, std::move(generator),
                                  meas_smearer, full_path);
     sim.run();
+
+    // Create detector file
+    auto writer_cfg = detray::io::detector_writer_config{}
+                          .format(detray::io::format::json)
+                          .replace_files(true);
+    detray::io::write_detector(det, name_map, writer_cfg);
 
     return 1;
 }

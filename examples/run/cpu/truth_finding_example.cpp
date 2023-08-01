@@ -12,6 +12,7 @@
 #include "traccc/finding/finding_algorithm.hpp"
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
+#include "traccc/io/read_geometry.hpp"
 #include "traccc/io/read_measurements.hpp"
 #include "traccc/io/utils.hpp"
 #include "traccc/options/common_options.hpp"
@@ -21,10 +22,10 @@
 #include "traccc/resolution/fitting_performance_writer.hpp"
 #include "traccc/utils/seed_generator.hpp"
 
-// detray include(s).
-#include "detray/detectors/create_toy_geometry.hpp"
-#include "detray/io/json/json_reader.hpp"
-#include "detray/io/json/json_writer.hpp"
+// Detray include(s).
+#include "detray/core/detector.hpp"
+#include "detray/detectors/toy_metadata.hpp"
+#include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -64,10 +65,8 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     // Performance writer
     traccc::finding_performance_writer find_performance_writer(
         traccc::finding_performance_writer::config{});
-
-    traccc::fitting_performance_writer::config writer_cfg;
-    writer_cfg.file_path = "performance_track_fitting.root";
-    traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
+    traccc::fitting_performance_writer fit_performance_writer(
+        traccc::fitting_performance_writer::config{});
 
     /*****************************
      * Build a geometry
@@ -78,18 +77,16 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
 
     // Read the detector
-    host_detector_type host_det{
-        host_mr,
-        b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]})};
-    detray::json_geometry_reader<host_detector_type> geo_reader;
-    detray::detector_builder<typename host_detector_type::metadata,
-                             detray::volume_builder>
-        det_builder;
+    detray::io::detector_reader_config reader_cfg{};
+    reader_cfg
+        .add_file(traccc::io::data_directory() + common_opts.detector_file)
+        .add_file(traccc::io::data_directory() + common_opts.material_file)
+        .bfield_vec(B[0], B[1], B[2]);
 
-    typename host_detector_type::name_map volume_name_map = {{0u, "detector"}};
+    const auto [host_det, names] =
+        detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
 
-    geo_reader.read(det_builder, volume_name_map,
-                    traccc::io::data_directory() + common_opts.detector_file);
+    const auto surface_transforms = traccc::io::alt_read_geometry(host_det);
 
     /*****************************
      * Do the reconstruction

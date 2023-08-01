@@ -36,7 +36,7 @@
 // Detray include(s).
 #include "detray/core/detector.hpp"
 #include "detray/detectors/toy_metadata.hpp"
-#include "detray/io/json/json_reader.hpp"
+#include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -54,53 +54,66 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
             const traccc::finding_input_config& finding_cfg,
             const traccc::propagation_options<scalar>& propagation_opts,
             const traccc::common_options& common_opts) {
-    // Memory resource used by the EDM.
-    vecmem::host_memory_resource host_mr;
 
-    // Declare detector type
-    using detector_t = detray::detector<detray::toy_metadata<>>;
-    detector_t det{host_mr};
+    /// Type declarations
+    using host_detector_type = detray::detector<detray::toy_metadata<>>;
 
-    using b_field_t = typename detector_t::bfield_type;
+    using b_field_t = typename host_detector_type::bfield_type;
     using rk_stepper_type =
         detray::rk_stepper<b_field_t::view_t, traccc::transform3,
                            detray::constrained_step<>>;
-    using navigator_type = detray::navigator<const detector_t>;
-    using fitter_type = traccc::kalman_fitter<rk_stepper_type, navigator_type>;
+    using host_navigator_type = detray::navigator<const host_detector_type>;
+    using host_fitter_type =
+        traccc::kalman_fitter<rk_stepper_type, host_navigator_type>;
 
-    // Read the surface transforms
-    traccc::geometry surface_transforms;
+    // Memory resource used by the EDM.
+    vecmem::host_memory_resource host_mr;
 
-    // B field value and its type
-    // @TODO: Set B field as argument
-    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
-
-    detector_type det{host_mr, b_field_t(b_field_t::backend_t::configuration_t{
-                                   B[0], B[1], B[2]})};
-
-    if (common_opts.run_detray_geometry == false) {
-        surface_transforms =
-            traccc::io::read_geometry(common_opts.detector_file);
-    } else if (common_opts.run_detray_geometry == true) {
-
-        // Read the detector
-        detray::json_geometry_reader<detector_t> geo_reader;
-        detray::detector_builder<typename detector_t::metadata,
-                                 detray::volume_builder>
-            det_builder;
-        typename detector_t::name_map volume_name_map = {{0u, "detector"}};
-
-        geo_reader.read(det_builder, volume_name_map,
-                        traccc::io::data_directory() + i_cfg.detector_file);
-
-        surface_transforms = traccc::io::alt_read_geometry(det);
-    }
+    // Performance writer
+    traccc::seeding_performance_writer sd_performance_writer(
+        traccc::seeding_performance_writer::config{});
+    traccc::finding_performance_writer find_performance_writer(
+        traccc::finding_performance_writer::config{});
+    traccc::fitting_performance_writer fit_performance_writer(
+        traccc::fitting_performance_writer::config{});
 
     // Output stats
     uint64_t n_spacepoints = 0;
     uint64_t n_seeds = 0;
     uint64_t n_found_tracks = 0;
     uint64_t n_fitted_tracks = 0;
+
+    /*****************************
+     * Build a geometry
+     *****************************/
+
+    // B field value and its type
+    // @TODO: Set B field as argument
+    const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
+
+    // Declare detector
+    host_detector_type host_det{host_mr};
+
+    // Read the surface transforms
+    traccc::geometry surface_transforms;
+
+    if (common_opts.run_detray_geometry == false) {
+        surface_transforms =
+            traccc::io::read_geometry(common_opts.detector_file);
+    } else if (common_opts.run_detray_geometry == true) {
+        // Read the detector
+        detray::io::detector_reader_config reader_cfg{};
+        reader_cfg
+            .add_file(traccc::io::data_directory() + common_opts.detector_file)
+            .add_file(traccc::io::data_directory() + common_opts.material_file)
+            .bfield_vec(B[0], B[1], B[2]);
+
+        auto [det, names] =
+            detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
+        host_det = std::move(det);
+
+        surface_transforms = traccc::io::alt_read_geometry(host_det);
+    }
 
     // Seeding algorithm
     traccc::seedfinder_config finder_config;
@@ -113,29 +126,19 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
 
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
-                                       navigator_type>::config_type cfg;
+                                       host_navigator_type>::config_type cfg;
 
     cfg.min_track_candidates_per_track = finding_cfg.track_candidates_range[0];
     cfg.max_track_candidates_per_track = finding_cfg.track_candidates_range[1];
     cfg.constrained_step_size = propagation_opts.step_constraint;
 
-    traccc::finding_algorithm<rk_stepper_type, navigator_type> host_finding(
-        cfg);
+    traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
+        host_finding(cfg);
 
     // Fitting algorithm object
-    typename traccc::fitting_algorithm<fitter_type>::config_type fit_cfg;
+    typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
     fit_cfg.step_constraint = propagation_opts.step_constraint;
-    traccc::fitting_algorithm<fitter_type> host_fitting(fit_cfg);
-
-    // performance writer
-    traccc::seeding_performance_writer sd_performance_writer(
-        traccc::seeding_performance_writer::config{});
-    traccc::finding_performance_writer find_performance_writer(
-        traccc::finding_performance_writer::config{});
-
-    traccc::fitting_performance_writer::config writer_cfg;
-    writer_cfg.file_path = "performance_track_fitting.root";
-    traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
+    traccc::fitting_algorithm<host_fitter_type> host_fitting(fit_cfg);
 
     // Loop over events
     for (unsigned int event = common_opts.skip;
@@ -179,14 +182,14 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
               ------------------------*/
 
             track_candidates =
-                host_finding(det, measurements_per_event, params);
+                host_finding(host_det, measurements_per_event, params);
             n_found_tracks += track_candidates.size();
 
             /*------------------------
                Track Fitting with KF
               ------------------------*/
 
-            track_states = host_fitting(det, track_candidates);
+            track_states = host_fitting(host_det, track_candidates);
             n_fitted_tracks += track_states.size();
         }
         /*------------
@@ -221,7 +224,7 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
                     const auto& fit_info = track_states[i].header;
 
                     fit_performance_writer.write(trk_states_per_track, fit_info,
-                                                 det, evt_map);
+                                                 host_det, evt_map);
                 }
             } else {
                 traccc::event_map evt_map(event, common_opts.detector_file,

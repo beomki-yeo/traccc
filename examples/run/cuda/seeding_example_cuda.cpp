@@ -37,7 +37,7 @@
 // Detray include(s).
 #include "detray/core/detector.hpp"
 #include "detray/detectors/toy_metadata.hpp"
-#include "detray/io/json/json_reader.hpp"
+#include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
@@ -63,19 +63,12 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
             const traccc::propagation_options<scalar>& propagation_opts,
             const traccc::common_options& common_opts, bool run_cpu) {
 
-    // Memory resources used by the application.
-    vecmem::host_memory_resource host_mr;
-    vecmem::cuda::host_memory_resource cuda_host_mr;
-    vecmem::cuda::managed_memory_resource mng_mr;
-    vecmem::cuda::device_memory_resource device_mr;
-    traccc::memory_resource mr{device_mr, &cuda_host_mr};
-
-    // Declare detector type
+    /// Type declarations
     using host_detector_type = detray::detector<detray::toy_metadata<>>;
 
     using device_detector_type =
-        detray::detector<detray::detector_registry::toy_detector,
-                         covfie::field_view, detray::device_container_types>;
+        detray::detector<detray::toy_metadata<>, covfie::field_view,
+                         detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;
     using rk_stepper_type =
@@ -88,30 +81,69 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
     using device_fitter_type =
         traccc::kalman_fitter<rk_stepper_type, device_navigator_type>;
 
+    // Memory resources used by the application.
+    vecmem::host_memory_resource host_mr;
+    vecmem::cuda::host_memory_resource cuda_host_mr;
+    vecmem::cuda::managed_memory_resource mng_mr;
+    vecmem::cuda::device_memory_resource device_mr;
+    traccc::memory_resource mr{device_mr, &cuda_host_mr};
+
+    // Performance writer
+    traccc::seeding_performance_writer sd_performance_writer(
+        traccc::seeding_performance_writer::config{});
+    traccc::finding_performance_writer find_performance_writer(
+        traccc::finding_performance_writer::config{});
+    traccc::fitting_performance_writer fit_performance_writer(
+        traccc::fitting_performance_writer::config{});
+
+    traccc::nseed_performance_writer nsd_performance_writer(
+        "nseed_performance_",
+        std::make_unique<traccc::simple_charged_eta_pt_cut>(
+            2.7f, 1.f * traccc::unit<traccc::scalar>::GeV),
+        std::make_unique<traccc::stepped_percentage>(0.6f));
+
+    if (common_opts.check_performance) {
+        nsd_performance_writer.initialize();
+    }
+
+    // Output stats
+    uint64_t n_modules = 0;
+    uint64_t n_spacepoints = 0;
+    uint64_t n_seeds = 0;
+    uint64_t n_seeds_cuda = 0;
+    uint64_t n_found_tracks = 0;
+    uint64_t n_found_tracks_cuda = 0;
+    uint64_t n_fitted_tracks = 0;
+    uint64_t n_fitted_tracks_cuda = 0;
+
+    /*****************************
+     * Build a geometry
+     *****************************/
+
     // B field value and its type
     // @TODO: Set B field as argument
     const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
 
-    host_detector_type host_det{
-        mng_mr,
-        b_field_t(b_field_t::backend_t::configuration_t{B[0], B[1], B[2]})};
+    host_detector_type host_det{mng_mr};
 
     // Read the surface transforms
     traccc::geometry surface_transforms;
+
     if (common_opts.run_detray_geometry == false) {
         surface_transforms =
             traccc::io::read_geometry(common_opts.detector_file);
     } else if (common_opts.run_detray_geometry == true) {
 
         // Read the detector
-        detray::json_geometry_reader<host_detector_type> geo_reader;
-        detray::detector_builder<typename host_detector_type::metadata,
-                                 detray::volume_builder>
-            det_builder;
-        typename detector_t::name_map volume_name_map = {{0u, "detector"}};
+        detray::io::detector_reader_config reader_cfg{};
+        reader_cfg
+            .add_file(traccc::io::data_directory() + common_opts.detector_file)
+            .add_file(traccc::io::data_directory() + common_opts.material_file)
+            .bfield_vec(B[0], B[1], B[2]);
 
-        geo_reader.read(det_builder, volume_name_map,
-                        traccc::io::data_directory() + i_cfg.detector_file);
+        auto [det, names] =
+            detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
+        host_det = std::move(det);
 
         surface_transforms = traccc::io::alt_read_geometry(host_det);
     }
@@ -131,16 +163,6 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
 
     traccc::device::container_d2h_copy_alg<traccc::track_state_container_types>
         track_state_d2h{mr, copy};
-
-    // Output stats
-    uint64_t n_modules = 0;
-    uint64_t n_spacepoints = 0;
-    uint64_t n_seeds = 0;
-    uint64_t n_seeds_cuda = 0;
-    uint64_t n_found_tracks = 0;
-    uint64_t n_found_tracks_cuda = 0;
-    uint64_t n_fitted_tracks = 0;
-    uint64_t n_fitted_tracks_cuda = 0;
 
     // Seeding algorithm
     traccc::seedfinder_config finder_config;
@@ -182,26 +204,6 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
     traccc::fitting_algorithm<host_fitter_type> host_fitting(fit_cfg);
     traccc::cuda::fitting_algorithm<device_fitter_type> device_fitting(fit_cfg,
                                                                        mr);
-
-    // Performance writers
-    traccc::seeding_performance_writer sd_performance_writer(
-        traccc::seeding_performance_writer::config{});
-    traccc::finding_performance_writer find_performance_writer(
-        traccc::finding_performance_writer::config{});
-
-    traccc::fitting_performance_writer::config writer_cfg;
-    writer_cfg.file_path = "performance_track_fitting.root";
-    traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
-
-    traccc::nseed_performance_writer nsd_performance_writer(
-        "nseed_performance_",
-        std::make_unique<traccc::simple_charged_eta_pt_cut>(
-            2.7f, 1.f * traccc::unit<traccc::scalar>::GeV),
-        std::make_unique<traccc::stepped_percentage>(0.6f));
-
-    if (common_opts.check_performance) {
-        nsd_performance_writer.initialize();
-    }
 
     traccc::performance::timing_info elapsedTimes;
 
@@ -440,12 +442,7 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
           ------------*/
 
         if (common_opts.check_performance) {
-<<<<<<< HEAD
-
             if (common_opts.run_detray_geometry) {
-=======
-            if (i_cfg.run_detray_geometry) {
->>>>>>> update-detray-v35
 
                 traccc::event_map2 evt_map(event, common_opts.input_directory,
                                            common_opts.input_directory,

@@ -23,6 +23,7 @@ struct common_options {
     unsigned short target_cells_per_partition;
     bool check_performance;
     std::string detector_file;
+    std::string material_file;
     bool run_detray_geometry;
 
     common_options(po::options_description& desc);
