@@ -93,6 +93,7 @@ struct kalman_actor : detray::actor {
             // Abort if the propagator fails to find the next measurement
             if (navigation.barcode() != trk_state.surface_link()) {
                 propagation._heartbeat &= navigation.abort();
+                return;
             }
 
             // This track state is not a hole
