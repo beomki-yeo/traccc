@@ -83,6 +83,7 @@ struct kalman_actor : detray::actor {
         // If the iterator reaches the end, terminate the propagation
         if (actor_state.is_complete()) {
             propagation._heartbeat &= navigation.abort();
+            return;
         }
 
         // triggered only for sensitive surfaces
