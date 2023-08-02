@@ -86,13 +86,13 @@ int simulate(std::string output_directory, unsigned int events,
     sim.get_config().overstep_tolerance = propagation_opts.overstep_tolerance;
 
     sim.run();
-    
+
     // Create detector file
     auto writer_cfg = detray::io::detector_writer_config{}
                           .format(detray::io::format::json)
                           .replace_files(true);
     detray::io::write_detector(det, name_map, writer_cfg);
-    
+
     return 1;
 }
 
