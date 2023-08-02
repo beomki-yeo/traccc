@@ -13,6 +13,7 @@ traccc_add_test(
 
     # Define the sources for the test.
     test_kalman_filter.sycl
+    test_thrust.sycl
 
     LINK_LIBRARIES
     GTest::gtest_main
