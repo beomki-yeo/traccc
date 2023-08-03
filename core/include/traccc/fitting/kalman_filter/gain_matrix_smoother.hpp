@@ -95,8 +95,10 @@ struct gain_matrix_smoother {
             mask_group_t::value_type::shape::meas_dim;
 
         // Calculate smoothed chi square
-        const matrix_type<D, 1>& meas_local = cur_state.measurement_local();
-        const matrix_type<D, D>& V = cur_state.measurement_covariance();
+        const matrix_type<D, 1>& meas_local =
+            cur_state.template measurement_local<D>();
+        const matrix_type<D, D>& V =
+            cur_state.template measurement_covariance<D>();
         const matrix_type<D, 1> residual = meas_local - H * smt_vec;
         const matrix_type<D, D> R =
             V - H * smt_cov * matrix_operator().transpose(H);

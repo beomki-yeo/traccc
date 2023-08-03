@@ -69,6 +69,41 @@ struct track_state {
     TRACCC_HOST_DEVICE
     inline const measurement& get_measurement() const { return m_measurement; }
 
+    template <unsigned int meas_dim>
+    TRACCC_HOST_DEVICE inline matrix_type<meas_dim, 1> measurement_local()
+        const {
+        static_assert(meas_dim == 1u || meas_dim == 2u,
+                      "Measurement dimension should be 1 or 2");
+
+        matrix_type<meas_dim, 1u> ret =
+            matrix_operator().template zero<meas_dim, 1u>();
+
+        matrix_operator().element(ret, 0u, 0u) = m_measurement.local[0u];
+
+        if constexpr (meas_dim == 2u) {
+            matrix_operator().element(ret, 1u, 0u) = m_measurement.local[1u];
+        }
+        return ret;
+    }
+
+    template <unsigned int meas_dim>
+    TRACCC_HOST_DEVICE inline matrix_type<meas_dim, meas_dim>
+    measurement_covariance() const {
+        static_assert(meas_dim == 1u || meas_dim == 2u,
+                      "Measurement dimension should be 1 or 2");
+
+        matrix_type<meas_dim, meas_dim> ret =
+            matrix_operator().template zero<meas_dim, meas_dim>();
+
+        matrix_operator().element(ret, 0u, 0u) = m_measurement.variance[0u];
+
+        if constexpr (meas_dim == 2u) {
+            matrix_operator().element(ret, 1u, 1u) = m_measurement.variance[1u];
+        }
+        return ret;
+    }
+
+    /*
     /// @return the local position of measurement with 2 X 1 matrix
     // FIXME: The conversion from vector to matrix is inefficient
     TRACCC_HOST_DEVICE
@@ -87,6 +122,7 @@ struct track_state {
         matrix_operator().element(ret, 1, 1) = m_measurement.variance[1];
         return ret;
     }
+    */
 
     /// @return the non-const reference of predicted track state
     TRACCC_HOST_DEVICE

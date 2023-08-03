@@ -58,7 +58,8 @@ struct gain_matrix_updater {
             mask_group[index].projection_matrix(bound_params);
 
         // Measurement data on surface
-        const matrix_type<D, 1>& meas_local = trk_state.measurement_local();
+        const matrix_type<D, 1>& meas_local =
+            trk_state.template measurement_local<D>();
 
         // Predicted vector of bound track parameters
         const matrix_type<6, 1>& predicted_vec = bound_params.vector();
@@ -71,7 +72,8 @@ struct gain_matrix_updater {
         trk_state.predicted().set_covariance(predicted_cov);
 
         // Spatial resolution (Measurement covariance)
-        const matrix_type<D, D> V = trk_state.measurement_covariance();
+        const matrix_type<D, D> V =
+            trk_state.template measurement_covariance<D>();
 
         const matrix_type<D, D> M =
             H * predicted_cov * matrix_operator().transpose(H) + V;

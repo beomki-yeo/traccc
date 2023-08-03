@@ -24,6 +24,7 @@
 
 // Detray include(s).
 #include "detray/core/detector.hpp"
+#include "detray/core/detector_metadata.hpp"
 #include "detray/detectors/toy_metadata.hpp"
 #include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
@@ -47,7 +48,7 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     /// Type declarations
     using host_detector_type =
-        detray::detector<detray::toy_metadata<>, covfie::field,
+        detray::detector<detray::default_metadata, covfie::field,
                          detray::host_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;
