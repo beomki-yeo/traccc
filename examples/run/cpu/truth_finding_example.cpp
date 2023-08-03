@@ -25,7 +25,6 @@
 // Detray include(s).
 #include "detray/core/detector.hpp"
 #include "detray/core/detector_metadata.hpp"
-#include "detray/detectors/toy_metadata.hpp"
 #include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"

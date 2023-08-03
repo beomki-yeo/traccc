@@ -36,7 +36,7 @@
 
 // Detray include(s).
 #include "detray/core/detector.hpp"
-#include "detray/detectors/toy_metadata.hpp"
+#include "detray/core/detector_metadata.hpp"
 #include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
@@ -64,10 +64,10 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
             const traccc::common_options& common_opts, bool run_cpu) {
 
     /// Type declarations
-    using host_detector_type = detray::detector<detray::toy_metadata<>>;
+    using host_detector_type = detray::detector<detray::default_metadata>;
 
     using device_detector_type =
-        detray::detector<detray::toy_metadata<>, covfie::field_view,
+        detray::detector<detray::default_metadata, covfie::field_view,
                          detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;

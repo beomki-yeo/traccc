@@ -509,6 +509,15 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
 }
 
 // Explicit template instantiation
+using default_detector_type =
+    detray::detector<detray::default_metadata, covfie::field_view,
+                     detray::device_container_types>;
+using default_stepper_type = detray::rk_stepper<
+    covfie::field<default_detector_type::bfield_backend_type>::view_t,
+    transform3, detray::constrained_step<>>;
+using default_navigator_type = detray::navigator<const default_detector_type>;
+template class finding_algorithm<default_stepper_type, default_navigator_type>;
+
 using toy_detector_type =
     detray::detector<detray::toy_metadata<>, covfie::field_view,
                      detray::device_container_types>;
