@@ -12,6 +12,7 @@
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
 
 // detray include(s).
+#include "detray/core/detector_metadata.hpp"
 #include "detray/detectors/telescope_metadata.hpp"
 #include "detray/detectors/toy_metadata.hpp"
 #include "detray/masks/unbounded.hpp"
@@ -96,6 +97,17 @@ track_state_container_types::buffer fitting_algorithm<fitter_t>::operator()(
 }
 
 // Explicit template instantiation
+using default_detector_type =
+    detray::detector<detray::default_metadata, covfie::field_view,
+                     detray::device_container_types>;
+using default_stepper_type = detray::rk_stepper<
+    covfie::field<default_detector_type::bfield_backend_type>::view_t,
+    transform3, detray::constrained_step<>>;
+using default_navigator_type = detray::navigator<const default_detector_type>;
+using default_fitter_type =
+    kalman_fitter<default_stepper_type, default_navigator_type>;
+template class fitting_algorithm<default_fitter_type>;
+
 using toy_detector_type =
     detray::detector<detray::toy_metadata<>, covfie::field_view,
                      detray::device_container_types>;

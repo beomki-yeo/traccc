@@ -57,10 +57,10 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     /// Type declarations
     using host_detector_type =
-        detray::detector<detray::toy_metadata<>, covfie::field,
+        detray::detector<detray::default_metadata, covfie::field,
                          detray::host_container_types>;
     using device_detector_type =
-        detray::detector<detray::toy_metadata<>, covfie::field_view,
+        detray::detector<detray::default_metadata, covfie::field_view,
                          detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;

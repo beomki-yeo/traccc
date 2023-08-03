@@ -21,6 +21,7 @@
 
 // detray include(s).
 #include "detray/core/detector.hpp"
+#include "detray/core/detector_metadata.hpp"
 #include "detray/detectors/telescope_metadata.hpp"
 #include "detray/detectors/toy_metadata.hpp"
 #include "detray/masks/unbounded.hpp"
