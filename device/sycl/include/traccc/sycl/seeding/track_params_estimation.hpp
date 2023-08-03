@@ -30,7 +30,9 @@ namespace traccc::sycl {
 struct track_params_estimation
     : public algorithm<bound_track_parameters_collection_types::buffer(
           const spacepoint_collection_types::const_view&,
-          const seed_collection_types::const_view&, const vector3&)> {
+          const seed_collection_types::const_view&,
+          const cell_module_collection_types::const_view&, const vector3&,
+          const std::array<traccc::scalar, traccc::e_bound_size>&)> {
 
     public:
     /// Constructor for track_params_estimation
@@ -53,7 +55,13 @@ struct track_params_estimation
     output_type operator()(
         const spacepoint_collection_types::const_view& spacepoints_view,
         const seed_collection_types::const_view& seeds_view,
-        const vector3& bfield) const override;
+        const cell_module_collection_types::const_view& modules_view,
+        const vector3& bfield,
+        const std::array<traccc::scalar, traccc::e_bound_size>& stddev = {
+            0.03 * detray::unit<traccc::scalar>::mm,
+            0.03 * detray::unit<traccc::scalar>::mm, 0.017, 0.017,
+            0.001 / detray::unit<traccc::scalar>::GeV,
+            1 * detray::unit<traccc::scalar>::ns}) const override;
 
     private:
     // Private member variables
