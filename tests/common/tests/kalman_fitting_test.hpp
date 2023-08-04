@@ -16,9 +16,9 @@
 #include "detray/core/detector_metadata.hpp"
 #include "detray/masks/masks.hpp"
 #include "detray/propagator/navigator.hpp"
+#include "detray/propagator/propagator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
-#include "detray/propagator/propagator.hpp"
 
 // GTest include(s).
 #include <gtest/gtest.h>

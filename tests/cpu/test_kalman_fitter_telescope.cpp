@@ -56,7 +56,7 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     /*****************************
      * Build a telescope geometry
      *****************************/
-    
+
     // Memory resources used by the application.
     vecmem::host_memory_resource host_mr;
 
@@ -84,11 +84,11 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
 
     const auto [host_det, names] =
         detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
-    
+
     /***************************
      * Generate simulation data
      ***************************/
-    
+
     auto generator =
         detray::random_track_generator<traccc::free_track_parameters,
                                        uniform_gen_t>(n_truth_tracks, origin,
@@ -106,11 +106,11 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     auto sim = detray::simulator(n_events, host_det, std::move(generator),
                                  meas_smearer, full_path);
     sim.run();
-    
+
     /***************
      * Run fitting
      ***************/
-    
+
     // Seed generator
     seed_generator<host_detector_type> sg(host_det, stddevs);
 

@@ -158,9 +158,6 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
         auto track_candidates =
             host_finding(host_det, measurements_per_event, seeds);
 
-        std::cout << i_evt << "  " << track_candidates.size() << "  "
-                  << n_truth_tracks << std::endl;
-
         ASSERT_EQ(track_candidates.size(), n_truth_tracks);
 
         // Run fitting
@@ -200,7 +197,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
         std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
         std::array<scalar, 2u>{0.f, 0.f}, 1, 5000)));
-/*
+
 INSTANTIATE_TEST_SUITE_P(
     CkfSparseTrackTelescopeValidation1, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
@@ -224,4 +221,3 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
         std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
         std::array<scalar, 2u>{0.f, 0.f}, 10, 500)));
-*/
