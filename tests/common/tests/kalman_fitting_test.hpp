@@ -13,11 +13,12 @@
 
 // detray include(s).
 #include "detray/core/detector.hpp"
-#include "detray/detectors/telescope_metadata.hpp"
+#include "detray/core/detector_metadata.hpp"
 #include "detray/masks/masks.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/rk_stepper.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
+#include "detray/propagator/propagator.hpp"
 
 // GTest include(s).
 #include <gtest/gtest.h>
@@ -49,10 +50,10 @@ class KalmanFittingTests
     public:
     /// Type declarations
     using host_detector_type =
-        detray::detector<detray::telescope_metadata<>, covfie::field,
+        detray::detector<detray::default_metadata, covfie::field,
                          detray::host_container_types>;
     using device_detector_type =
-        detray::detector<detray::telescope_metadata<>, covfie::field_view,
+        detray::detector<detray::default_metadata, covfie::field_view,
                          detray::device_container_types>;
 
     using b_field_t = typename host_detector_type::bfield_type;
@@ -69,38 +70,6 @@ class KalmanFittingTests
     using uniform_gen_t =
         detray::random_numbers<scalar, std::uniform_real_distribution<scalar>,
                                std::seed_seq>;
-
-    /// Plane alignment direction (aligned to x-axis)
-    static const inline detray::detail::ray<transform3> traj{
-        {0, 0, 0}, 0, {1, 0, 0}, -1};
-
-    /// Position of planes (in mm unit)
-    static const inline std::vector<scalar> plane_positions = {
-        20., 40., 60., 80., 100., 120., 140, 160, 180.};
-
-    /// B field value and its type
-    static constexpr vector3 B{2 * detray::unit<scalar>::T, 0, 0};
-
-    /// Plane material and thickness
-    static const inline detray::silicon_tml<scalar> mat = {};
-    static constexpr scalar thickness = 0.5 * detray::unit<scalar>::mm;
-
-    // Rectangle mask for the telescope geometry
-    static constexpr detray::mask<detray::rectangle2D<>> rectangle{0u, 100000.f,
-                                                                   100000.f};
-
-    /// Measurement smearing parameters
-    static constexpr std::array<scalar, 2u> smearing{
-        50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um};
-
-    /// Standard deviations for seed track parameters
-    static constexpr std::array<scalar, e_bound_size> stddevs = {
-        0.03 * detray::unit<scalar>::mm,
-        0.03 * detray::unit<scalar>::mm,
-        0.017,
-        0.017,
-        0.001 / detray::unit<scalar>::GeV,
-        1 * detray::unit<scalar>::ns};
 
     /// Verify that pull distribtions follow the normal distribution
     ///
