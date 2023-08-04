@@ -68,9 +68,9 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
     tel_cfg.mat_thickness(thickness);
     tel_cfg.pilot_track(traj);
     tel_cfg.bfield_vec(B);
-    
+
     // Create telescope detector
-    /*
+
     auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
 
     // Write detector file
@@ -87,11 +87,11 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
 
     const auto [host_det, names] =
         detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
-    */    
+
     /***************************
      * Generate simulation data
      ***************************/
-    /*
+
     auto generator =
         detray::random_track_generator<traccc::free_track_parameters,
                                        uniform_gen_t>(n_truth_tracks, origin,
@@ -109,11 +109,11 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
     auto sim = detray::simulator(n_events, host_det, std::move(generator),
                                  meas_smearer, full_path);
     sim.run();
-    */
+
     /*****************************
      * Do the reconstruction
      *****************************/
-    /*
+
     // Seed generator
     seed_generator<host_detector_type> sg(host_det, stddevs);
 
@@ -158,6 +158,9 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
         auto track_candidates =
             host_finding(host_det, measurements_per_event, seeds);
 
+        std::cout << i_evt << "  " << track_candidates.size() << "  "
+                  << n_truth_tracks << std::endl;
+
         ASSERT_EQ(track_candidates.size(), n_truth_tracks);
 
         // Run fitting
@@ -177,18 +180,17 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
     }
 
     fit_performance_writer.finalize();
-    */
+
     /********************
      * Pull value test
      ********************/
-    /*
+
     static const std::vector<std::string> pull_names{
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
     pull_value_tests(fit_writer_cfg.file_path, pull_names);
 
     // Remove the data
     std::filesystem::remove_all(full_path);
-    */
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -198,7 +200,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
         std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
         std::array<scalar, 2u>{0.f, 0.f}, 1, 5000)));
-
+/*
 INSTANTIATE_TEST_SUITE_P(
     CkfSparseTrackTelescopeValidation1, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
@@ -222,3 +224,4 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
         std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
         std::array<scalar, 2u>{0.f, 0.f}, 10, 500)));
+*/
