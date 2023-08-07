@@ -19,7 +19,7 @@
 #include "traccc/utils/seed_generator.hpp"
 
 // Test include(s).
-#include "tests/combinatorial_kalman_finding_test.hpp"
+#include "tests/ckf_telescope_test.hpp"
 
 // detray include(s).
 #include "detray/detectors/create_telescope_detector.hpp"

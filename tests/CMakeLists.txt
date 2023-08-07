@@ -11,10 +11,12 @@ include( traccc-compiler-options-cpp )
 add_library( traccc_tests_common STATIC
     "common/tests/atlas_cuts.hpp"
     "common/tests/cca_test.hpp"
-    "common/tests/combinatorial_kalman_finding_telescope_test.hpp"
+    "common/tests/ckf_telescope_test.hpp"
+    "common/tests/ckf_wire_chamber_test.hpp"
     "common/tests/data_test.hpp"
     "common/tests/kalman_fitting_test.hpp"
     "common/tests/kalman_fitting_telescope_test.hpp"
+    "common/tests/kalman_fitting_wire_chamber_test.hpp"
     "common/tests/kalman_fitting_test.cpp"
     "common/tests/space_point.hpp" )
 target_include_directories( traccc_tests_common

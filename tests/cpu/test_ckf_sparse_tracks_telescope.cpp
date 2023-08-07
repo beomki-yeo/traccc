@@ -14,7 +14,7 @@
 #include "traccc/utils/ranges.hpp"
 
 // Test include(s).
-#include "tests/combinatorial_kalman_finding_telescope_test.hpp"
+#include "tests/ckf_telescope_test.hpp"
 #include "traccc/utils/seed_generator.hpp"
 
 // detray include(s).
