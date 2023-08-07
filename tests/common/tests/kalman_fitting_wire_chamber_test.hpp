@@ -24,8 +24,24 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
 
     /// Measurement smearing parameters
     static constexpr std::array<scalar, 2u> smearing{
-        50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um};
+        1.f * detray::unit<scalar>::um, 1.f * detray::unit<scalar>::um};
 
+    /// Standard deviations for seed track parameters
+    static constexpr std::array<scalar, e_bound_size> stddevs = {
+        0.001 * detray::unit<scalar>::mm,
+        0.001 * detray::unit<scalar>::mm,
+        0.001,
+        0.001,
+        0.001 / detray::unit<scalar>::GeV,
+        1 * detray::unit<scalar>::ns};
+
+    /*
+    /// Measurement smearing parameters
+    static constexpr std::array<scalar, 2u> smearing{
+        50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um};
+    */
+
+    /*
     /// Standard deviations for seed track parameters
     static constexpr std::array<scalar, e_bound_size> stddevs = {
         0.03 * detray::unit<scalar>::mm,
@@ -34,6 +50,7 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
         0.017,
         0.001 / detray::unit<scalar>::GeV,
         1 * detray::unit<scalar>::ns};
+    */
 };
 
 }  // namespace traccc

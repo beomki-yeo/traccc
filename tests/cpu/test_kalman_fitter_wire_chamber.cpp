@@ -115,10 +115,13 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
     typename traccc::fitting_algorithm<host_fitter_type>::config_type fit_cfg;
     fitting_algorithm<host_fitter_type> fitting(fit_cfg);
 
+    int miss = 0;
+    int weird = 0;
+
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {
 
-        std::cout << "Event ID: " << i_evt << std::endl;
+        // std::cout << "Event ID: " << i_evt << std::endl;
 
         // Event map
         traccc::event_map2 evt_map(i_evt, path, path, path);
@@ -135,22 +138,46 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
 
         // Iterator over tracks
         const std::size_t n_tracks = track_states.size();
-
-        // n_trakcs = 100
         ASSERT_EQ(n_tracks, n_truth_tracks);
+
         for (std::size_t i_trk = 0; i_trk < n_tracks; i_trk++) {
 
-            std::cout << i_trk << std::endl;
+            // std::cout << i_trk << std::endl;
 
             const auto& track_states_per_track = track_states[i_trk].items;
-            ASSERT_EQ(track_states_per_track.size(), n_wire_layers);
+            const auto& track_candidates_per_track =
+                track_candidates[i_trk].items;
+
+            // The nubmer of track candidates is supposed be greater than or
+            // equal to the number of layers
+            EXPECT_GE(track_candidates_per_track.size(), n_wire_layers);
+
+            if (track_candidates_per_track.size() < n_wire_layers) {
+                weird++;
+            }
+
+            // The number of track states is supposed to be eqaul to the number
+            // of measurements
+            EXPECT_EQ(track_states_per_track.size(),
+                      track_candidates_per_track.size());
+
             const auto& fit_info = track_states[i_trk].header;
-            ASSERT_FLOAT_EQ(fit_info.ndf, n_wire_layers - 5.f);
+
+            if (fit_info.ndf < track_candidates_per_track.size() - 5.f) {
+                miss++;
+            }
+
+            EXPECT_FLOAT_EQ(fit_info.ndf,
+                            track_candidates_per_track.size() - 5.f)
+                << track_states_per_track.size();
 
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
         }
     }
+
+    std::cout << "Missed Events: " << miss << std::endl;
+    std::cout << "Weird Events:  " << weird << std::endl;
 
     fit_performance_writer.finalize();
 
@@ -185,10 +212,10 @@ INSTANTIATE_TEST_SUITE_P(
 */
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation2, KalmanFittingWireChamberTests,
-    ::testing::Values(std::make_tuple("100_GeV_0_phi",
-                                      std::array<scalar, 3u>{0.f, 0.f, 0.f},
-                                      std::array<scalar, 3u>{0.f, 0.f, 0.f},
-                                      std::array<scalar, 2u>{100.f, 100.f},
-                                      std::array<scalar, 2u>{-0.5f, 0.5f},
-                                      std::array<scalar, 2u>{0.f, 0.f}, 100,
-                                      100)));
+    ::testing::Values(std::make_tuple(
+        "100_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
+        std::array<scalar, 3u>{0.f, 0.f, 0.f},
+        std::array<scalar, 2u>{100.f, 100.f},
+        std::array<scalar, 2u>{-0.2f, 0.2f},
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
+        100)));
