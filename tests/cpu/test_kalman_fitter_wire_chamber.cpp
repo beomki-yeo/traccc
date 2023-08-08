@@ -62,6 +62,7 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
 
     detray::wire_chamber_config wire_chamber_cfg;
     wire_chamber_cfg.n_layers(n_wire_layers);
+    wire_chamber_cfg.half_z(half_z);
     wire_chamber_cfg.bfield_vec(B);
 
     // Create telescope detector
@@ -199,23 +200,26 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(std::make_tuple(
         "1_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
-        std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
-        std::array<scalar, 2u>{0.f, 0.f}, 100, 100)));
+        std::array<scalar, 2u>{1.f, 1.f},
+        std::array<scalar, 2u>{-1.f, 1.f},
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
+        100)));
+*/
 
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation1, KalmanFittingWireChamberTests,
     ::testing::Values(std::make_tuple(
         "10_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
-        std::array<scalar, 2u>{10.f, 10.f}, std::array<scalar, 2u>{0.f, 0.f},
-        std::array<scalar, 2u>{0.f, 0.f}, 100, 100)));
-*/
+        std::array<scalar, 2u>{10.f, 10.f}, std::array<scalar, 2u>{-1.f, 1.f},
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
+        100)));
+
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation2, KalmanFittingWireChamberTests,
     ::testing::Values(std::make_tuple(
         "100_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
-        std::array<scalar, 2u>{100.f, 100.f},
-        std::array<scalar, 2u>{-0.2f, 0.2f},
+        std::array<scalar, 2u>{100.f, 100.f}, std::array<scalar, 2u>{-1.f, 1.f},
         std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
         100)));

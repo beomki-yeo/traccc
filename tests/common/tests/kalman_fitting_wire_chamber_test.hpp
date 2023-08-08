@@ -19,12 +19,15 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
     /// Number of layers
     static const inline unsigned int n_wire_layers{20u};
 
+    /// Half z of cylinder
+    static const inline scalar half_z{4000.f * detray::unit<scalar>::mm};
+
     /// B field value and its type
     static constexpr vector3 B{0, 0, 2 * detray::unit<scalar>::T};
 
     /// Measurement smearing parameters
     static constexpr std::array<scalar, 2u> smearing{
-        1.f * detray::unit<scalar>::um, 1.f * detray::unit<scalar>::um};
+        100.f * detray::unit<scalar>::um, 100.f * detray::unit<scalar>::um};
 
     /// Standard deviations for seed track parameters
     static constexpr std::array<scalar, e_bound_size> stddevs = {
