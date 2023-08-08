@@ -20,10 +20,13 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
     static const inline unsigned int n_wire_layers{20u};
 
     /// Half z of cylinder
-    static const inline scalar half_z{4000.f * detray::unit<scalar>::mm};
+    static const inline scalar half_z{2000.f * detray::unit<scalar>::mm};
 
     /// B field value and its type
     static constexpr vector3 B{0, 0, 2 * detray::unit<scalar>::T};
+
+    /// Step constraint
+    static const inline scalar step_constraint = 2 * detray::unit<scalar>::mm;
 
     /// Measurement smearing parameters
     static constexpr std::array<scalar, 2u> smearing{
