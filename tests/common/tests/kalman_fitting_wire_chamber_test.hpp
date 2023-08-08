@@ -28,9 +28,16 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
     /// Step constraint
     static const inline scalar step_constraint = 2 * detray::unit<scalar>::mm;
 
+    /// Overstep tolerance
+    static const inline scalar overstep_tolerance =
+        -100.f * detray::unit<scalar>::um;
+
+    // Set mask tolerance to a large value not to miss the surface during KF
+    static const inline scalar mask_tolerance = 50.f * detray::unit<scalar>::um;
+
     /// Measurement smearing parameters
     static constexpr std::array<scalar, 2u> smearing{
-        100.f * detray::unit<scalar>::um, 100.f * detray::unit<scalar>::um};
+        50.f * detray::unit<scalar>::um, 50.f * detray::unit<scalar>::um};
 
     /// Standard deviations for seed track parameters
     static constexpr std::array<scalar, e_bound_size> stddevs = {
@@ -39,24 +46,7 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
         0.001,
         0.001,
         0.001 / detray::unit<scalar>::GeV,
-        1 * detray::unit<scalar>::ns};
-
-    /*
-    /// Measurement smearing parameters
-    static constexpr std::array<scalar, 2u> smearing{
-        50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um};
-    */
-
-    /*
-    /// Standard deviations for seed track parameters
-    static constexpr std::array<scalar, e_bound_size> stddevs = {
-        0.03 * detray::unit<scalar>::mm,
-        0.03 * detray::unit<scalar>::mm,
-        0.017,
-        0.017,
-        0.001 / detray::unit<scalar>::GeV,
-        1 * detray::unit<scalar>::ns};
-    */
+        0.001 * detray::unit<scalar>::ns};
 };
 
 }  // namespace traccc
