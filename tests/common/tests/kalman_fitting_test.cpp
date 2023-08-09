@@ -81,4 +81,24 @@ void KalmanFittingTests::pull_value_tests(
 #endif  // TRACCC_HAVE_ROOT
 }
 
+void KalmanFittingTests::statistics_tests(
+    const std::size_t idx, const host_detector_type& host_det,
+    const track_candidate_container_types::host& track_candidates,
+    const track_state_container_types::host& track_states) const {
+
+    const auto& track_states_per_track = track_states[idx].items;
+    const auto& track_candidates_per_track = track_candidates[idx].items;
+    const auto& fit_info = track_states[idx].header;
+
+    // The number of track states is supposed to be eqaul to the number
+    // of measurements
+    EXPECT_EQ(track_states_per_track.size(), track_candidates_per_track.size());
+
+    // Check if the number of degree of freedoms is equal to (the sum of
+    // measurement dimensions - 5)
+    EXPECT_FLOAT_EQ(fit_info.ndf, dim_sum - 5.f);
+
+    return;
+}
+
 }  // namespace traccc

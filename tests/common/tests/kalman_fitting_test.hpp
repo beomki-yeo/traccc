@@ -78,6 +78,17 @@ class KalmanFittingTests
     ///
     void pull_value_tests(std::string_view file_name,
                           const std::vector<std::string>& hist_names) const;
+
+    /// Validadte the fitting statistics
+    ///
+    /// @param file_name The name of the file holding the distributions
+    /// @param hist_names The names of the histograms to process
+    /// @param host_det The host type detector object
+    ///
+    void statistics_tests(
+        const std::size_t idx, const host_detector_type& host_det,
+        const track_candidate_container_types::host& track_candidates,
+        const track_state_container_types::host& track_states) const;
 };
 
 }  // namespace traccc
