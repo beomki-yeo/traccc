@@ -23,6 +23,8 @@
 
 // detray include(s).
 #include "detray/detectors/create_telescope_detector.hpp"
+#include "detray/io/common/detector_reader.hpp"
+#include "detray/io/common/detector_writer.hpp"
 #include "detray/propagator/propagator.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
 #include "detray/simulation/simulator.hpp"
@@ -42,7 +44,7 @@
 
 using namespace traccc;
 // This defines the local frame test suite
-TEST_P(CkfSparseTrackTests, Run) {
+TEST_P(CkfSparseTrackTelescopeTests, Run) {
 
     // Get the parameters
     const std::string name = std::get<0>(GetParam());
@@ -56,9 +58,9 @@ TEST_P(CkfSparseTrackTests, Run) {
     const unsigned int n_events = std::get<7>(GetParam());
 
     // Performance writer
-    traccc::fitting_performance_writer::config writer_cfg;
-    writer_cfg.file_path = "performance_track_fitting_" + name + ".root";
-    traccc::fitting_performance_writer fit_performance_writer(writer_cfg);
+    traccc::fitting_performance_writer::config fit_writer_cfg;
+    fit_writer_cfg.file_path = "performance_track_fitting_" + name + ".root";
+    traccc::fitting_performance_writer fit_performance_writer(fit_writer_cfg);
 
     /*****************************
      * Build a telescope geometry
@@ -77,7 +79,23 @@ TEST_P(CkfSparseTrackTests, Run) {
     tel_cfg.pilot_track(traj);
     tel_cfg.bfield_vec(B);
 
-    auto [host_det, name_map] = create_telescope_detector(mng_mr, tel_cfg);
+    // Create telescope detector
+    auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
+
+    // Write detector file
+    auto writer_cfg = detray::io::detector_writer_config{}
+                          .format(detray::io::format::json)
+                          .replace_files(true);
+    detray::io::write_detector(det, name_map, writer_cfg);
+
+    // Read back detector file
+    detray::io::detector_reader_config reader_cfg{};
+    reader_cfg.add_file("telescope_detector_geometry.json")
+        .add_file("telescope_detector_homogeneous_material.json")
+        .bfield_vec(B[0], B[1], B[2]);
+
+    auto [host_det, names] =
+        detray::io::read_detector<host_detector_type>(mng_mr, reader_cfg);
 
     // Detector view object
     auto det_view = detray::get_data(host_det);
@@ -208,13 +226,21 @@ TEST_P(CkfSparseTrackTests, Run) {
 
         ASSERT_EQ(track_states_cuda.size(), n_truth_tracks);
 
-        for (unsigned int i = 0; i < n_truth_tracks; i++) {
-            const auto& trk_states_per_track = track_states_cuda.at(i).items;
-            ASSERT_EQ(trk_states_per_track.size(), plane_positions.size());
-            const auto& fit_info = track_states_cuda[i].header;
-            ASSERT_FLOAT_EQ(fit_info.ndf, 2 * plane_positions.size() - 5.f);
+        for (unsigned int i_trk = 0; i_trk < n_truth_tracks; i_trk++) {
 
-            fit_performance_writer.write(trk_states_per_track, fit_info,
+            std::cout << i_evt << "  " << i_trk << std::endl;
+
+            const auto& track_states_per_track = track_states_cuda[i_trk].items;
+            const auto& fit_info = track_states_cuda[i_trk].header;
+            const auto& track_candidates_per_track =
+                track_candidates_cuda[i_trk].items;
+
+            data_consistency_tests(track_candidates_per_track);
+
+            ndf_tests(host_det, fit_info, track_candidates_per_track,
+                      track_states_per_track);
+
+            fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
         }
     }
@@ -227,14 +253,23 @@ TEST_P(CkfSparseTrackTests, Run) {
 
     static const std::vector<std::string> pull_names{
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
-    pull_value_tests(writer_cfg.file_path, pull_names);
+    pull_value_tests(fit_writer_cfg.file_path, pull_names);
+
+    /********************
+     * Success rate test
+     ********************/
+
+    scalar success_rate =
+        static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
+
+    ASSERT_FLOAT_EQ(success_rate, 1.00f);
 
     // Remove the data
     std::filesystem::remove_all(full_path);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    CkfSparseTrackValidation0, CkfSparseTrackTests,
+    CkfSparseTrackTelescopeValidation0, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
         "single_tracks", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
@@ -242,7 +277,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 2u>{0.f, 0.f}, 1, 5000)));
 
 INSTANTIATE_TEST_SUITE_P(
-    CkfSparseTrackValidation1, CkfSparseTrackTests,
+    CkfSparseTrackTelescopeValidation1, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
         "double_tracks", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
@@ -250,7 +285,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 2u>{0.f, 0.f}, 2, 2500)));
 
 INSTANTIATE_TEST_SUITE_P(
-    CkfSparseTrackValidation2, CkfSparseTrackTests,
+    CkfSparseTrackTelescopeValidation2, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
         "quadra_tracks", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 200.f, 200.f},
@@ -258,7 +293,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::array<scalar, 2u>{0.f, 0.f}, 4, 1250)));
 
 INSTANTIATE_TEST_SUITE_P(
-    CkfSparseTrackValidation3, CkfSparseTrackTests,
+    CkfSparseTrackTelescopeValidation3, CkfSparseTrackTelescopeTests,
     ::testing::Values(std::make_tuple(
         "decade_tracks", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 200.f, 200.f},

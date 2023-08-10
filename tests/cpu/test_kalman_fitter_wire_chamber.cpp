@@ -123,13 +123,8 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
     fit_cfg.mask_tolerance = mask_tolerance;
     fitting_algorithm<host_fitter_type> fitting(fit_cfg);
 
-    int miss = 0;
-    int weird = 0;
-
     // Iterate over events
     for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {
-
-        // std::cout << "Event ID: " << i_evt << std::endl;
 
         // Event map
         traccc::event_map2 evt_map(i_evt, path, path, path);
@@ -150,43 +145,20 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
 
         for (std::size_t i_trk = 0; i_trk < n_tracks; i_trk++) {
 
-            // std::cout << i_trk << std::endl;
-
+            const auto& fit_info = track_states[i_trk].header;
             const auto& track_states_per_track = track_states[i_trk].items;
             const auto& track_candidates_per_track =
                 track_candidates[i_trk].items;
 
-            // The nubmer of track candidates is supposed be greater than or
-            // equal to the number of layers
-            EXPECT_GE(track_candidates_per_track.size(), n_wire_layers);
+            data_consistency_tests(track_candidates_per_track);
 
-            if (track_candidates_per_track.size() < n_wire_layers) {
-                weird++;
-            }
-            /*
-            // The number of track states is supposed to be eqaul to the number
-            // of measurements
-            EXPECT_EQ(track_states_per_track.size(),
-                      track_candidates_per_track.size());
-            */
-            const auto& fit_info = track_states[i_trk].header;
+            ndf_tests(host_det, fit_info, track_candidates_per_track,
+                      track_states_per_track);
 
-            if (fit_info.ndf < track_candidates_per_track.size() - 5.f) {
-                miss++;
-            }
-
-            /*
-            EXPECT_FLOAT_EQ(fit_info.ndf,
-                            track_candidates_per_track.size() - 5.f)
-                << track_states_per_track.size();
-            */
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
         }
     }
-
-    std::cout << "Missed Events: " << miss << std::endl;
-    std::cout << "Weird Events:  " << weird << std::endl;
 
     fit_performance_writer.finalize();
 
@@ -197,6 +169,16 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
     static const std::vector<std::string> pull_names{
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
     pull_value_tests(fit_writer_cfg.file_path, pull_names);
+
+    /********************
+     * Success rate test
+     ********************/
+
+    scalar success_rate =
+        static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
+
+    ASSERT_GE(success_rate, 0.99f);
+    ASSERT_LE(success_rate, 1.00f);
 
     // Remove the data
     std::filesystem::remove_all(full_path);

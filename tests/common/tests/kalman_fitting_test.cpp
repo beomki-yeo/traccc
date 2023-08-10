@@ -81,24 +81,37 @@ void KalmanFittingTests::pull_value_tests(
 #endif  // TRACCC_HAVE_ROOT
 }
 
-void KalmanFittingTests::statistics_tests(
-    const std::size_t idx, const host_detector_type& host_det,
-    const track_candidate_container_types::host& track_candidates,
-    const track_state_container_types::host& track_states) const {
+void KalmanFittingTests::ndf_tests(
+    const host_detector_type& host_det, const fitter_info<transform3>& fit_info,
+    const track_candidate_collection_types::host& track_candidates_per_track,
+    const track_state_collection_types::host& track_states_per_track) {
 
-    const auto& track_states_per_track = track_states[idx].items;
-    const auto& track_candidates_per_track = track_candidates[idx].items;
-    const auto& fit_info = track_states[idx].header;
+    scalar dim_sum = 0;
+    std::size_t n_effective_states = 0;
 
-    // The number of track states is supposed to be eqaul to the number
-    // of measurements
-    EXPECT_EQ(track_states_per_track.size(), track_candidates_per_track.size());
+    for (const auto& state : track_states_per_track) {
+
+        if (!state.is_hole) {
+
+            const auto& sf_link = state.surface_link();
+
+            const auto& sf_desc = host_det.surface(sf_link);
+            const auto sf = detray::surface{host_det, sf_desc};
+
+            dim_sum += sf.meas_dim();
+            n_effective_states++;
+        }
+    }
 
     // Check if the number of degree of freedoms is equal to (the sum of
     // measurement dimensions - 5)
-    EXPECT_FLOAT_EQ(fit_info.ndf, dim_sum - 5.f);
+    ASSERT_FLOAT_EQ(fit_info.ndf, dim_sum - 5.f);
 
-    return;
+    // The number of track states is supposed to be eqaul to the number
+    // of measurements unless KF failes in the middle of propagation
+    if (n_effective_states == track_candidates_per_track.size()) {
+        n_success++;
+    }
 }
 
 }  // namespace traccc

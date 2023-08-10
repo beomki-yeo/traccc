@@ -70,7 +70,6 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
     tel_cfg.bfield_vec(B);
 
     // Create telescope detector
-
     auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
 
     // Write detector file
@@ -165,13 +164,19 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
 
         ASSERT_EQ(track_states.size(), n_truth_tracks);
 
-        for (unsigned int i = 0; i < n_truth_tracks; i++) {
-            const auto& trk_states_per_track = track_states.at(i).items;
-            ASSERT_EQ(trk_states_per_track.size(), plane_positions.size());
-            const auto& fit_info = track_states[i].header;
-            ASSERT_FLOAT_EQ(fit_info.ndf, 2 * plane_positions.size() - 5.f);
+        for (unsigned int i_trk = 0; i_trk < n_truth_tracks; i_trk++) {
 
-            fit_performance_writer.write(trk_states_per_track, fit_info,
+            const auto& track_states_per_track = track_states[i_trk].items;
+            const auto& fit_info = track_states[i_trk].header;
+            const auto& track_candidates_per_track =
+                track_candidates[i_trk].items;
+
+            data_consistency_tests(track_candidates_per_track);
+
+            ndf_tests(host_det, fit_info, track_candidates_per_track,
+                      track_states_per_track);
+
+            fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
         }
     }
@@ -185,6 +190,15 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
     static const std::vector<std::string> pull_names{
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
     pull_value_tests(fit_writer_cfg.file_path, pull_names);
+
+    /********************
+     * Success rate test
+     ********************/
+
+    scalar success_rate =
+        static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
+
+    ASSERT_FLOAT_EQ(success_rate, 1.00f);
 
     // Remove the data
     std::filesystem::remove_all(full_path);

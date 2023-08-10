@@ -138,12 +138,18 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
 
         // n_trakcs = 100
         ASSERT_EQ(n_tracks, n_truth_tracks);
+
         for (std::size_t i_trk = 0; i_trk < n_tracks; i_trk++) {
 
             const auto& track_states_per_track = track_states[i_trk].items;
-            ASSERT_EQ(track_states_per_track.size(), plane_positions.size());
             const auto& fit_info = track_states[i_trk].header;
-            ASSERT_FLOAT_EQ(fit_info.ndf, 2 * plane_positions.size() - 5.f);
+            const auto& track_candidates_per_track =
+                track_candidates[i_trk].items;
+
+            data_consistency_tests(track_candidates_per_track);
+
+            ndf_tests(host_det, fit_info, track_candidates_per_track,
+                      track_states_per_track);
 
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
@@ -159,6 +165,15 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     static const std::vector<std::string> pull_names{
         "pull_d0", "pull_z0", "pull_phi", "pull_theta", "pull_qop"};
     pull_value_tests(fit_writer_cfg.file_path, pull_names);
+
+    /********************
+     * Success rate test
+     ********************/
+
+    scalar success_rate =
+        static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
+
+    ASSERT_FLOAT_EQ(success_rate, 1.00f);
 
     // Remove the data
     std::filesystem::remove_all(full_path);
