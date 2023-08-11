@@ -48,12 +48,12 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
         0.001 / detray::unit<scalar>::GeV,
         0.001 * detray::unit<scalar>::ns};
 
-    void data_consistency_tests(const track_candidate_collection_types::host&
-                                    track_candidates_per_track) const override {
+    void consistency_tests(const track_state_collection_types::host&
+                               track_states_per_track) const override {
 
-        // The nubmer of track candidates is supposed be greater than or
+        // The nubmer of track states is supposed be greater than or
         // equal to the number of layers
-        ASSERT_GE(track_candidates_per_track.size(), n_wire_layers);
+        ASSERT_GE(track_states_per_track.size(), n_wire_layers);
     }
 };
 

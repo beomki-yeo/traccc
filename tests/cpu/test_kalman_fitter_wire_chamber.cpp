@@ -147,13 +147,10 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
 
             const auto& fit_info = track_states[i_trk].header;
             const auto& track_states_per_track = track_states[i_trk].items;
-            const auto& track_candidates_per_track =
-                track_candidates[i_trk].items;
 
-            data_consistency_tests(track_candidates_per_track);
+            consistency_tests(track_states_per_track);
 
-            ndf_tests(host_det, fit_info, track_candidates_per_track,
-                      track_states_per_track);
+            ndf_tests(host_det, fit_info, track_states_per_track);
 
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
@@ -177,7 +174,7 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
     scalar success_rate =
         static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
 
-    ASSERT_GE(success_rate, 0.99f);
+    ASSERT_GE(success_rate, 0.995f);
     ASSERT_LE(success_rate, 1.00f);
 
     // Remove the data

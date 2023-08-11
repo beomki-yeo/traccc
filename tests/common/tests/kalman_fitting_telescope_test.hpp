@@ -48,12 +48,12 @@ class KalmanFittingTelescopeTests : public KalmanFittingTests {
         0.001 / detray::unit<scalar>::GeV,
         1 * detray::unit<scalar>::ns};
 
-    void data_consistency_tests(const track_candidate_collection_types::host&
-                                    track_candidates_per_track) const override {
+    void consistency_tests(const track_state_collection_types::host&
+                               track_states_per_track) const override {
 
-        // The nubmer of track candidates is supposed be equal to the number
+        // The nubmer of track states is supposed be equal to the number
         // of planes
-        ASSERT_EQ(track_candidates_per_track.size(), plane_positions.size());
+        ASSERT_EQ(track_states_per_track.size(), plane_positions.size());
     }
 };
 

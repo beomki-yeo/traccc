@@ -89,13 +89,10 @@ class KalmanFittingTests
     void ndf_tests(
         const host_detector_type& host_det,
         const fitter_info<transform3>& fit_info,
-        const track_candidate_collection_types::host&
-            track_candidates_per_track,
         const track_state_collection_types::host& track_states_per_track);
 
-    virtual void data_consistency_tests(
-        const track_candidate_collection_types::host&
-            track_candidates_per_track) const = 0;
+    virtual void consistency_tests(const track_state_collection_types::host&
+                                       track_states_per_track) const = 0;
 
     // The number of tracks successful with KF
     std::size_t n_success{0u};

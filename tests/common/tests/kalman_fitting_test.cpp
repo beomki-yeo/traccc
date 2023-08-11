@@ -83,7 +83,6 @@ void KalmanFittingTests::pull_value_tests(
 
 void KalmanFittingTests::ndf_tests(
     const host_detector_type& host_det, const fitter_info<transform3>& fit_info,
-    const track_candidate_collection_types::host& track_candidates_per_track,
     const track_state_collection_types::host& track_states_per_track) {
 
     scalar dim_sum = 0;
@@ -109,7 +108,7 @@ void KalmanFittingTests::ndf_tests(
 
     // The number of track states is supposed to be eqaul to the number
     // of measurements unless KF failes in the middle of propagation
-    if (n_effective_states == track_candidates_per_track.size()) {
+    if (n_effective_states == track_states_per_track.size()) {
         n_success++;
     }
 }

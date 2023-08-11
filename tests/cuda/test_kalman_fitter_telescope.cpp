@@ -183,13 +183,10 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
 
             const auto& track_states_per_track = track_states_cuda[i_trk].items;
             const auto& fit_info = track_states_cuda[i_trk].header;
-            const auto& track_candidates_per_track =
-                track_candidates[i_trk].items;
 
-            data_consistency_tests(track_candidates_per_track);
+            consistency_tests(track_states_per_track);
 
-            ndf_tests(host_det, fit_info, track_candidates_per_track,
-                      track_states_per_track);
+            ndf_tests(host_det, fit_info, track_states_per_track);
 
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);
