@@ -177,12 +177,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     traccc::performance::timing_info elapsedTimes;
 
+    // Seed generator
+    traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
+
     // Iterate over events
     for (unsigned int event = common_opts.skip;
          event < common_opts.events + common_opts.skip; ++event) {
-
-        // Seed generator
-        traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
 
         // Truth Track Candidates
         traccc::event_map2 evt_map2(event, common_opts.input_directory,
