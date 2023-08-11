@@ -135,12 +135,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Standard deviations for seed track parameters
     static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
-        {1e-4 * detray::unit<traccc::scalar>::mm,
-         1e-4 * detray::unit<traccc::scalar>::mm,
-         1e-4,
-         1e-4,
-         1e-4 / detray::unit<traccc::scalar>::GeV,
-         1e-4 * detray::unit<traccc::scalar>::ns};
+        {0.01 * detray::unit<scalar>::mm,
+         0.01 * detray::unit<scalar>::mm,
+         0.001,
+         0.001,
+         0.01 / detray::unit<scalar>::GeV,
+         0.01 * detray::unit<scalar>::ns};
+
     /*
     static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
         {0.03 * detray::unit<traccc::scalar>::mm,
