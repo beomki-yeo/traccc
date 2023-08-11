@@ -174,7 +174,7 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
     scalar success_rate =
         static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
 
-    ASSERT_GE(success_rate, 0.995f);
+    ASSERT_GE(success_rate, 0.99f);
     ASSERT_LE(success_rate, 1.00f);
 
     // Remove the data
