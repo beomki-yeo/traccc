@@ -129,12 +129,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     fit_cfg.step_constraint = propagation_opts.step_constraint;
     traccc::fitting_algorithm<host_fitter_type> host_fitting(fit_cfg);
 
+    // Seed generator
+    traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
+
     // Iterate over events
     for (unsigned int event = common_opts.skip;
          event < common_opts.events + common_opts.skip; ++event) {
-
-        // Seed generator
-        traccc::seed_generator<host_detector_type> sg(host_det, stddevs);
 
         // Truth Track Candidates
         traccc::event_map2 evt_map2(event, common_opts.input_directory,
