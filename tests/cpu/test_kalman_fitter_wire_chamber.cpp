@@ -184,7 +184,7 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation0, KalmanFittingWireChamberTests,
     ::testing::Values(std::make_tuple(
-        "2_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
+        "2_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f}, std::array<scalar, 2u>{2.f, 2.f},
         std::array<scalar, 2u>{-1.f, 1.f},
         std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
@@ -193,7 +193,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation1, KalmanFittingWireChamberTests,
     ::testing::Values(std::make_tuple(
-        "10_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
+        "10_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 2u>{10.f, 10.f}, std::array<scalar, 2u>{-1.f, 1.f},
         std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
@@ -202,7 +202,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(
     KalmanFitWireChamberValidation2, KalmanFittingWireChamberTests,
     ::testing::Values(std::make_tuple(
-        "100_GeV_0_phi", std::array<scalar, 3u>{0.f, 0.f, 0.f},
+        "100_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 2u>{100.f, 100.f}, std::array<scalar, 2u>{-1.f, 1.f},
         std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, 100,
