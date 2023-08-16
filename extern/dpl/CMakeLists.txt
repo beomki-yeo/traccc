@@ -18,13 +18,20 @@ message( STATUS "Building oneDPL as part of the TRACCC project" )
 
 # Declare where to get DPL from.
 set( TRACCC_DPL_SOURCE
-   "URL;https://github.com/oneapi-src/oneDPL/archive/refs/tags/oneDPL-2022.0.0-release.tar.gz;URL_MD5;46b60bd87325042df716d1df4686eb3b"
+   "URL;https://github.com/oneapi-src/oneDPL/archive/refs/tags/oneDPL-2022.2.0-rc1.tar.gz;URL_MD5;e63a3903873636b464db6ee7a9364055"
    CACHE STRING "Source for DPL, when built as part of this project" )
 mark_as_advanced( TRACCC_DPL_SOURCE )
 FetchContent_Declare( DPL ${TRACCC_DPL_SOURCE} )
 
-# Exclude TBB
-set( ONEDPL_BACKEND dpcpp_only )
+# Set the default oneDPL threading backend.
+set( ONEDPL_BACKEND "dpcpp" CACHE STRING "oneDPL threading backend" )
 
 # Get it into the current directory.
 FetchContent_MakeAvailable( DPL )
+
+# Treat the oneDPL headers as "system headers", to avoid getting warnings from
+# them.
+get_target_property( _incDirs oneDPL INTERFACE_INCLUDE_DIRECTORIES )
+target_include_directories( oneDPL
+   SYSTEM INTERFACE ${_incDirs} )
+unset( _incDirs )

@@ -5,6 +5,10 @@
  * Mozilla Public License Version 2.0
  */
 
+// DPL include(s).
+#include <oneapi/dpl/algorithm>
+#include <oneapi/dpl/execution>
+
 // SYCL include(s).
 #include <CL/sycl.hpp>
 
@@ -14,10 +18,6 @@
 #include <vecmem/memory/host_memory_resource.hpp>
 #include <vecmem/memory/sycl/device_memory_resource.hpp>
 #include <vecmem/utils/sycl/copy.hpp>
-
-// DPL include(s).
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
 
 // GTest include(s).
 #include <gtest/gtest.h>
@@ -36,14 +36,14 @@ auto handle_async_error = [](::sycl::exception_list elist) {
     }
 };
 
-::sycl::queue q(handle_async_error);
-vecmem::sycl::copy copy{&q};
-vecmem::host_memory_resource host_resource;
-vecmem::sycl::device_memory_resource device_resource;
-
 }  // namespace
 
 TEST(dpl, sort) {
+
+    ::sycl::queue q(handle_async_error);
+    vecmem::sycl::copy copy{&q};
+    vecmem::host_memory_resource host_resource;
+    vecmem::sycl::device_memory_resource device_resource{&q};
 
     vecmem::vector<unsigned int> host_vector{{3, 2, 1, 8, 4}, &host_resource};
 
@@ -67,6 +67,11 @@ TEST(dpl, sort) {
 
 TEST(dpl, scan) {
 
+    ::sycl::queue q(handle_async_error);
+    vecmem::sycl::copy copy{&q};
+    vecmem::host_memory_resource host_resource;
+    vecmem::sycl::device_memory_resource device_resource{&q};
+
     vecmem::vector<unsigned int> host_vector{{3, 2, 1, 8, 4}, &host_resource};
 
     auto host_buffer = vecmem::get_data(host_vector);
@@ -89,6 +94,11 @@ TEST(dpl, scan) {
 }
 
 TEST(dpl, fill) {
+
+    ::sycl::queue q(handle_async_error);
+    vecmem::sycl::copy copy{&q};
+    vecmem::host_memory_resource host_resource;
+    vecmem::sycl::device_memory_resource device_resource{&q};
 
     vecmem::vector<unsigned int> host_vector{{1, 1, 1, 1, 1, 1, 1},
                                              &host_resource};
