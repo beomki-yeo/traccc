@@ -13,7 +13,8 @@
 namespace traccc::cuda {
 
 /// Measurement collection to container
-measurement_container_types::buffer measurement_collection_to_container(
+//measurement_container_types::buffer measurement_collection_to_container(
+void measurement_collection_to_container(
     measurement_collection_types::buffer measurement_buffer);
 
 }  // namespace traccc::cuda
