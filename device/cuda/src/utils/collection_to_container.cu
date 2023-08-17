@@ -9,7 +9,8 @@
 #include "traccc/cuda/utils/collection_to_container.hpp"
 
 // Vecmem include(s).
-#include <vecmem/memory/memory_resource.hpp>
+#include <vecmem/memory/cuda/device_memory_resource.hpp>
+#include <vecmem/containers/data/vector_buffer.hpp>
 
 // Thrust include(s).
 #include <thrust/execution_policy.h>
@@ -21,7 +22,7 @@ namespace traccc::cuda {
 /// Measurement collection to container
 measurement_container_types::buffer measurement_collection_to_container(
     measurement_collection_types::buffer measurement_buffer,
-    vecmem::memory_resource& mr) {
+    vecmem::cuda::device_memory_resource& mr) {
 
     // Create the measurement collection from buffer
     measurement_collection_types::device measurements(buffer);
@@ -33,11 +34,14 @@ measurement_container_types::buffer measurement_collection_to_container(
     measurement_collection_types::buffer uniques_buffer{measurements.size(),
                                                         mr};
     measurement_collection_types::device uniques(uniques_buffer);
-
     thrust::unique_copy(thrust::device, measurements.begin(),
                         measurements.end(), uniques.begin());
 
-    // Get lower bound from unique element
+    // Get lower bounds from unique element
+    //vector_buffer<unsigned int> lower_bounds{uniques.size(), mr};
+    
+
+
 }
 
 }  // namespace traccc::cuda
