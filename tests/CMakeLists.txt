@@ -43,6 +43,10 @@ if( TRACCC_BUILD_SYCL )
     add_subdirectory( sycl )
 endif()
 
+if (TRACCC_BUILD_SYCL_FPGA )
+    add_subdirectory( sycl_fpga )
+endif()
+
 if( TRACCC_BUILD_KOKKOS )
     add_subdirectory( kokkos )
 endif()
