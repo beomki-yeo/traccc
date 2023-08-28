@@ -45,7 +45,8 @@ class clusterization_algorithm
     /// partition
     ///
     clusterization_algorithm(const traccc::memory_resource& mr,
-                             vecmem::copy& copy, stream& str);
+                             vecmem::copy& copy, stream& str,
+                             const unsigned short target_cells_per_partition);
     // const unsigned short target_cells_per_partition);
 
     /// Callable operator for clusterization algorithm
@@ -60,8 +61,7 @@ class clusterization_algorithm
 
     private:
     /// The average number of cells in each partition
-    // unsigned short m_target_cells_per_partition;
-
+    unsigned short m_target_cells_per_partition;
     /// The memory resource(s) to use
     traccc::memory_resource m_mr;
     /// The copy object to use

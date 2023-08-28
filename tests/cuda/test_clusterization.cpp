@@ -9,7 +9,24 @@
 #include "traccc/cuda/clusterization/experimental/clusterization_algorithm.hpp"
 #include "traccc/definitions/common.hpp"
 
+// VecMem include(s).
+#include <vecmem/memory/cuda/managed_memory_resource.hpp>
+#include <vecmem/utils/cuda/async_copy.hpp>
+
 // GTest include(s).
 #include <gtest/gtest.h>
 
-TEST(clusterization, cuda) {}
+using namespace traccc;
+
+TEST(clusterization, cuda) {
+
+    // Memory resource used by the EDM.
+    vecmem::cuda::managed_memory_resource mng_mr;
+    traccc::memory_resource mr{mng_mr};
+
+    // Cuda stream
+    traccc::cuda::stream stream;
+
+    // Cuda copy objects
+    vecmem::cuda::async_copy copy{stream.cudaStream()};
+}
