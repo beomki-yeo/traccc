@@ -26,7 +26,7 @@ namespace traccc {
 ///
 struct cell_module {
 
-    detray::geometry::barcode surface_link;
+    detray::geometry::barcode surface_link{0u};
     transform3 placement = transform3{};
     scalar threshold = 0;
 

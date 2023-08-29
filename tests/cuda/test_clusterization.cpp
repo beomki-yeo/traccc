@@ -37,11 +37,11 @@ TEST(clusterization, cuda) {
     cells.push_back({2u, 2u, 1.f, 0, 0});
     cells.push_back({3u, 2u, 1.f, 0, 0});
 
-    cells.push_back({4u, 5u, 1.f, 0, 0});
-    cells.push_back({5u, 4u, 1.f, 0, 0});
     cells.push_back({5u, 5u, 1.f, 0, 0});
-    cells.push_back({5u, 6u, 1.f, 0, 0});
+    cells.push_back({6u, 4u, 1.f, 0, 0});
     cells.push_back({6u, 5u, 1.f, 0, 0});
+    cells.push_back({6u, 6u, 1.f, 0, 0});
+    cells.push_back({7u, 5u, 1.f, 0, 0});
 
     // Create module collection
     traccc::cell_module_collection_types::host modules{&mng_mr};
@@ -58,4 +58,15 @@ TEST(clusterization, cuda) {
 
     // Check the results
     EXPECT_EQ(copy.get_size(measurements_buffer), 2u);
+    std::set<measurement> test;
+    test.insert(measurements[0]);
+    test.insert(measurements[1]);
+
+    std::set<measurement> ref;
+    ref.insert(
+        {{2.f, 2.f}, measurements[0].variance, detray::geometry::barcode{0u}});
+    ref.insert(
+        {{6.f, 5.f}, measurements[1].variance, detray::geometry::barcode{0u}});
+
+    EXPECT_EQ(test, ref);
 }
