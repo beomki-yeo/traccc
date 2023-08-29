@@ -29,4 +29,33 @@ TEST(clusterization, cuda) {
 
     // Cuda copy objects
     vecmem::cuda::async_copy copy{stream.cudaStream()};
+
+    // Create cell collection
+    traccc::cell_collection_types::host cells{&mng_mr};
+
+    cells.push_back({1u, 2u, 1.f, 0, 0});
+    cells.push_back({2u, 2u, 1.f, 0, 0});
+    cells.push_back({3u, 2u, 1.f, 0, 0});
+
+    cells.push_back({4u, 5u, 1.f, 0, 0});
+    cells.push_back({5u, 4u, 1.f, 0, 0});
+    cells.push_back({5u, 5u, 1.f, 0, 0});
+    cells.push_back({5u, 6u, 1.f, 0, 0});
+    cells.push_back({6u, 5u, 1.f, 0, 0});
+
+    // Create module collection
+    traccc::cell_module_collection_types::host modules{&mng_mr};
+    modules.push_back({});
+
+    // Run Clusterization
+    cuda::experimental::clusterization_algorithm ca_cuda(mr, copy, stream,
+                                                         1024);
+
+    auto measurements_buffer =
+        ca_cuda(vecmem::get_data(cells), vecmem::get_data(modules));
+
+    measurement_collection_types::device measurements(measurements_buffer);
+
+    // Check the results
+    EXPECT_EQ(copy.get_size(measurements_buffer), 2u);
 }
