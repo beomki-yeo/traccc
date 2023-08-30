@@ -63,10 +63,9 @@ TEST(clusterization, cuda) {
     test.insert(measurements[1]);
 
     std::set<measurement> ref;
+    ref.insert({{2.f, 2.f}, {0.75, 0.0833333}, detray::geometry::barcode{0u}});
     ref.insert(
-        {{2.f, 2.f}, measurements[0].variance, detray::geometry::barcode{0u}});
-    ref.insert(
-        {{6.f, 5.f}, measurements[1].variance, detray::geometry::barcode{0u}});
+        {{6.f, 5.f}, {0.483333, 0.483333}, detray::geometry::barcode{0u}});
 
     EXPECT_EQ(test, ref);
 }
