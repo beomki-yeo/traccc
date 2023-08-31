@@ -79,8 +79,7 @@ namespace experimental {
 
 namespace json {
 
-digitization_map read_digitization_config(
-    std::string_view filename) {
+digitization_map read_digitization_config(std::string_view filename) {
 
     // Open the input file. Relying on exceptions for the error handling.
     std::ifstream infile(filename.data(), std::ifstream::binary);
@@ -105,8 +104,8 @@ digitization_map read_digitization_config(
 
 }  // namespace json
 
-digitization_map read_digitization_config(
-    std::string_view filename, data_format format) {
+digitization_map read_digitization_config(std::string_view filename,
+                                          data_format format) {
     // Construct the full filename.
     std::string full_filename = data_directory() + filename.data();
 
