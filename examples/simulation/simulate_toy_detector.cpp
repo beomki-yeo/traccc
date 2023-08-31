@@ -8,12 +8,15 @@
 // Project include(s).
 #include "traccc/definitions/primitives.hpp"
 #include "traccc/edm/track_parameters.hpp"
+#include "traccc/io/read_digitization_config.hpp"
 #include "traccc/io/utils.hpp"
 #include "traccc/options/common_options.hpp"
 #include "traccc/options/handle_argument_errors.hpp"
 #include "traccc/options/options.hpp"
 #include "traccc/options/particle_gen_options.hpp"
 #include "traccc/options/propagation_options.hpp"
+#include "traccc/options/simulation_options.hpp"
+#include "traccc/utils/digitization_writer.hpp"
 
 // detray include(s).
 #include "detray/detectors/create_toy_geometry.hpp"
@@ -32,7 +35,8 @@ namespace po = boost::program_options;
 
 int simulate(std::string output_directory, unsigned int events,
              const traccc::particle_gen_options<scalar>& pg_opts,
-             const traccc::propagation_options<scalar>& propagation_opts) {
+             const traccc::propagation_options<scalar>& propagation_opts,
+             const traccc::simulation_options& simulation_opts) {
 
     // Use deterministic random number generator for testing
     using uniform_gen_t =
@@ -72,31 +76,51 @@ int simulate(std::string output_directory, unsigned int events,
                                        uniform_gen_t>(
             pg_opts.gen_nparticles, pg_opts.vertex, pg_opts.vertex_stddev,
             pg_opts.mom_range, pg_opts.theta_range, pg_opts.phi_range);
+    using generator_type = decltype(generator);
 
     // Smearing value for measurements
     detray::measurement_smearer<transform3> meas_smearer(
         50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um);
 
-    // Type declarations
-    using generator_type = decltype(generator);
-    using writer_type =
-        detray::smearing_writer<detray::measurement_smearer<transform3>>;
-
-    // Writer config
-    typename writer_type::config smearer_writer_cfg{meas_smearer};
-
-    // Run simulator
+    // Create directory
     const std::string full_path = io::data_directory() + output_directory;
-
     boost::filesystem::create_directories(full_path);
 
-    auto sim = detray::simulator<detector_type, generator_type, writer_type>(
-        events, det, std::move(generator), std::move(smearer_writer_cfg),
-        full_path);
-    sim.get_config().step_constraint = propagation_opts.step_constraint;
-    sim.get_config().overstep_tolerance = propagation_opts.overstep_tolerance;
+    if (!simulation_opts.run_digitization) {
+        // Writer config
+        using writer_type =
+            detray::smearing_writer<detray::measurement_smearer<transform3>>;
+        typename writer_type::config smearer_writer_cfg{meas_smearer};
 
-    sim.run();
+        // Run simulator
+        auto sim =
+            detray::simulator<detector_type, generator_type, writer_type>(
+                events, det, std::move(generator),
+                std::move(smearer_writer_cfg), full_path);
+        sim.get_config().step_constraint = propagation_opts.step_constraint;
+        sim.get_config().overstep_tolerance =
+            propagation_opts.overstep_tolerance;
+        sim.run();
+    } else {
+        // Writer config
+        using writer_type = traccc::digitization_writer;
+
+        // Read the digitization configuration file
+        auto digi_map = traccc::io::experimental::read_digitization_config(
+            simulation_opts.digitization_config_file);
+
+        typename writer_type::config digitization_writer_cfg{digi_map};
+
+        // Run simulator
+        auto sim =
+            detray::simulator<detector_type, generator_type, writer_type>(
+                events, det, std::move(generator),
+                std::move(digitization_writer_cfg), full_path);
+        sim.get_config().step_constraint = propagation_opts.step_constraint;
+        sim.get_config().overstep_tolerance =
+            propagation_opts.overstep_tolerance;
+        sim.run();
+    }
 
     // Create detector file
     auto writer_cfg = detray::io::detector_writer_config{}
@@ -121,6 +145,7 @@ int main(int argc, char* argv[]) {
                        "number of events");
     traccc::particle_gen_options<scalar> pg_opts(desc);
     traccc::propagation_options<scalar> propagation_opts(desc);
+    traccc::simulation_options simulation_opts(desc);
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -133,9 +158,11 @@ int main(int argc, char* argv[]) {
     auto events = vm["events"].as<unsigned int>();
     pg_opts.read(vm);
     propagation_opts.read(vm);
+    simulation_opts.read(vm);
 
     std::cout << "Running " << argv[0] << " " << output_directory << " "
               << events << std::endl;
 
-    return simulate(output_directory, events, pg_opts, propagation_opts);
+    return simulate(output_directory, events, pg_opts, propagation_opts,
+                    simulation_opts);
 }

@@ -16,6 +16,7 @@ traccc_add_library( traccc_options options TYPE SHARED
   "include/traccc/options/finding_input_options.hpp"
   "include/traccc/options/seeding_input_options.hpp"
   "include/traccc/options/full_tracking_input_options.hpp"   
+  "include/traccc/options/simulation_options.hpp"
   "include/traccc/options/throughput_options.hpp"
   # source files
   "src/options/common_options.cpp"
@@ -24,6 +25,7 @@ traccc_add_library( traccc_options options TYPE SHARED
   "src/options/seeding_input_options.cpp"
   "src/options/finding_input_options.cpp"
   "src/options/full_tracking_input_options.cpp"
+  "src/options/simulation_options.cpp"
   "src/options/throughput_options.cpp"
   )
 target_link_libraries( traccc_options PUBLIC traccc::io 

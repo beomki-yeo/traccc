@@ -6,10 +6,10 @@
 
 traccc_add_executable(simulate_telescope "simulate_telescope.cpp"
     LINK_LIBRARIES vecmem::core traccc::io traccc::core
-    traccc::options detray::core detray::utils covfie::core 
+    traccc::options traccc::utils detray::core detray::utils covfie::core 
     Boost::filesystem)
 
 traccc_add_executable(simulate_toy_detector "simulate_toy_detector.cpp"
     LINK_LIBRARIES vecmem::core traccc::io traccc::core
-    traccc::options detray::core detray::utils covfie::core 
+    traccc::options traccc::utils detray::core detray::utils covfie::core 
     Boost::filesystem)
