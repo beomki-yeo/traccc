@@ -56,4 +56,16 @@ TEST(digitization, planar_surface) {
 
     // Run digitization
     const auto cells = digi(bound_param);
+
+    EXPECT_EQ(cells.size(), 5u);
+    EXPECT_EQ(cells[0][0], 480);
+    EXPECT_EQ(cells[0][1], 108);
+    EXPECT_EQ(cells[1][0], 479);
+    EXPECT_EQ(cells[1][1], 108);
+    EXPECT_EQ(cells[2][0], 480);
+    EXPECT_EQ(cells[2][1], 107);
+    EXPECT_EQ(cells[3][0], 481);
+    EXPECT_EQ(cells[3][1], 108);
+    EXPECT_EQ(cells[4][0], 480);
+    EXPECT_EQ(cells[4][1], 109);
 }

@@ -7,6 +7,9 @@
 
 #pragma once
 
+// Project include(s).
+#include "traccc/utils/digitization_algorithm.hpp"
+
 // Detray include(s).
 #include "detray/propagator/base_actor.hpp"
 
@@ -14,7 +17,9 @@ namespace traccc {
 
 struct digitization_writer : detray::actor {
 
-    struct state {};
+    struct state {
+        std::unique_ptr<digitization_map> m_digi_map;
+    };
 
     template <typename propagator_state_t>
     void operator()(state& writer_state,
@@ -48,7 +53,10 @@ struct digitization_writer : detray::actor {
             writer_state.m_hit_writer.append(hit);
 
             // Write cells
-            //csv_cell ce;
+            digitization_algorithm digi_alg(navigation.detector(),
+                                            writer_state.m_digi_map);
+
+            // csv_cell ce;
             /*
             csv_measurement meas;
 
