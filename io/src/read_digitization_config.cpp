@@ -75,5 +75,51 @@ digitization_config read_digitization_config(std::string_view filename,
     }
 }
 
+namespace experimental {
+
+namespace json {
+
+digitization_map read_digitization_config(
+    std::string_view filename) {
+
+    // Open the input file. Relying on exceptions for the error handling.
+    std::ifstream infile(filename.data(), std::ifstream::binary);
+    infile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+
+    // Read the contents of the file into a JSON object.
+    nlohmann::json json;
+    infile >> json;
+
+    std::map<std::size_t, Acts::BinUtility> digi_map;
+
+    for (const auto& entry : json.at("entries")) {
+
+        auto vid = entry.at("volume");
+        Acts::BinUtility seg =
+            entry.at("value").at("geometric").at("segmentation");
+        digi_map[vid] = seg;
+    }
+
+    return digi_map;
+}
+
+}  // namespace json
+
+digitization_map read_digitization_config(
+    std::string_view filename, data_format format) {
+    // Construct the full filename.
+    std::string full_filename = data_directory() + filename.data();
+
+    // Decide how to read the file.
+    switch (format) {
+        case data_format::json:
+            return json::read_digitization_config(full_filename);
+        default:
+            throw std::invalid_argument("Unsupported data format");
+    }
+}
+
+}  // namespace experimental
+
 }  // namespace io
 }  // namespace traccc

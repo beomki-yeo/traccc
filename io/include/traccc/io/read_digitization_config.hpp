@@ -28,4 +28,11 @@ namespace traccc::io {
 digitization_config read_digitization_config(
     std::string_view filename, data_format format = data_format::json);
 
+namespace experimental {
+
+digitization_map read_digitization_config(
+    std::string_view filename, data_format format = data_format::json);
+
+}  // namespace experimental
+
 }  // namespace traccc::io

@@ -279,6 +279,7 @@ if( TRACCC_BUILD_ALPAKA )
 endif()
 add_subdirectory( io )
 add_subdirectory( plugins )
+add_subdirectory( utils )
 
 if ( TRACCC_BUILD_EXAMPLES )
    # Find Boost.

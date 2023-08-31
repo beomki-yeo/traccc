@@ -1,0 +1,621 @@
+{
+  "acts-geometry-hierarchy-map" : {
+    "format-version" : 0,
+    "value-identifier" : "digitization-configuration"
+  },
+                                  "entries"
+      : [
+        {
+          "volume" : 1,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 3,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 5,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 7,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 9,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 11,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 13,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 15,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 640,
+                    "max": 48.0,
+                    "min": -48.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 72,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 17,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 640,
+                    "max": 48.0,
+                    "min": -48.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 72,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 19,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 640,
+                    "max": 48.0,
+                    "min": -48.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 72,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 21,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 640,
+                    "max": 48.0,
+                    "min": -48.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 72,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },                        
+        {
+          "volume" : 23,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 25,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 27,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },
+        {
+          "volume" : 29,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 31,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 33,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        },        
+        {
+          "volume" : 35,
+          "value": {
+            "geometric": {
+              "digital": false,
+              "indices": [
+                0,
+                1
+              ],
+              "segmentation": {
+                "binningdata": [
+                  {
+                    "bins": 960,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binX"
+                  },
+                  {
+                    "bins": 216,
+                    "max": 54.0,
+                    "min": -54.0,
+                    "option": "open",
+                    "type": "equidistant",
+                    "value": "binY"
+                  }
+                ]
+              },
+              "thickness": 0.15,
+              "threshold": 0.01
+            }
+          }
+        }        
+      ]
+}
