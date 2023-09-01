@@ -173,9 +173,8 @@ int main(int argc, char* argv[]) {
     common_opts.read(vm);
     full_tracking_input_cfg.read(vm);
 
-    std::cout << "Running " << argv[0] << " "
-              << full_tracking_input_cfg.detector_file << " "
-              << common_opts.input_directory << " " << common_opts.events
+    std::cout << "Running " << argv[0] << " " << common_opts.detector_file
+              << " " << common_opts.input_directory << " " << common_opts.events
               << std::endl;
 
     return seq_run(full_tracking_input_cfg, common_opts);

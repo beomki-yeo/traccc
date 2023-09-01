@@ -101,6 +101,7 @@ TRACCC_HOST inline void fill_measurement(
 
     if (totalWeight > 0.) {
         measurement m;
+        m.surface_link = module.surface_link;
         m.module_link = module_link;
         // normalize the cell position
         m.local = mean;

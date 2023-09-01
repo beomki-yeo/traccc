@@ -172,6 +172,9 @@ int main(int argc, char* argv[]) {
 
         auto measurements_per_event = ca(cells_per_event, modules_per_event);
 
+        std::cout << cells_per_event.size() << "  "
+                  << measurements_per_event.size() << std::endl;
+
         /*------------------------
             Spacepoint formation
           ------------------------*/
