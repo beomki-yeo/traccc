@@ -1,0 +1,32 @@
+/** TRACCC library, part of the ACTS project (R&D line)
+ *
+ * (c) 2023 CERN for the benefit of the ACTS project
+ *
+ * Mozilla Public License Version 2.0
+ */
+
+#pragma once
+
+// Local include(s).
+#include "traccc/io/experimental/csv/cell.hpp"
+
+// DFE include(s).
+#include <dfe/dfe_io_dsv.hpp>
+
+// System include(s).
+#include <string_view>
+
+namespace traccc::io::experimental::csv {
+
+/// Set up an object for reading a CSV file containing cell information
+///
+/// @param filename The name of the file to read
+/// @return An object that can read the specified CSV file
+///
+dfe::NamedTupleCsvReader<cell> make_cell_reader(std::string_view filename) {
+    return {
+        filename.data(),
+        {"geometry_id", "hit_id", "cannel0", "channel1", "timestamp", "value"}};
+}
+
+}  // namespace traccc::io::experimental::csv

@@ -10,6 +10,7 @@ find_package( OpenMP COMPONENTS CXX )
 # Set up the "build" of the traccc::io library.
 traccc_add_library( traccc_io io TYPE SHARED
   # Public headers
+  "include/traccc/io/experimental/read_cells.hpp"
   "include/traccc/io/digitization_config.hpp"
   "include/traccc/io/read.hpp"
   "include/traccc/io/read_cells.hpp"
@@ -28,6 +29,7 @@ traccc_add_library( traccc_io io TYPE SHARED
   "include/traccc/io/details/read_surfaces.hpp"
   "include/traccc/io/reader_edm.hpp"
   # Implementation
+  "src/experimental/read_cells.cpp"
   "src/data_format.cpp"
   "src/event_map2.cpp"
   "src/mapper.cpp"
@@ -51,6 +53,8 @@ traccc_add_library( traccc_io io TYPE SHARED
   "src/csv/cell.hpp"
   "src/csv/make_cell_reader.hpp"
   "src/csv/make_cell_reader.cpp"
+  "src/csv/experimental/read_cells.hpp"
+  "src/csv/experimental/read_cells.cpp"
   "src/csv/read_cells.hpp"
   "src/csv/read_cells.cpp"
   "src/csv/hit.hpp"
