@@ -97,7 +97,34 @@ struct digitization_writer : detray::actor {
 
             writer_state.m_hit_writer.append(hit);
 
-            // Write cells
+            /*
+            // Write measurements
+            // NOTE: Works for 2D measurement only
+            csv_measurement meas;
+
+            const auto bound_params = stepping._bound_params;
+
+            const auto local = sf.template visit_mask<measurement_kernel>(
+                bound_params, writer_state.m_meas_smearer);
+
+            meas.measurement_id = writer_state.m_hit_count;
+            meas.geometry_id = hit.geometry_id;
+            meas.local_key = "unknown";
+            meas.local0 = local[0];
+            meas.local1 = local[1];
+            auto stddev_0 = writer_state.m_meas_smearer.stddev[0];
+            auto stddev_1 = writer_state.m_meas_smearer.stddev[1];
+            meas.var_local0 = stddev_0 * stddev_0;
+            meas.var_local1 = stddev_1 * stddev_1;
+            meas.phi = bound_params.phi();
+            meas.theta = bound_params.theta();
+            meas.time = bound_params.time();
+
+            writer_state.m_meas_writer.append(meas);
+            */
+           
+            // Write cells 
+            // NOTE: Works for 2D measurement only
             digitization_algorithm digi_alg(navigation.detector(),
                                             writer_state.m_digi_map);
 

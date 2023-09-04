@@ -131,6 +131,8 @@ int main(int argc, char* argv[]) {
     traccc::experimental::spacepoint_formation<host_detector_type> sf(host_mr);
 
     traccc::seedfinder_config finder_config;
+    finder_config.sigmaScattering = 10.f;
+    finder_config.maxPtScattering = 1.f * traccc::unit<traccc::scalar>::GeV;
     traccc::spacepoint_grid_config grid_config(finder_config);
     traccc::seedfilter_config filter_config;
     traccc::seeding_algorithm sa(finder_config, grid_config, filter_config,
