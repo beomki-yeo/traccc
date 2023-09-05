@@ -60,11 +60,6 @@ void res_plot_tool::fill(res_plot_cache& cache,
         const auto pull = residual / std::sqrt(getter::element(
                                          fit_param.covariance(), idx, idx));
 
-        printf("%lu %f %f %f %f \n", idx,
-               getter::element(fit_param.vector(), idx, 0),
-               getter::element(truth_param.vector(), idx, 0),
-               getter::element(fit_param.covariance(), idx, idx), pull);
-
         // Avoid unused variable warnings when building the code without ROOT.
         (void)residual;
         (void)pull;

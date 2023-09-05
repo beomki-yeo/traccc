@@ -144,8 +144,6 @@ class fitting_performance_writer {
         getter::element(truth_vec, e_bound_qoverp, 0) =
             ptc.charge / getter::norm(global_mom);
 
-        printf("Momentum %f \n", getter::norm(global_mom));
-
         // For the moment, only fill with the first measurements
         write_res(truth_param, trk_state.smoothed());
         write_stat(fit_info);

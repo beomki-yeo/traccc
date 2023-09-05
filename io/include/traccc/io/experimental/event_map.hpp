@@ -45,7 +45,7 @@ class event_map {
     using particle_measurement_map =
         std::map<particle, std::vector<measurement>>;
     /// Map for measurement to cluster (cells)
-    using measurement_cluster_map = std::map<measurement, vecmem::vector<cell>>;
+    using measurement_cluster_map = std::map<measurement, std::vector<cell>>;
     /// Map for cell to particle map
     using cell_particle_map = std::map<cell, particle>;
     /// Particle ID type

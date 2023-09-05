@@ -128,7 +128,10 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
     for (unsigned int i = 0; i < measurements_per_event.size(); ++i) {
         const auto& clus = clusters_per_event.get_items()[i];
 
-        meas_clus_map[measurements_per_event[i]] = clus;
+        std::vector<cell> clus_copy;
+        std::copy(clus.begin(), clus.end(), std::back_inserter(clus_copy));
+
+        meas_clus_map[measurements_per_event[i]] = clus_copy;
     }
 
     // Fill the barcode link map
@@ -167,26 +170,42 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
      * Generate measurement to param map
      ***************************************/
 
-    /*
     // Fill Measurement to Param Map
     for (const auto& meas : measurements_per_event) {
 
         const auto& aClus = meas_clus_map[meas];
 
-        // find a matching cluster
-        // @NOTE: Might be buggy as it is looking for a value of map
-        for (auto const& [hit, clus] : hit_clus_map) {
-            if (clus == aClus) {
-                point3 pos{ioptc.vx, ioptc.vy, ioptc.vz};
-                vector3 mom{ioptc.px, ioptc.py, ioptc.pz};
+        std::map<hit_id, int> hit_count;
 
-                meas_param_map[meas] = ;
-                break;
+        for (const auto& cell : aClus) {
+
+            for (const auto& iocell : cells) {
+                if (iocell.channel0 == cell.channel0 &&
+                    iocell.channel1 == cell.channel1 &&
+                    iocell.timestamp == cell.time &&
+                    iocell.value == cell.activation &&
+                    iocell.geometry_id == modules_per_event[cell.module_link]
+                                              .surface_link.value()) {
+                    hit_count[iocell.hit_id]++;
+                }
             }
         }
+
+        hit_id max_hit_id;
+        int max_N = 0;
+        for (auto const& [hid, N] : hit_count) {
+            if (N > max_N) {
+                max_N = N;
+                max_hit_id = hid;
+            }
+        }
+
+        const auto& h = hits[max_hit_id];
+        point3 pos{h.tx, h.ty, h.tz};
+        point3 mom{h.tpx, h.tpy, h.tpz};
+        meas_param_map[meas] = std::make_pair(pos, mom);
     }
-    */
-   
+
     /***************************************
      * Generate cell to particle map
      ***************************************/
