@@ -233,7 +233,6 @@ int main(int argc, char* argv[]) {
                                         vecmem::get_data(spacepoints_per_event),
                                         evt_map);
 
-            /*
             find_performance_writer.write(traccc::get_data(track_candidates),
                                           evt_map);
 
@@ -245,7 +244,6 @@ int main(int argc, char* argv[]) {
                 fit_performance_writer.write(trk_states_per_track, fit_info,
                                              host_det, evt_map);
             }
-            */
         }
     }
 

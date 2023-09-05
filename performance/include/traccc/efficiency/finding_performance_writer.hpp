@@ -13,6 +13,7 @@
 // Project include(s).
 #include "traccc/edm/track_candidate.hpp"
 #include "traccc/io/event_map2.hpp"
+#include "traccc/io/experimental/event_map.hpp"
 
 // System include(s).
 #include <map>
@@ -62,6 +63,10 @@ class finding_performance_writer {
     void write(const track_candidate_container_types::const_view&
                    track_candidates_view,
                const event_map2& evt_map);
+
+    void write(const track_candidate_container_types::const_view&
+                   track_candidates_view,
+               const io::experimental::event_map& evt_map);
 
     void finalize();
 

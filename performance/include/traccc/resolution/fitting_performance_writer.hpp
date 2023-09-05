@@ -15,6 +15,7 @@
 #include "traccc/edm/track_parameters.hpp"
 #include "traccc/edm/track_state.hpp"
 #include "traccc/io/event_map2.hpp"
+#include "traccc/io/experimental/event_map.hpp"
 #include "traccc/io/mapper.hpp"
 
 // System include(s).
@@ -92,6 +93,58 @@ class fitting_performance_writer {
         getter::element(truth_vec, e_bound_time, 0) = 0.;
         getter::element(truth_vec, e_bound_qoverp, 0) =
             ptc.charge / getter::norm(global_mom);
+
+        // For the moment, only fill with the first measurements
+        write_res(truth_param, trk_state.smoothed());
+        write_stat(fit_info);
+    }
+
+    /// Fill the tracking results into the histograms
+    ///
+    /// @param track_states_per_track vector of track states of a track
+    /// @param det detector object
+    /// @param evt_map event map to find the truth values
+    template <typename detector_t>
+    void write(const track_state_collection_types::host& track_states_per_track,
+               const fitter_info<transform3>& fit_info, const detector_t& det,
+               io::experimental::event_map& evt_map) {
+
+        auto& m_p_map = evt_map.meas_ptc_map;
+
+        // Get the track state at the first surface
+        const auto& trk_state = track_states_per_track[0];
+        const measurement meas = trk_state.get_measurement();
+
+        // Find the contributing particle
+        // @todo: Use identify_contributing_particles function
+        std::map<particle, uint64_t> contributing_particles = m_p_map[meas];
+
+        const particle ptc = contributing_particles.begin()->first;
+
+        // Find the truth global position and momentum
+        const auto global_pos = evt_map.meas_param_map[meas].first;
+        const auto global_mom = evt_map.meas_param_map[meas].second;
+
+        const detray::surface<detector_t> sf{det, meas.surface_link};
+        using cxt_t = typename detector_t::geometry_context;
+        const cxt_t ctx{};
+        const auto truth_local =
+            sf.global_to_local(ctx, global_pos, vector::normalize(global_mom));
+
+        // Return value
+        bound_track_parameters truth_param;
+        auto& truth_vec = truth_param.vector();
+        getter::element(truth_vec, e_bound_loc0, 0) = truth_local[0];
+        getter::element(truth_vec, e_bound_loc1, 0) = truth_local[1];
+        getter::element(truth_vec, e_bound_phi, 0) = getter::phi(global_mom);
+        getter::element(truth_vec, e_bound_theta, 0) =
+            getter::theta(global_mom);
+        // @todo: Assign a proper value to time
+        getter::element(truth_vec, e_bound_time, 0) = 0.;
+        getter::element(truth_vec, e_bound_qoverp, 0) =
+            ptc.charge / getter::norm(global_mom);
+
+        printf("Momentum %f \n", getter::norm(global_mom));
 
         // For the moment, only fill with the first measurements
         write_res(truth_param, trk_state.smoothed());

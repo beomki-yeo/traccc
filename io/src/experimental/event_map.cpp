@@ -143,15 +143,6 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
     for (const auto& hit : hits) {
         spacepoint sp;
         sp.global = {hit.tx, hit.ty, hit.tz};
-
-        /*
-        unsigned int link = 0;
-        auto it = link_map.find(hit.geometry_id);
-        if (it != link_map.end()) {
-            link = (*it).second;
-        }
-        */
-
         hit_ptc_map[sp] = ptc_map[hit.particle_id];
     }
 
@@ -172,6 +163,30 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
                  iocell.timestamp, link});
     }
 
+    /***************************************
+     * Generate measurement to param map
+     ***************************************/
+
+    /*
+    // Fill Measurement to Param Map
+    for (const auto& meas : measurements_per_event) {
+
+        const auto& aClus = meas_clus_map[meas];
+
+        // find a matching cluster
+        // @NOTE: Might be buggy as it is looking for a value of map
+        for (auto const& [hit, clus] : hit_clus_map) {
+            if (clus == aClus) {
+                point3 pos{ioptc.vx, ioptc.vy, ioptc.vz};
+                vector3 mom{ioptc.px, ioptc.py, ioptc.pz};
+
+                meas_param_map[meas] = ;
+                break;
+            }
+        }
+    }
+    */
+   
     /***************************************
      * Generate cell to particle map
      ***************************************/
