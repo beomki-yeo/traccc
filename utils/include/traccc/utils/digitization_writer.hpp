@@ -34,6 +34,8 @@ struct digitization_writer : detray::actor {
                                                 event_id, "-particles.csv")),
               m_hit_writer(directory +
                            io::get_event_filename(event_id, "-hits.csv")),
+              m_meas_writer(directory + io::get_event_filename(
+                                            event_id, "-measurements.csv")),
               m_meas_hit_id_writer(
                   directory + io::get_event_filename(
                                   event_id, "-measurement-simhit-map.csv")),
@@ -44,6 +46,7 @@ struct digitization_writer : detray::actor {
         uint64_t particle_id = 0u;
         detray::particle_writer m_particle_writer;
         detray::hit_writer m_hit_writer;
+        detray::measurement_writer m_meas_writer;
         detray::meas_hit_id_writer m_meas_hit_id_writer;
         traccc::cell_writer m_cell_writer;
         uint64_t m_hit_count = 0u;
@@ -101,31 +104,22 @@ struct digitization_writer : detray::actor {
 
             writer_state.m_hit_writer.append(hit);
 
-            /*
             // Write measurements
             // NOTE: Works for 2D measurement only
-            csv_measurement meas;
-
-            const auto bound_params = stepping._bound_params;
-
-            const auto local = sf.template visit_mask<measurement_kernel>(
-                bound_params, writer_state.m_meas_smearer);
-
+            detray::csv_measurement meas;
             meas.measurement_id = writer_state.m_hit_count;
             meas.geometry_id = hit.geometry_id;
             meas.local_key = "unknown";
+            const auto bound_params = stepping._bound_params;
+            const auto local = bound_params.bound_local();
             meas.local0 = local[0];
             meas.local1 = local[1];
-            auto stddev_0 = writer_state.m_meas_smearer.stddev[0];
-            auto stddev_1 = writer_state.m_meas_smearer.stddev[1];
-            meas.var_local0 = stddev_0 * stddev_0;
-            meas.var_local1 = stddev_1 * stddev_1;
+            meas.var_local0 = 0.f;
+            meas.var_local1 = 0.f;
             meas.phi = bound_params.phi();
             meas.theta = bound_params.theta();
             meas.time = bound_params.time();
-
             writer_state.m_meas_writer.append(meas);
-            */
 
             // Write cells
             // NOTE: Works for 2D measurement only
