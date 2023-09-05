@@ -20,6 +20,7 @@ traccc_add_library( traccc_io io TYPE SHARED
   "include/traccc/io/read_particles.hpp"
   "include/traccc/io/read_spacepoints.hpp"
   "include/traccc/io/data_format.hpp"
+  "include/traccc/io/experimental/event_map.hpp"
   "include/traccc/io/event_map.hpp"
   "include/traccc/io/event_map2.hpp"
   "include/traccc/io/demonstrator_edm.hpp"
@@ -29,6 +30,7 @@ traccc_add_library( traccc_io io TYPE SHARED
   "include/traccc/io/details/read_surfaces.hpp"
   "include/traccc/io/reader_edm.hpp"
   # Implementation
+  "src/experimental/event_map.cpp"
   "src/experimental/read_cells.cpp"
   "src/data_format.cpp"
   "src/event_map2.cpp"

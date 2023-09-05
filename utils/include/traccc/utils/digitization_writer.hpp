@@ -34,6 +34,9 @@ struct digitization_writer : detray::actor {
                                                 event_id, "-particles.csv")),
               m_hit_writer(directory +
                            io::get_event_filename(event_id, "-hits.csv")),
+              m_meas_hit_id_writer(
+                  directory + detail::get_event_filename(
+                                  event_id, "-measurement-simhit-map.csv")),
               m_cell_writer(directory +
                             io::get_event_filename(event_id, "-cells.csv")),
               m_digi_map(writer_cfg.digi_map) {}
@@ -42,6 +45,7 @@ struct digitization_writer : detray::actor {
         detray::particle_writer m_particle_writer;
         detray::hit_writer m_hit_writer;
         traccc::cell_writer m_cell_writer;
+        detray::meas_hit_id_writer m_meas_hit_id_writer;
         uint64_t m_hit_count = 0u;
         digitization_map m_digi_map;
 
@@ -122,8 +126,8 @@ struct digitization_writer : detray::actor {
 
             writer_state.m_meas_writer.append(meas);
             */
-           
-            // Write cells 
+
+            // Write cells
             // NOTE: Works for 2D measurement only
             digitization_algorithm digi_alg(navigation.detector(),
                                             writer_state.m_digi_map);
@@ -140,6 +144,11 @@ struct digitization_writer : detray::actor {
                 writer_state.m_cell_writer.append(ce);
             }
 
+            // Write hit measurement map
+            csv_meas_hit_id meas_hit_id;
+            meas_hit_id.hit_id = writer_state.m_hit_count;
+            meas_hit_id.measurement_id = writer_state.m_hit_count;
+            writer_state.m_meas_hit_id_writer.append(meas_hit_id);
             writer_state.m_hit_count++;
         }
     }
