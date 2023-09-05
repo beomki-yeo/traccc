@@ -6,6 +6,7 @@
  */
 
 // io
+#include "traccc/io/experimental/event_map.hpp"
 #include "traccc/io/experimental/read_cells.hpp"
 #include "traccc/io/read_digitization_config.hpp"
 #include "traccc/io/read_geometry.hpp"
@@ -221,16 +222,18 @@ int main(int argc, char* argv[]) {
           Writer
           ------------*/
 
-        /*
         if (common_opts.check_performance) {
 
-            traccc::event_map2 evt_map(event, common_opts.input_directory,
-                                       common_opts.input_directory,
-                                       common_opts.input_directory);
+            traccc::io::experimental::event_map evt_map(
+                event, host_mr,
+                full_tracking_input_cfg.digitization_config_file,
+                common_opts.input_directory, common_opts.input_directory,
+                common_opts.input_directory);
             sd_performance_writer.write(vecmem::get_data(seeds),
                                         vecmem::get_data(spacepoints_per_event),
                                         evt_map);
 
+            /*
             find_performance_writer.write(traccc::get_data(track_candidates),
                                           evt_map);
 
@@ -242,8 +245,8 @@ int main(int argc, char* argv[]) {
                 fit_performance_writer.write(trk_states_per_track, fit_info,
                                              host_det, evt_map);
             }
+            */
         }
-        */
     }
 
     if (common_opts.check_performance) {

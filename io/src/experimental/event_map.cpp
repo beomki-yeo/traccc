@@ -8,12 +8,18 @@
 // Local include(s).
 #include "traccc/io/experimental/event_map.hpp"
 
-#include "csv/make_cell_reader.hpp"
-#include "csv/make_hit_reader.hpp"
-#include "csv/make_measurement_hit_id_reader.hpp"
-#include "csv/make_measurement_reader.hpp"
-#include "csv/make_particle_reader.hpp"
+#include "../csv/make_cell_reader.hpp"
+#include "../csv/make_hit_reader.hpp"
+#include "../csv/make_measurement_hit_id_reader.hpp"
+#include "../csv/make_measurement_reader.hpp"
+#include "../csv/make_particle_reader.hpp"
+#include "traccc/io/experimental/read_cells.hpp"
+#include "traccc/io/read_digitization_config.hpp"
 #include "traccc/io/utils.hpp"
+
+// Project include(s).
+#include "traccc/clusterization/component_connection.hpp"
+#include "traccc/clusterization/measurement_creation.hpp"
 
 namespace traccc::io::experimental {
 
@@ -52,6 +58,19 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
                      io_particle.m,           io_particle.q};
     }
 
+    // Read Meas-to-Hit IDs
+    std::string io_meas_hit_id_file =
+        io::data_directory() + hit_dir +
+        io::get_event_filename(event, "-measurement-simhit-map.csv");
+
+    auto mhid_reader =
+        io::csv::make_measurement_hit_id_reader(io_meas_hit_id_file);
+
+    traccc::io::csv::measurement_hit_id io_mh_id;
+    while (mhid_reader.read(io_mh_id)) {
+        meas_hit_ids.push_back(io_mh_id);
+    }
+
     // Read Hits
     std::string io_hit_file = io::data_directory() + hit_dir +
                               io::get_event_filename(event, "-hits.csv");
@@ -65,23 +84,9 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
         hits.push_back(io_hit);
 
         spacepoint sp;
-        sp.global = {iohit.tx, iohit.ty, iohit.tz};
-
+        sp.global = {io_hit.tx, io_hit.ty, io_hit.tz};
         h_map[meas_hit_ids[hid].hit_id] = sp;
         hid++;
-    }
-
-    // Read Meas-to-Hit IDs
-    std::string io_meas_hit_id_file =
-        io::data_directory() + hit_dir +
-        io::get_event_filename(event, "-measurement-simhit-map.csv");
-
-    auto mhid_reader =
-        io::csv::make_measurement_hit_id_reader(io_meas_hit_id_file);
-
-    traccc::io::csv::measurement_hit_id io_mh_id;
-    while (mhid_reader.read(io_mh_id)) {
-        meas_hit_ids.push_back(io_mh_id);
     }
 
     // Read Cells
@@ -109,7 +114,7 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
 
     // Read the cells from the relevant event file
     traccc::io::cell_reader_output readOut(&resource);
-    io::experimental::read_cells(readOut, event, cells_dir,
+    io::experimental::read_cells(readOut, event, cell_dir,
                                  traccc::data_format::csv, &digi_cfg);
     cell_collection_types::host& cells_per_event = readOut.cells;
     cell_module_collection_types::host& modules_per_event = readOut.modules;
@@ -147,7 +152,7 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
         }
         */
 
-        hit_ptc_map[sp] = ptc_map[hit.partcle_id];
+        hit_ptc_map[sp] = ptc_map[hit.particle_id];
     }
 
     /***************************************
@@ -155,7 +160,14 @@ event_map::event_map(std::size_t event, vecmem::memory_resource& resource,
      ***************************************/
 
     for (const auto& iocell : cells) {
-        hit_clus_map[h_map[cell.hit_id]].push_back(
+        unsigned int link = 0;
+        auto it =
+            bcd_link_map.find(detray::geometry::barcode{iocell.geometry_id});
+        if (it != bcd_link_map.end()) {
+            link = (*it).second;
+        }
+
+        hit_clus_map[h_map[iocell.hit_id]].push_back(
             cell{iocell.channel0, iocell.channel1, iocell.value,
                  iocell.timestamp, link});
     }

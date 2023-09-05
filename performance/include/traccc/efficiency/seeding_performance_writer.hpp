@@ -15,6 +15,7 @@
 #include "traccc/edm/spacepoint.hpp"
 #include "traccc/io/event_map.hpp"
 #include "traccc/io/event_map2.hpp"
+#include "traccc/io/experimental/event_map.hpp"
 
 // System include(s).
 #include <map>
@@ -68,6 +69,10 @@ class seeding_performance_writer {
     void write(const seed_collection_types::const_view& seeds_view,
                const spacepoint_collection_types::const_view& spacepoints_view,
                const event_map2& evt_map);
+
+    void write(const seed_collection_types::const_view& seeds_view,
+               const spacepoint_collection_types::const_view& spacepoints_view,
+               const io::experimental::event_map& evt_map);
 
     void finalize();
 

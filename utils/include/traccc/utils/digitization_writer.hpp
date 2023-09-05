@@ -35,7 +35,7 @@ struct digitization_writer : detray::actor {
               m_hit_writer(directory +
                            io::get_event_filename(event_id, "-hits.csv")),
               m_meas_hit_id_writer(
-                  directory + detail::get_event_filename(
+                  directory + io::get_event_filename(
                                   event_id, "-measurement-simhit-map.csv")),
               m_cell_writer(directory +
                             io::get_event_filename(event_id, "-cells.csv")),
@@ -44,8 +44,8 @@ struct digitization_writer : detray::actor {
         uint64_t particle_id = 0u;
         detray::particle_writer m_particle_writer;
         detray::hit_writer m_hit_writer;
-        traccc::cell_writer m_cell_writer;
         detray::meas_hit_id_writer m_meas_hit_id_writer;
+        traccc::cell_writer m_cell_writer;
         uint64_t m_hit_count = 0u;
         digitization_map m_digi_map;
 
@@ -145,7 +145,7 @@ struct digitization_writer : detray::actor {
             }
 
             // Write hit measurement map
-            csv_meas_hit_id meas_hit_id;
+            detray::csv_meas_hit_id meas_hit_id;
             meas_hit_id.hit_id = writer_state.m_hit_count;
             meas_hit_id.measurement_id = writer_state.m_hit_count;
             writer_state.m_meas_hit_id_writer.append(meas_hit_id);

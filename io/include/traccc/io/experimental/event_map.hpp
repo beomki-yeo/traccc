@@ -63,7 +63,6 @@ class event_map {
     /// Map for barcode to link
     using barcode_link_map = std::map<detray::geometry::barcode, unsigned int>;
 
-    private:
     particle_map ptc_map;
     hit_map h_map;
     measurement_parameter_map meas_param_map;
