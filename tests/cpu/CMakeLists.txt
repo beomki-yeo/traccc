@@ -11,6 +11,7 @@ traccc_add_test(cpu
     "test_cca.cpp"
     "test_ckf_sparse_tracks.cpp"
     "test_clusterization_resolution.cpp"
+    "test_clusterization.cpp"
     "test_copy.cpp"
     "test_kalman_fitter.cpp"
     "test_ranges.cpp"
