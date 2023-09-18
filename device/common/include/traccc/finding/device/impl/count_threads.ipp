@@ -11,6 +11,10 @@
 #include "traccc/definitions/algorithms.hpp"
 #include "traccc/definitions/qualifiers.hpp"
 
+// Thrust include(s).
+#include <thrust/binary_search.h>
+#include <thrust/execution_policy.h>
+
 namespace traccc::device {
 
 template <typename config_t>
@@ -40,11 +44,10 @@ TRACCC_DEVICE inline void count_threads(
 
     // Search for the corresponding index of unique vector
     const auto lower =
-        // thrust::lower_bound(thrust::seq, barcodes.begin(), barcodes.end(),
-        // bcd);
-        algorithm::lower_bound(barcodes.begin(), barcodes.end(), bcd);
-    // const auto idx = thrust::distance(barcodes.begin(), lower);
-    const auto idx = algorithm::distance(barcodes.begin(), lower);
+        thrust::lower_bound(thrust::seq, barcodes.begin(), barcodes.end(), bcd);
+    // algorithm::lower_bound(barcodes.begin(), barcodes.end(), bcd);
+    const auto idx = thrust::distance(barcodes.begin(), lower);
+    // const auto idx = algorithm::distance(barcodes.begin(), lower);
 
     // The averaged number of measurement per track
     const unsigned int n_avg_meas_per_track =

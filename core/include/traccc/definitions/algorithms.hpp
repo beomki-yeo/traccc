@@ -13,12 +13,12 @@
 #include <algorithm>
 #endif
 
-namespace traccc {
-
+namespace traccc::detail {
+/*
 #if defined(__CUDACC__)
 namespace algorithm = thrust;
 #else
 namespace algorithm = std;
 #endif
-
-}  // namespace traccc
+*/
+}  // namespace traccc::detail
