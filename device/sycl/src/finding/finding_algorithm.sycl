@@ -74,6 +74,24 @@ finding_algorithm<stepper_t, navigator_t>::finding_algorithm(
     }
 };
 
+template <typename stepper_t, typename navigator_t>
+track_candidate_container_types::buffer
+finding_algorithm<stepper_t, navigator_t>::operator()(
+    const typename detector_type::detector_view_type& det_view,
+    const vecmem::data::jagged_vector_view<
+        typename navigator_t::intersection_type>& navigation_buffer,
+    typename measurement_collection_types::view&& measurements,
+    bound_track_parameters_collection_types::buffer&& seeds_buffer) const {
+
+    // Create track candidate buffer
+    track_candidate_container_types::buffer track_candidates_buffer{
+        {1, m_mr.main},
+        {std::vector<std::size_t>(1, m_cfg.max_track_candidates_per_track),
+         m_mr.main, m_mr.host, vecmem::data::buffer_type::resizable}};
+
+    return track_candidates_buffer;
+}
+
 // Explicit template instantiation
 using toy_detector_type =
     detray::detector<detray::toy_metadata<>, covfie::field_view,
