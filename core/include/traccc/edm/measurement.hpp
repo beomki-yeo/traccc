@@ -13,6 +13,9 @@
 #include "traccc/edm/cell.hpp"
 #include "traccc/edm/container.hpp"
 
+// Detray include(s).
+#include "detray/geometry/barcode.hpp"
+
 // System include(s).
 #include <limits>
 
@@ -30,6 +33,10 @@ struct measurement {
     /// Variance on the 2D coordinates of the measurement
     variance2 variance{0., 0.};
 
+    /// Geometry ID
+    detray::geometry::barcode surface_link;
+
+    /// Link to Module vector index
     using link_type = cell_module_collection_types::view::size_type;
     link_type module_link = 0;
 
@@ -37,18 +44,12 @@ struct measurement {
     std::size_t cluster_link = std::numeric_limits<std::size_t>::max();
 };
 
-/// Measurement with surface link
-struct measurement_link {
-    geometry_id surface_link;
-    measurement meas;
-};
-
 /// Comparison / ordering operator for measurements
 TRACCC_HOST_DEVICE
 inline bool operator<(const measurement& lhs, const measurement& rhs) {
 
-    if (lhs.module_link != rhs.module_link) {
-        return lhs.module_link < rhs.module_link;
+    if (lhs.surface_link != rhs.surface_link) {
+        return lhs.surface_link < rhs.surface_link;
     } else if (std::abs(lhs.local[0] - rhs.local[0]) > float_epsilon) {
         return (lhs.local[0] < rhs.local[0]);
     } else {
@@ -60,12 +61,27 @@ inline bool operator<(const measurement& lhs, const measurement& rhs) {
 TRACCC_HOST_DEVICE
 inline bool operator==(const measurement& lhs, const measurement& rhs) {
 
-    return ((lhs.module_link == rhs.module_link) &&
+    return ((lhs.surface_link == rhs.surface_link) &&
             (std::abs(lhs.local[0] - rhs.local[0]) < float_epsilon) &&
             (std::abs(lhs.local[1] - rhs.local[1]) < float_epsilon) &&
             (std::abs(lhs.variance[0] - rhs.variance[0]) < float_epsilon) &&
             (std::abs(lhs.variance[1] - rhs.variance[1]) < float_epsilon));
 }
+
+/// Comparator based on detray barcode value
+struct measurement_sort_comp {
+    TRACCC_HOST_DEVICE
+    bool operator()(const measurement& lhs, const measurement& rhs) {
+        return lhs.surface_link < rhs.surface_link;
+    }
+};
+
+struct measurement_equal_comp {
+    TRACCC_HOST_DEVICE
+    bool operator()(const measurement& lhs, const measurement& rhs) {
+        return lhs.surface_link == rhs.surface_link;
+    }
+};
 
 /// Declare all measurement collection types
 using measurement_collection_types = collection_types<measurement>;
