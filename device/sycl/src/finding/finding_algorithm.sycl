@@ -5,6 +5,11 @@
  * Mozilla Public License Version 2.0
  */
 
+// DPL include(s).
+// @NOTE: For GCC 9 or 10, onedpl header should come first
+#include <oneapi/dpl/algorithm>
+#include <oneapi/dpl/execution>
+
 // Project include(s).
 #include "../utils/get_queue.hpp"
 #include "traccc/definitions/primitives.hpp"
@@ -31,10 +36,6 @@
 #include <vecmem/containers/device_vector.hpp>
 #include <vecmem/containers/jagged_device_vector.hpp>
 #include <vecmem/containers/vector.hpp>
-
-// DPL include(s).
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
 
 namespace traccc::sycl {
 
