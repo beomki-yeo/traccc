@@ -24,7 +24,7 @@ mark_as_advanced( TRACCC_DPL_SOURCE )
 FetchContent_Declare( DPL ${TRACCC_DPL_SOURCE} )
 
 # Set the default oneDPL threading backend.
-set( ONEDPL_BACKEND "dpcpp" CACHE STRING "oneDPL threading backend" )
+set( ONEDPL_BACKEND "dpcpp_only" CACHE STRING "oneDPL threading backend" )
 
 # Get it into the current directory.
 FetchContent_MakeAvailable( DPL )

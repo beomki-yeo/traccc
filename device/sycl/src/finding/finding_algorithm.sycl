@@ -93,6 +93,10 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     bound_track_parameters_collection_types::device in_params(in_params_buffer);
     bound_track_parameters_collection_types::device seeds(seeds_buffer);
 
+    /*
+    oneapi::dpl::sort(oneapi::dpl::execution::dpcpp_default,
+                      in_params.begin(), in_params.end());
+    */
     // thrust::copy(thrust::device, seeds.begin(), seeds.end(),
     // in_params.begin());
 
