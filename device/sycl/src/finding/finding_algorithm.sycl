@@ -33,8 +33,8 @@
 #include <vecmem/containers/vector.hpp>
 
 // DPL include(s).
-// #include <oneapi/dpl/algorithm>
-// #include <oneapi/dpl/execution>
+#include <oneapi/dpl/algorithm>
+#include <oneapi/dpl/execution>
 
 namespace traccc::sycl {
 
@@ -80,8 +80,52 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
     const typename detector_type::detector_view_type& det_view,
     const vecmem::data::jagged_vector_view<
         typename navigator_t::intersection_type>& navigation_buffer,
-    typename measurement_collection_types::view&& measurements,
-    bound_track_parameters_collection_types::buffer&& seeds_buffer) const {
+    const measurement_collection_types::view& measurements,
+    const bound_track_parameters_collection_types::buffer& seeds_buffer) const {
+
+    // Copy setup
+    m_copy->setup(seeds_buffer);
+    m_copy->setup(navigation_buffer);
+
+    // Prepare input parameters with seeds
+    bound_track_parameters_collection_types::buffer in_params_buffer(
+        m_copy->get_size(seeds_buffer), m_mr.main);
+    bound_track_parameters_collection_types::device in_params(in_params_buffer);
+    bound_track_parameters_collection_types::device seeds(seeds_buffer);
+
+    // thrust::copy(thrust::device, seeds.begin(), seeds.end(),
+    // in_params.begin());
+
+    /*
+    // Create a map for links
+    std::map<unsigned int, vecmem::data::vector_buffer<candidate_link>>
+        link_map;
+
+    // Create a map for parameter ID to link ID
+    std::map<unsigned int, vecmem::data::vector_buffer<unsigned int>>
+        param_to_link_map;
+
+    // Create a map for tip links
+    std::map<unsigned int, vecmem::data::vector_buffer<
+                               typename candidate_link::link_index_type>>
+        tips_map;
+
+    // Link size
+    std::vector<std::size_t> n_candidates_per_step;
+    n_candidates_per_step.reserve(m_cfg.max_track_candidates_per_track);
+
+    std::vector<std::size_t> n_parameters_per_step;
+    n_parameters_per_step.reserve(m_cfg.max_track_candidates_per_track);
+
+    // Global counter object in Device memory
+    vecmem::unique_alloc_ptr<device::finding_global_counter>
+        global_counter_device =
+            vecmem::make_unique_alloc<device::finding_global_counter>(
+                m_mr.main);
+
+    // Global counter object in Host memory
+    device::finding_global_counter global_counter_host;
+    */
 
     // Create track candidate buffer
     track_candidate_container_types::buffer track_candidates_buffer{
