@@ -54,7 +54,6 @@ TRACCC_DEVICE inline void apply_interaction(
     const cxt_t ctx{};
     const auto free_vec = sf.bound_to_free_vector(ctx, bound_param.vector());
 
-    const auto& mask_store = det.mask_store();
     intersection_type sfi;
     sfi.sf_desc = det.surface(bound_param.surface_link());
     sf.template visit_mask<detray::intersection_update>(
