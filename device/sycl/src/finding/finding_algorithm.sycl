@@ -386,8 +386,16 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
             param_to_link_map[step]);
 
         // Create the tip map
+
+        tips_map[step] = vecmem::data::vector_buffer<
+            typename candidate_link::link_index_type>{
+            global_counter_host->n_candidates, m_mr.main,
+            vecmem::data::buffer_type::resizable};
+
+        /*
         tips_map[step] = {global_counter_host->n_candidates, m_mr.main,
                           vecmem::data::buffer_type::resizable};
+        */
         m_copy->setup(tips_map[step]);
         vecmem::data::vector_view<typename candidate_link::link_index_type>
             tips_view(tips_map[step]);

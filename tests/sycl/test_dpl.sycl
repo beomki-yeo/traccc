@@ -19,6 +19,8 @@
 #include <vecmem/memory/sycl/device_memory_resource.hpp>
 #include <vecmem/utils/sycl/copy.hpp>
 
+#include "traccc/finding/candidate_link.hpp"
+
 // GTest include(s).
 #include <gtest/gtest.h>
 
@@ -121,4 +123,23 @@ TEST(dpl, fill) {
     ASSERT_EQ(host_vector[4], 112);
     ASSERT_EQ(host_vector[5], 112);
     ASSERT_EQ(host_vector[6], 112);
+}
+
+TEST(dpl, pair) {
+
+    ::sycl::queue q(handle_async_error);
+    vecmem::sycl::copy copy{&q};
+    vecmem::host_memory_resource host_resource;
+    vecmem::sycl::device_memory_resource device_resource{&q};
+
+    // Create a map for tip links
+    std::map<unsigned int,
+             vecmem::data::vector_buffer<
+                 typename traccc::candidate_link::link_index_type>>
+        tips_map;
+
+    for (int i = 0; i < 10; i++) {
+        tips_map[i] = {10, device_resource,
+                       vecmem::data::buffer_type::resizable};
+    }
 }
