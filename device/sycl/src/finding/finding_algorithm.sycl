@@ -56,7 +56,6 @@ class find_tracks;
 
 /// Class identifying the kernel running @c
 /// traccc::device::propagate_to_next_surface
-template <typename propagator_t, typename config_t>
 class propagate_to_next_surface;
 
 /// Class identifying the kernel running @c traccc::device::build_tracks
@@ -174,7 +173,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         oneapi::dpl::execution::dpcpp_default, sorted_measurements.begin(),
         sorted_measurements.end(), uniques.begin(), uniques.begin() + n_modules,
         upper_bounds.begin(), measurement_sort_comp());
-    vecmem::device_vector<const unsigned int> upper_bounds_view(
+    vecmem::data::vector_view<const unsigned int> upper_bounds_view(
         upper_bounds_buffer);
 
     // Get the number of measurements of each module
@@ -330,13 +329,16 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         // Create the link map
         link_map[step] = {n_in_params * m_cfg.max_num_branches_per_surface,
                           m_mr.main};
+        vecmem::data::vector_view<candidate_link> link_view(link_map[step]);
+
         m_copy->setup(link_map[step]);
 
         localSize = 64;
-        auto findTracksNdRange = traccc::sycl::calculate1DimNdRange(
-            global_counter_host->n_total_threads, localSize);
 
         if (global_counter_host->n_total_threads > 0) {
+            auto findTracksNdRange = traccc::sycl::calculate1DimNdRange(
+                global_counter_host->n_total_threads, localSize);
+
             details::get_queue(m_queue)
                 .submit([&](::sycl::handler& h) {
                     h.parallel_for<kernels::find_tracks>(
@@ -345,7 +347,7 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                          barcodes_view, upper_bounds_view, in_params_view,
                          n_threads_view, step, aux_global_counter,
                          updated_params_view,
-                         link_map](::sycl::nd_item<1> item) {
+                         link_view](::sycl::nd_item<1> item) {
                             device::find_tracks<detector_type, config_type>(
                                 item.get_global_linear_id(), config, det_view,
                                 sorted_measurements_view, barcodes_view,
@@ -353,51 +355,80 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
                                 n_threads_view, step,
                                 (*aux_global_counter).n_measurements_per_thread,
                                 (*aux_global_counter).n_total_threads,
-                                updated_params_view, link_map[step],
+                                updated_params_view, link_view,
                                 (*aux_global_counter).n_candidates);
                         });
                 })
                 .wait_and_throw();
         }
 
-        /*
-        nBlocks =
-            (global_counter_host.n_total_threads + nThreads - 1) / nThreads;
-        */
-
-        /*
-        bound_track_parameters_collection_types::const_view in_params_view(
-            in_params_buffer);
-        vecmem::data::vector_view<const unsigned int>
-
-
-        details::get_queue(m_queue)
-            .submit([&](::sycl::handler& h) {
-                h.parallel_for<kernels::apply_interaction>(
-                    applyInteractionNdRange,
-                    [config = m_cfg, in_params_view, barcodes_view, sizes_view,
-                     n_in_params, n_total_measurements, n_threads_view,
-                     global_counter_device](::sycl::nd_item<1> item) {
-                        device::apply_interaction(
-                            item.get_global_linear_id(), config,
-                            in_params_buffer, barcodes_view, sizes_buffer,
-                            n_in_params, n_total_measurements, n_threads_buffer,
-                            (*global_counter_device).n_measurements_per_thread,
-                            (*global_counter_device).n_total_threads);
-                    });
-            })
-            .wait_and_throw();
-        */
         /*****************************************************************
-         * Kernel3: Count the number of threads per parameter
-         ****************************************************************/
+         * Kernel5: Propagate to the next surface
+         *****************************************************************/
 
-        /*
-        // Create a buffer for the number of threads per parameter
-        vecmem::data::vector_buffer<unsigned int> n_threads_buffer(n_in_params,
-                                                                   m_mr.main);
+        // Global counter object: Device -> Host
+        details::get_queue(m_queue)
+            .memcpy(global_counter_host.get(), global_counter_device.get(),
+                    sizeof(device::finding_global_counter))
+            .wait_and_throw();
 
-        */
+        // Buffer for out parameters for the next step
+        bound_track_parameters_collection_types::buffer out_params_buffer(
+            global_counter_host->n_candidates, m_mr.main);
+        bound_track_parameters_collection_types::view out_params_view(
+            out_params_buffer);
+
+        // Create the param to link ID map
+        param_to_link_map[step] = {global_counter_host->n_candidates,
+                                   m_mr.main};
+        m_copy->setup(param_to_link_map[step]);
+        vecmem::data::vector_view<unsigned int> param_to_link_view(
+            param_to_link_map[step]);
+
+        // Create the tip map
+        tips_map[step] = {global_counter_host->n_candidates, m_mr.main,
+                          vecmem::data::buffer_type::resizable};
+        m_copy->setup(tips_map[step]);
+        vecmem::data::vector_view<typename candidate_link::link_index_type>
+            tips_view(tips_map[step]);
+
+        localSize = 64;
+        if (global_counter_host->n_candidates > 0) {
+            auto propagateNdRange = traccc::sycl::calculate1DimNdRange(
+                global_counter_host->n_candidates, localSize);
+
+            details::get_queue(m_queue)
+                .submit([&](::sycl::handler& h) {
+                    h.parallel_for<kernels::propagate_to_next_surface>(
+                        propagateNdRange,
+                        [config = m_cfg, det_view, navigation_buffer,
+                         in_params_view, link_view, step, n_in_params,
+                         out_params_view, param_to_link_view, tips_view,
+                         aux_global_counter](::sycl::nd_item<1> item) {
+                            device::propagate_to_next_surface<propagator_type,
+                                                              config_type>(
+                                item.get_global_linear_id(), config, det_view,
+                                navigation_buffer, in_params_view, link_view,
+                                step, n_in_params, out_params_view,
+                                param_to_link_view, tips_view,
+                                (*aux_global_counter).n_out_params);
+                        });
+                })
+                .wait_and_throw();
+        }
+
+        // Global counter object: Device -> Host
+        details::get_queue(m_queue)
+            .memcpy(global_counter_host.get(), global_counter_device.get(),
+                    sizeof(device::finding_global_counter))
+            .wait_and_throw();
+
+        // Fill the candidate size vector
+        n_candidates_per_step.push_back(global_counter_host->n_candidates);
+        n_parameters_per_step.push_back(global_counter_host->n_out_params);
+
+        // Swap parameter buffer for the next step
+        in_params_buffer = std::move(out_params_buffer);
     }
 
     /////////////////////////////////////////
