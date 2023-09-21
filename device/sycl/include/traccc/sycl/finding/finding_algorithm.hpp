@@ -13,6 +13,7 @@
 #include "traccc/edm/track_candidate.hpp"
 #include "traccc/finding/finding_config.hpp"
 #include "traccc/finding/interaction_register.hpp"
+#include "traccc/sycl/utils/queue_wrapper.hpp"
 #include "traccc/utils/algorithm.hpp"
 #include "traccc/utils/memory_resource.hpp"
 

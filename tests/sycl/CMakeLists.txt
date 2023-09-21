@@ -12,6 +12,7 @@ traccc_add_test(
     sycl
 
     # Define the sources for the test.
+    test_ckf_sparse_tracks.sycl
     test_dpl.sycl
     test_kalman_filter.sycl
 
