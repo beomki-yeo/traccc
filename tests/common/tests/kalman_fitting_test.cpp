@@ -82,7 +82,7 @@ void KalmanFittingTests::pull_value_tests(
 }
 
 void KalmanFittingTests::ndf_tests(
-    const host_detector_type& host_det, const fitter_info<transform3>& fit_info,
+    const fitter_info<transform3>& fit_info,
     const track_state_collection_types::host& track_states_per_track) {
 
     scalar dim_sum = 0;
@@ -92,12 +92,7 @@ void KalmanFittingTests::ndf_tests(
 
         if (!state.is_hole) {
 
-            const auto& sf_link = state.surface_link();
-
-            const auto& sf_desc = host_det.surface(sf_link);
-            const auto sf = detray::surface{host_det, sf_desc};
-
-            dim_sum += sf.meas_dim();
+            dim_sum += state.get_measurement().meas_dim;
             n_effective_states++;
         }
     }

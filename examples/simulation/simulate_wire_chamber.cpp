@@ -14,12 +14,15 @@
 #include "traccc/options/options.hpp"
 #include "traccc/options/particle_gen_options.hpp"
 #include "traccc/options/propagation_options.hpp"
+#include "traccc/simulation/measurement_smearer.hpp"
+#include "traccc/simulation/simulator.hpp"
+#include "traccc/simulation/smearing_writer.hpp"
 
 // detray include(s).
+#include "detray/detectors/bfield.hpp"
 #include "detray/detectors/create_wire_chamber.hpp"
 #include "detray/io/common/detector_writer.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
-#include "detray/simulation/simulator.hpp"
 
 // VecMem include(s).
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -43,45 +46,63 @@ int simulate(std::string output_directory, unsigned int events,
     vecmem::host_memory_resource host_mr;
 
     /*****************************
-     * Build a toy geometry
+     * Build a wire chamber
      *****************************/
+
+    // Detector type
+    using detector_type = detray::detector<detray::default_metadata>;
 
     // B field value and its type
     // @TODO: Set B field as argument
+    using b_field_t = covfie::field<detray::bfield::const_bknd_t>;
     const vector3 B{0, 0, 2 * detray::unit<scalar>::T};
+    auto field = detray::bfield::create_const_field(B);
 
     // Set Configuration
     detray::wire_chamber_config wire_chamber_cfg{};
     wire_chamber_cfg.n_layers(20u);
-    wire_chamber_cfg.bfield_vec(B);
 
     // Create the toy geometry
     const auto [det, name_map] =
-        detray::create_wire_chamber<detray::host_container_types>(
-            host_mr, wire_chamber_cfg);
+        detray::create_wire_chamber(host_mr, wire_chamber_cfg);
 
     /***************************
      * Generate simulation data
      ***************************/
 
     // Origin of particles
-    auto generator =
+    using generator_type =
         detray::random_track_generator<traccc::free_track_parameters,
-                                       uniform_gen_t>(
-            pg_opts.gen_nparticles, pg_opts.vertex, pg_opts.vertex_stddev,
-            pg_opts.mom_range, pg_opts.theta_range, pg_opts.phi_range);
+                                       uniform_gen_t>;
+    generator_type::configuration gen_cfg{};
+    gen_cfg.n_tracks(pg_opts.gen_nparticles);
+    gen_cfg.origin(pg_opts.vertex);
+    gen_cfg.origin_stddev(pg_opts.vertex_stddev);
+    gen_cfg.phi_range(pg_opts.phi_range[0], pg_opts.phi_range[1]);
+    gen_cfg.theta_range(pg_opts.theta_range[0], pg_opts.theta_range[1]);
+    gen_cfg.mom_range(pg_opts.mom_range[0], pg_opts.mom_range[1]);
+    generator_type generator(gen_cfg);
 
     // Smearing value for measurements
-    detray::measurement_smearer<transform3> meas_smearer(
+    traccc::measurement_smearer<transform3> meas_smearer(
         50 * detray::unit<scalar>::um, 50 * detray::unit<scalar>::um);
+
+    // Type declarations
+    using writer_type =
+        traccc::smearing_writer<traccc::measurement_smearer<transform3>>;
+
+    // Writer config
+    typename writer_type::config smearer_writer_cfg{meas_smearer};
 
     // Run simulator
     const std::string full_path = io::data_directory() + output_directory;
 
     boost::filesystem::create_directories(full_path);
 
-    auto sim = detray::simulator(events, det, std::move(generator),
-                                 meas_smearer, full_path);
+    auto sim = traccc::simulator<detector_type, b_field_t, generator_type,
+                                 writer_type>(
+        events, det, field, std::move(generator), std::move(smearer_writer_cfg),
+        full_path);
     sim.get_config().step_constraint = propagation_opts.step_constraint;
     sim.get_config().overstep_tolerance = propagation_opts.overstep_tolerance;
 

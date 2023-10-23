@@ -10,6 +10,7 @@
 #include "traccc/fitting/fitting_algorithm.hpp"
 #include "traccc/io/utils.hpp"
 #include "traccc/resolution/fitting_performance_writer.hpp"
+#include "traccc/simulation/simulator.hpp"
 #include "traccc/utils/ranges.hpp"
 #include "traccc/utils/seed_generator.hpp"
 
@@ -21,7 +22,6 @@
 #include "detray/io/common/detector_reader.hpp"
 #include "detray/io/common/detector_writer.hpp"
 #include "detray/simulation/event_generator/track_generators.hpp"
-#include "detray/simulation/simulator.hpp"
 
 // VecMem include(s).
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -65,10 +65,10 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     tel_cfg.module_material(mat);
     tel_cfg.mat_thickness(thickness);
     tel_cfg.pilot_track(traj);
-    tel_cfg.bfield_vec(B);
 
     // Create telescope detector
     auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
+    auto field = detray::bfield::create_const_field(B);
 
     // Write detector file
     auto writer_cfg = detray::io::detector_writer_config{}
@@ -79,8 +79,7 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
     // Read back detector file
     detray::io::detector_reader_config reader_cfg{};
     reader_cfg.add_file("telescope_detector_geometry.json")
-        .add_file("telescope_detector_homogeneous_material.json")
-        .bfield_vec(B[0], B[1], B[2]);
+        .add_file("telescope_detector_homogeneous_material.json");
 
     const auto [host_det, names] =
         detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
@@ -89,22 +88,36 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
      * Generate simulation data
      ***************************/
 
-    auto generator =
+    // Track generator
+    using generator_type =
         detray::random_track_generator<traccc::free_track_parameters,
-                                       uniform_gen_t>(n_truth_tracks, origin,
-                                                      origin_stddev, mom_range,
-                                                      theta_range, phi_range);
+                                       uniform_gen_t>;
+    generator_type::configuration gen_cfg{};
+    gen_cfg.n_tracks(n_truth_tracks);
+    gen_cfg.origin(origin);
+    gen_cfg.origin_stddev(origin_stddev);
+    gen_cfg.phi_range(phi_range[0], phi_range[1]);
+    gen_cfg.theta_range(theta_range[0], theta_range[1]);
+    gen_cfg.mom_range(mom_range[0], mom_range[1]);
+    generator_type generator(gen_cfg);
 
     // Smearing value for measurements
-    detray::measurement_smearer<transform3> meas_smearer(smearing[0],
+    traccc::measurement_smearer<transform3> meas_smearer(smearing[0],
                                                          smearing[1]);
+
+    using writer_type =
+        traccc::smearing_writer<traccc::measurement_smearer<transform3>>;
+
+    typename writer_type::config smearer_writer_cfg{meas_smearer};
 
     // Run simulator
     const std::string path = name + "/";
     const std::string full_path = io::data_directory() + path;
     std::filesystem::create_directories(full_path);
-    auto sim = detray::simulator(n_events, host_det, std::move(generator),
-                                 meas_smearer, full_path);
+    auto sim = traccc::simulator<host_detector_type, b_field_t, generator_type,
+                                 writer_type>(
+        n_events, host_det, field, std::move(generator),
+        std::move(smearer_writer_cfg), full_path);
     sim.run();
 
     /***************
@@ -131,7 +144,7 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
         ASSERT_EQ(track_candidates.size(), n_truth_tracks);
 
         // Run fitting
-        auto track_states = fitting(host_det, track_candidates);
+        auto track_states = fitting(host_det, field, track_candidates);
 
         // Iterator over tracks
         const std::size_t n_tracks = track_states.size();
@@ -146,7 +159,7 @@ TEST_P(KalmanFittingTelescopeTests, Run) {
 
             consistency_tests(track_states_per_track);
 
-            ndf_tests(host_det, fit_info, track_states_per_track);
+            ndf_tests(fit_info, track_states_per_track);
 
             fit_performance_writer.write(track_states_per_track, fit_info,
                                          host_det, evt_map);

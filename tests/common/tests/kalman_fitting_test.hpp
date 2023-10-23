@@ -14,6 +14,7 @@
 // detray include(s).
 #include "detray/core/detector.hpp"
 #include "detray/core/detector_metadata.hpp"
+#include "detray/detectors/bfield.hpp"
 #include "detray/masks/masks.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
@@ -49,14 +50,13 @@ class KalmanFittingTests
 
     public:
     /// Type declarations
-    using host_detector_type =
-        detray::detector<detray::default_metadata, covfie::field,
-                         detray::host_container_types>;
+    using host_detector_type = detray::detector<detray::default_metadata,
+                                                detray::host_container_types>;
     using device_detector_type =
-        detray::detector<detray::default_metadata, covfie::field_view,
+        detray::detector<detray::default_metadata,
                          detray::device_container_types>;
 
-    using b_field_t = typename host_detector_type::bfield_type;
+    using b_field_t = covfie::field<detray::bfield::const_bknd_t>;
     using rk_stepper_type = detray::rk_stepper<b_field_t::view_t, transform3,
                                                detray::constrained_step<>>;
     using host_navigator_type = detray::navigator<const host_detector_type>;
@@ -87,7 +87,6 @@ class KalmanFittingTests
     /// @param track_states_per_track Track states of a track
     ///
     void ndf_tests(
-        const host_detector_type& host_det,
         const fitter_info<transform3>& fit_info,
         const track_state_collection_types::host& track_states_per_track);
 

@@ -25,6 +25,7 @@
 // Detray include(s).
 #include "detray/core/detector.hpp"
 #include "detray/core/detector_metadata.hpp"
+#include "detray/detectors/bfield.hpp"
 #include "detray/io/common/detector_reader.hpp"
 #include "detray/propagator/navigator.hpp"
 #include "detray/propagator/propagator.hpp"
@@ -46,11 +47,10 @@ int seq_run(const traccc::finding_input_config& i_cfg,
             const traccc::common_options& common_opts) {
 
     /// Type declarations
-    using host_detector_type =
-        detray::detector<detray::default_metadata, covfie::field,
-                         detray::host_container_types>;
+    using host_detector_type = detray::detector<detray::default_metadata,
+                                                detray::host_container_types>;
 
-    using b_field_t = typename host_detector_type::bfield_type;
+    using b_field_t = covfie::field<detray::bfield::const_bknd_t>;
     using rk_stepper_type =
         detray::rk_stepper<b_field_t::view_t, traccc::transform3,
                            detray::constrained_step<>>;
@@ -75,13 +75,13 @@ int seq_run(const traccc::finding_input_config& i_cfg,
     // B field value and its type
     // @TODO: Set B field as argument
     const traccc::vector3 B{0, 0, 2 * detray::unit<traccc::scalar>::T};
+    auto field = detray::bfield::create_const_field(B);
 
     // Read the detector
     detray::io::detector_reader_config reader_cfg{};
     reader_cfg
         .add_file(traccc::io::data_directory() + common_opts.detector_file)
-        .add_file(traccc::io::data_directory() + common_opts.material_file)
-        .bfield_vec(B[0], B[1], B[2]);
+        .add_file(traccc::io::data_directory() + common_opts.material_file);
 
     const auto [host_det, names] =
         detray::io::read_detector<host_detector_type>(host_mr, reader_cfg);
@@ -94,21 +94,12 @@ int seq_run(const traccc::finding_input_config& i_cfg,
 
     // Standard deviations for seed track parameters
     static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
-        {0.01 * detray::unit<scalar>::mm,
-         0.01 * detray::unit<scalar>::mm,
-         0.001,
-         0.001,
-         0.01 / detray::unit<scalar>::GeV,
-         0.01 * detray::unit<scalar>::ns};
-    /*
-    static constexpr std::array<traccc::scalar, traccc::e_bound_size> stddevs =
-        {0.03 * detray::unit<traccc::scalar>::mm,
-         0.03 * detray::unit<traccc::scalar>::mm,
-         0.017,
-         0.017,
-         0.001 / detray::unit<traccc::scalar>::GeV,
-         1 * detray::unit<traccc::scalar>::ns};
-    */
+        {1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-4 * detray::unit<traccc::scalar>::mm,
+         1e-3,
+         1e-3,
+         1e-4 / detray::unit<traccc::scalar>::GeV,
+         1e-4 * detray::unit<traccc::scalar>::ns};
 
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
@@ -152,20 +143,22 @@ int seq_run(const traccc::finding_input_config& i_cfg,
         }
 
         // Read measurements
-        traccc::measurement_container_types::host measurements_per_event =
-            traccc::io::read_measurements_container(
-                event, common_opts.input_directory, traccc::data_format::csv,
-                &host_mr);
+        traccc::io::measurement_reader_output meas_read_out(&host_mr);
+        traccc::io::read_measurements(meas_read_out, event,
+                                      common_opts.input_directory,
+                                      traccc::data_format::csv);
+        traccc::measurement_collection_types::host& measurements_per_event =
+            meas_read_out.measurements;
 
         // Run finding
         auto track_candidates =
-            host_finding(host_det, measurements_per_event, seeds);
+            host_finding(host_det, field, measurements_per_event, seeds);
 
         std::cout << "Number of found tracks: " << track_candidates.size()
                   << std::endl;
 
         // Run fitting
-        auto track_states = host_fitting(host_det, track_candidates);
+        auto track_states = host_fitting(host_det, field, track_candidates);
 
         std::cout << "Number of fitted tracks: " << track_states.size()
                   << std::endl;

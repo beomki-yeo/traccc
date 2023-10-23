@@ -39,6 +39,10 @@ add_subdirectory( core )
 add_subdirectory( cpu )
 add_subdirectory( io )
 
+if( TRACCC_BUILD_EXAMPLES )
+    add_subdirectory( examples )
+endif()
+
 if( TRACCC_BUILD_CUDA )
     add_subdirectory( cuda )
 endif()
