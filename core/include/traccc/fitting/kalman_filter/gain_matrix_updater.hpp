@@ -38,22 +38,24 @@ struct gain_matrix_updater {
     /// @return true if the update succeeds
     template <typename mask_group_t, typename index_t>
     TRACCC_HOST_DEVICE inline void operator()(
-        const mask_group_t& /*mask_group*/, const index_t& /*index*/,
+        const mask_group_t& mask_group, const index_t& index,
         track_state<algebra_t>& trk_state,
         bound_track_parameters& bound_params) const {
+
+        const auto& mask = mask_group[index];
 
         const auto D = trk_state.get_measurement().meas_dim;
         assert(D == 1u || D == 2u);
         if (D == 1u) {
-            update<1u>(trk_state, bound_params);
+            update<1u>(mask, trk_state, bound_params);
         } else if (D == 2u) {
-            update<2u>(trk_state, bound_params);
+            update<2u>(mask, trk_state, bound_params);
         }
     }
 
-    template <size_type D>
+    template <size_type D, typename mask_t>
     TRACCC_HOST_DEVICE inline void update(
-        track_state<algebra_t>& trk_state,
+        const mask_t& /*mask*/, track_state<algebra_t>& trk_state,
         bound_track_parameters& bound_params) const {
 
         static_assert(((D == 1u) || (D == 2u)),
@@ -69,8 +71,7 @@ struct gain_matrix_updater {
         const matrix_type<D, D> I_m =
             matrix_operator().template identity<D, D>();
 
-        const matrix_type<D, e_bound_size> H =
-            meas.subs.template projector<D>();
+        matrix_type<D, e_bound_size> H = meas.subs.template projector<D>();
 
         // Measurement data on surface
         const matrix_type<D, 1>& meas_local =
@@ -87,6 +88,13 @@ struct gain_matrix_updater {
         // Set track state parameters
         trk_state.predicted().set_vector(predicted_vec);
         trk_state.predicted().set_covariance(predicted_cov);
+
+        // Correct sign for line detector
+        if (mask_t::shape::mask_type == detray::mask_types::line) {
+            if (getter::element(predicted_vec, e_bound_loc0, 0u) < 0) {
+                getter::element(H, 0u, e_bound_loc0) = -1;
+            }
+        }
 
         // Spatial resolution (Measurement covariance)
         const matrix_type<D, D> V =
