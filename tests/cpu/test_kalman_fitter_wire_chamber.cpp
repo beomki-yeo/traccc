@@ -119,6 +119,11 @@ TEST_P(KalmanFittingWireChamberTests, Run) {
                                  writer_type>(
         n_events, host_det, field, std::move(generator),
         std::move(smearer_writer_cfg), full_path);
+
+    // Set constrained step size to 2 mm
+    sim.get_config().step_constraint = step_constraint;
+    sim.get_config().overstep_tolerance = overstep_tolerance;
+
     sim.run();
 
     /***************
