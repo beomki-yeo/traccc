@@ -60,24 +60,6 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
      * Build a telescope geometry
      *****************************/
 
-    // Memory resources used by the application.
-    vecmem::host_memory_resource host_mr;
-
-    detray::tel_det_config<> tel_cfg{rectangle};
-    tel_cfg.positions(plane_positions);
-    tel_cfg.module_material(mat);
-    tel_cfg.mat_thickness(thickness);
-    tel_cfg.pilot_track(traj);
-
-    // Create telescope detector
-    auto [det, name_map] = create_telescope_detector(host_mr, tel_cfg);
-
-    // Write detector file
-    auto writer_cfg = detray::io::detector_writer_config{}
-                          .format(detray::io::format::json)
-                          .replace_files(true);
-    detray::io::write_detector(det, name_map, writer_cfg);
-
     // Read back detector file
     const std::string path = name + "/";
     detray::io::detector_reader_config reader_cfg{};

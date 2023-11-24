@@ -6,10 +6,10 @@
  */
 
 // Project include(s).
+#include "traccc/efficiency/finding_performance_writer.hpp"
 #include "traccc/finding/finding_algorithm.hpp"
 #include "traccc/io/read_measurements.hpp"
 #include "traccc/io/utils.hpp"
-#include "traccc/efficiency/finding_performance_writer.hpp"
 #include "traccc/simulation/simulator.hpp"
 #include "traccc/utils/ranges.hpp"
 
@@ -45,24 +45,19 @@ TEST_P(CkfEfficiencyToyDetectorTests, Run) {
     const std::array<scalar, 2u> eta_range = std::get<4>(GetParam());
     const std::array<scalar, 2u> theta_range = eta_to_theta_range(eta_range);
     const std::array<scalar, 2u> phi_range = std::get<5>(GetParam());
-    const unsigned int n_truth_tracks = std::get<6>(GetParam());
-    const unsigned int n_events = std::get<7>(GetParam());
+    const scalar charge = std::get<6>(GetParam());
+    const unsigned int n_truth_tracks = std::get<7>(GetParam());
+    const unsigned int n_events = std::get<8>(GetParam());
 
     // Performance writer
     traccc::find_performance_writer::config find_writer_cfg;
     find_writer_cfg.file_path = "performance_track_finding_" + name + ".root";
-    traccc::fitting_performance_writer fit_performance_writer(fit_writer_cfg);
+    traccc::finding_performance_writer find_performance_writer(find_writer_cfg);
+
+    /*****************************
+     * Build a toy detector
+     *****************************/
 
     // Remove the data
     std::filesystem::remove_all(full_path);
 }
-
-/*
-INSTANTIATE_TEST_SUITE_P(
-    CkfEfficiencyToyDetectorValidation0, CkfEfficiencyToyDetectorTests,
-    ::testing::Values(std::make_tuple(
-        "toy_detector", std::array<scalar, 3u>{0.f, 0.f, 0.f},
-        std::array<scalar, 3u>{0.f, 200.f, 200.f},
-        std::array<scalar, 2u>{1.f, 1.f}, std::array<scalar, 2u>{0.f, 0.f},
-        std::array<scalar, 2u>{0.f, 0.f}, 1, 5000)));
-*/
