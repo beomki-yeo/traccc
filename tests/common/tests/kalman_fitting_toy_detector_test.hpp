@@ -31,7 +31,6 @@ class KalmanFittingToyDetectorTests : public KalmanFittingTests {
     /// B field value and its type
     static constexpr vector3 B{0, 0, 2 * detray::unit<scalar>::T};
 
-    /*
     /// Step constraint (only for simulation)
     static const inline scalar step_constraint = 2 * detray::unit<scalar>::mm;
 
@@ -39,9 +38,6 @@ class KalmanFittingToyDetectorTests : public KalmanFittingTests {
     static const inline scalar overstep_tolerance =
         -100.f * detray::unit<scalar>::um;
 
-    // Set mask tolerance to a large value not to miss the surface during KF
-    static const inline scalar mask_tolerance = 50.f * detray::unit<scalar>::um;
-    */
     /// Measurement smearing parameters
     static constexpr std::array<scalar, 2u> smearing{
         50.f * detray::unit<scalar>::um, 50.f * detray::unit<scalar>::um};

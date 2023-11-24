@@ -107,6 +107,11 @@ TEST_P(CkfEfficiencyToyDetectorTests, Run) {
                                  writer_type>(
         n_events, host_det, field, std::move(generator),
         std::move(smearer_writer_cfg), full_path);
+
+    // Set constrained step size to 2 mm
+    sim.get_config().step_constraint = step_constraint;
+    sim.get_config().overstep_tolerance = overstep_tolerance;
+
     sim.run();
 
     /*****************************
@@ -119,12 +124,45 @@ TEST_P(CkfEfficiencyToyDetectorTests, Run) {
     // Finding algorithm configuration
     typename traccc::finding_algorithm<rk_stepper_type,
                                        host_navigator_type>::config_type cfg;
-    // few tracks (~1 out of 1000 tracks) are missed when chi2_max = 15
-    cfg.chi2_max = 30.f;
 
     // Finding algorithm object
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
         host_finding(cfg);
+
+    // Iterate over events
+    for (std::size_t i_evt = 0; i_evt < n_events; i_evt++) {
+
+        // Truth Track Candidates
+        traccc::event_map2 evt_map(i_evt, path, path, path);
+
+        traccc::track_candidate_container_types::host truth_track_candidates =
+            evt_map.generate_truth_candidates(sg, host_mr);
+
+        ASSERT_EQ(truth_track_candidates.size(), n_truth_tracks);
+
+        // Prepare truth seeds
+        traccc::bound_track_parameters_collection_types::host seeds(&host_mr);
+        for (unsigned int i_trk = 0; i_trk < n_truth_tracks; i_trk++) {
+            seeds.push_back(truth_track_candidates.at(i_trk).header);
+        }
+        ASSERT_EQ(seeds.size(), n_truth_tracks);
+
+        // Read measurements
+        traccc::io::measurement_reader_output readOut(&host_mr);
+        traccc::io::read_measurements(readOut, i_evt, path,
+                                      traccc::data_format::csv);
+        traccc::measurement_collection_types::host& measurements_per_event =
+            readOut.measurements;
+
+        // Run finding
+        auto track_candidates =
+            host_finding(host_det, field, measurements_per_event, seeds);
+
+        find_performance_writer.write(traccc::get_data(track_candidates),
+                                      evt_map);
+    }
+
+    find_performance_writer.finalize();
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -133,8 +171,8 @@ INSTANTIATE_TEST_SUITE_P(
         "toy_1_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f}, std::array<scalar, 2u>{1.f, 1.f},
         std::array<scalar, 2u>{-3.f, 3.f},
-        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi},
-        -1.f, 4000, 1)));
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, -1.f,
+        4000, 1)));
 
 INSTANTIATE_TEST_SUITE_P(
     CkfEfficiencyToyDetectorValidation1, CkfEfficiencyToyDetectorTests,
@@ -142,8 +180,8 @@ INSTANTIATE_TEST_SUITE_P(
         "toy_10_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 2u>{10.f, 10.f}, std::array<scalar, 2u>{-3.f, 3.f},
-        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi},
-        -1.f, 4000, 1)));
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, -1.f,
+        4000, 1)));
 
 INSTANTIATE_TEST_SUITE_P(
     CkfEfficiencyToyDetectorValidation2, CkfEfficiencyToyDetectorTests,
@@ -151,5 +189,5 @@ INSTANTIATE_TEST_SUITE_P(
         "toy_100_GeV", std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 3u>{0.f, 0.f, 0.f},
         std::array<scalar, 2u>{100.f, 100.f}, std::array<scalar, 2u>{-3.f, 3.f},
-        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi},
-        -1.f, 4000, 1)));
+        std::array<scalar, 2u>{0.f, 2.0f * detray::constant<scalar>::pi}, -1.f,
+        4000, 1)));
