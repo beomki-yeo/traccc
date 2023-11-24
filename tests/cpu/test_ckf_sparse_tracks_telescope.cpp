@@ -60,6 +60,9 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
      * Build a telescope geometry
      *****************************/
 
+    // Memory resources used by the application.
+    vecmem::host_memory_resource host_mr;
+
     // Read back detector file
     const std::string path = name + "/";
     detray::io::detector_reader_config reader_cfg{};
@@ -196,9 +199,6 @@ TEST_P(CkfSparseTrackTelescopeTests, Run) {
         static_cast<scalar>(n_success) / (n_truth_tracks * n_events);
 
     ASSERT_FLOAT_EQ(success_rate, 1.00f);
-
-    // Remove the data
-    std::filesystem::remove_all(full_path);
 }
 
 INSTANTIATE_TEST_SUITE_P(
