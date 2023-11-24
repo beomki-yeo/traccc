@@ -55,7 +55,7 @@ class KalmanFittingWireChamberTests : public KalmanFittingTests {
         0.01 * detray::unit<scalar>::ns};
 
     void consistency_tests(const track_state_collection_types::host&
-                               track_states_per_track) const override {
+                               track_states_per_track) const {
 
         // The nubmer of track states is supposed be greater than or
         // equal to the number of layers

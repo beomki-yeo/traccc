@@ -61,7 +61,7 @@ class KalmanFittingToyDetectorTests : public KalmanFittingTests {
 
         // Create the toy geometry
         auto [det, name_map] =
-            create_toy_geometry(host_mr, {n_barrels, n_endcaps});
+            detray::create_toy_geometry(host_mr, {n_barrels, n_endcaps});
 
         // Write detector file
         auto writer_cfg = detray::io::detector_writer_config{}
