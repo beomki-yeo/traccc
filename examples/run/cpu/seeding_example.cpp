@@ -53,7 +53,7 @@ using namespace traccc;
 namespace po = boost::program_options;
 
 int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
-            const traccc::finding_input_config& finding_cfg,
+            const traccc::finding_input_config<traccc::scalar>& finding_cfg,
             const traccc::propagation_options<traccc::scalar>& propagation_opts,
             const traccc::common_options& common_opts,
             const traccc::detector_input_options& det_opts) {
@@ -128,6 +128,7 @@ int seq_run(const traccc::seeding_input_config& /*i_cfg*/,
 
     cfg.min_track_candidates_per_track = finding_cfg.track_candidates_range[0];
     cfg.max_track_candidates_per_track = finding_cfg.track_candidates_range[1];
+    cfg.chi2_max = finding_cfg.chi2_max;
     cfg.constrained_step_size = propagation_opts.step_constraint;
 
     traccc::finding_algorithm<rk_stepper_type, host_navigator_type>
@@ -254,7 +255,7 @@ int main(int argc, char* argv[]) {
     traccc::common_options common_opts(desc);
     traccc::detector_input_options det_opts(desc);
     traccc::seeding_input_config seeding_input_cfg(desc);
-    traccc::finding_input_config finding_input_cfg(desc);
+    traccc::finding_input_config<traccc::scalar> finding_input_cfg(desc);
     traccc::propagation_options<traccc::scalar> propagation_opts(desc);
 
     po::variables_map vm;
