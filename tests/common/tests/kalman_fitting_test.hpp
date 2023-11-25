@@ -91,6 +91,15 @@ class KalmanFittingTests
         const fitter_info<transform3>& fit_info,
         const track_state_collection_types::host& track_states_per_track);
 
+    /// Check the CKF tracking efficiency
+    ///
+    /// @param file_name The name of the track finding efficiency file
+    /// @note Consider making a child class for CKF and move this function there
+    ///
+    void ckf_efficiency_tests(const std::string_view file_name,
+                              const scalar min_eta, const scalar max_eta,
+                              const scalar eff_cut = 1.f) const;
+
     // The number of tracks successful with KF
     std::size_t n_success{0u};
 };

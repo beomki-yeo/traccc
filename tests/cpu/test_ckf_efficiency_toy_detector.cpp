@@ -163,6 +163,9 @@ TEST_P(CkfEfficiencyToyDetectorTests, Run) {
     }
 
     find_performance_writer.finalize();
+
+    // Check the efficiency
+    ckf_efficiency_tests(find_writer_cfg.file_path, eta_range[0], eta_range[1], 0.95f);
 }
 
 INSTANTIATE_TEST_SUITE_P(

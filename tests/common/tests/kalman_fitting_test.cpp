@@ -17,6 +17,7 @@
 
 // ROOT include(s).
 #ifdef TRACCC_HAVE_ROOT
+#include <TEfficiency.h>
 #include <TF1.h>
 #include <TFile.h>
 #include <TH1.h>
@@ -106,6 +107,45 @@ void KalmanFittingTests::ndf_tests(
     if (n_effective_states == track_states_per_track.size()) {
         n_success++;
     }
+}
+
+void KalmanFittingTests::ckf_efficiency_tests(const std::string_view file_name,
+                                              const scalar min_eta,
+                                              const scalar max_eta,
+                                              const scalar eff_cut) const {
+
+    // Avoid unused variable warnings when building the code without ROOT.
+    (void)file_name;
+
+#ifdef TRACCC_HAVE_ROOT
+    // Open the file with the histograms.
+    std::unique_ptr<TFile> ifile(TFile::Open(file_name.data(), "READ"));
+    if ((!ifile) || ifile->IsZombie()) {
+        throw std::runtime_error(std::string("Could not open file \"") +
+                                 file_name.data() + "\"");
+    }
+
+    // Access the histogram.
+    TEfficiency* track_eff =
+        dynamic_cast<TEfficiency*>(ifile->Get("finding_trackeff_vs_eta"));
+
+    if (!track_eff) {
+        throw std::runtime_error(
+            std::string("Could not access efficiency plot in file \"") +
+            file_name.data() + "\"");
+    }
+
+    auto min_idx = track_eff->GetTotalHistogram()->GetXaxis()->FindBin(min_eta);
+    auto max_idx = track_eff->GetTotalHistogram()->GetXaxis()->FindBin(max_eta);
+
+    for (int i = min_idx; i < max_idx; i++) {
+        ASSERT_GE(track_eff->GetEfficiency(i), eff_cut);
+    }
+
+#else
+    std::cout << "CKF efficiency tests not performed without ROOT"
+               << std::endl;
+#endif  // TRACCC_HAVE_ROOT
 }
 
 }  // namespace traccc
