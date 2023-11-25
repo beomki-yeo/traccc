@@ -139,7 +139,7 @@ void KalmanFittingTests::ckf_efficiency_tests(const std::string_view file_name,
     auto max_idx = track_eff->GetTotalHistogram()->GetXaxis()->FindBin(max_eta);
 
     for (int i = min_idx; i < max_idx; i++) {
-        ASSERT_GE(track_eff->GetEfficiency(i), eff_cut);
+        EXPECT_GE(track_eff->GetEfficiency(i), eff_cut);
     }
 
 #else

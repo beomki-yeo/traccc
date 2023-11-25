@@ -98,7 +98,7 @@ class KalmanFittingTests
     ///
     void ckf_efficiency_tests(const std::string_view file_name,
                               const scalar min_eta, const scalar max_eta,
-                              const scalar eff_cut = 1.f) const;
+                              const scalar eff_cut) const;
 
     // The number of tracks successful with KF
     std::size_t n_success{0u};
