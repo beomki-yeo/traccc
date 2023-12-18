@@ -4,6 +4,10 @@
 #
 # Mozilla Public License Version 2.0
 
+traccc_add_executable( spacepoint_formation_example "spacepoint_formation_example.cpp"
+   LINK_LIBRARIES vecmem::core traccc::core traccc::io 
+   traccc::performance traccc::options detray::utils detray::io)
+
 traccc_add_executable( seeding_example "seeding_example.cpp"
    LINK_LIBRARIES vecmem::core traccc::core traccc::io 
    traccc::performance traccc::options detray::utils detray::io)
