@@ -22,7 +22,14 @@
 
 using namespace traccc;
 
-TEST(track_params_estimation, helix) {
+// Track parameter estimation with 10 X momentum input
+class TrackParameterEstimationTest
+    : public testing::TestWithParam<traccc::scalar> {};
+
+TEST_P(TrackParameterEstimationTest, helix) {
+
+    // Momentum = 0.1 * input parameter
+    const scalar p0 = static_cast<scalar>(GetParam() * 0.1f);
 
     // Memory resource used by the EDM.
     vecmem::host_memory_resource host_mr;
@@ -34,7 +41,9 @@ TEST(track_params_estimation, helix) {
     // Track property
     const point3 pos{0.f, 0.f, 0.f};
     const scalar time{0.f};
-    const vector3 mom{1.f, 0.f, 1.f * unit<scalar>::GeV};
+    vector3 mom{1.f, 0.f, 1.f * unit<scalar>::GeV};
+    mom = p0 * vector::normalize(mom);
+
     const scalar q{-1.f * unit<scalar>::e};
 
     // Make a helix
@@ -42,9 +51,9 @@ TEST(track_params_estimation, helix) {
 
     // Make three spacepoints with the helix
     spacepoint_collection_types::host spacepoints;
-    spacepoints.push_back({hlx(50 * unit<scalar>::mm), {}});
-    spacepoints.push_back({hlx(100 * unit<scalar>::mm), {}});
-    spacepoints.push_back({hlx(150 * unit<scalar>::mm), {}});
+    spacepoints.push_back({hlx(200 * unit<scalar>::mm), {}});
+    spacepoints.push_back({hlx(400 * unit<scalar>::mm), {}});
+    spacepoints.push_back({hlx(600 * unit<scalar>::mm), {}});
 
     // Make a seed from the three spacepoints
     seed_collection_types::host seeds;
@@ -59,3 +68,9 @@ TEST(track_params_estimation, helix) {
     ASSERT_EQ(bound_params.size(), 1u);
     ASSERT_NEAR(bound_params[0].p(), getter::norm(mom), 1e-4);
 }
+
+// Test from 0.1 to 10 GeV/c
+INSTANTIATE_TEST_SUITE_P(TrackParameterEstimationGroup,
+                         TrackParameterEstimationTest,
+                         testing::Range(1.f, 100.f),
+                         testing::PrintToStringParamName());

@@ -81,15 +81,12 @@ inline TRACCC_HOST_DEVICE bound_vector seed_to_bound_vector(
     scalar A = (uv2[1] - uv1[1]) / (uv2[0] - uv1[0]);
     scalar B = uv2[1] - A * uv2[0];
 
-    // Curvature (with a sign) estimate
-    scalar rho = -2.0f * B / getter::perp(vector2{1., A});
-    // The projection of the top space point on the transverse plane of
-    // the new frame
-    scalar rn = local2[0] * local2[0] + local2[1] * local2[1];
-    // The (1/tanTheta) of momentum in the new frame
-    static constexpr scalar G = static_cast<scalar>(1.f / 24.f);
+    // Radius is a signed distance between circleCenter and first sp, which is
+    // at (0, 0) in the new frame. Sign depends on B
+    const scalar signed_R = -0.5f * getter::perp(vector2{1., A}) / B;
     scalar invTanTheta =
-        local2[2] * std::sqrt(1.f / rn) / (1.f + G * rho * rho * rn);
+        local2[2] /
+        (2.f * signed_R * std::asin(getter::perp(local2) / (2.f * signed_R)));
 
     // The momentum direction in the new frame (the center of the circle
     // has the coordinate (-1.*A/(2*B), 1./(2*B)))
@@ -110,7 +107,7 @@ inline TRACCC_HOST_DEVICE bound_vector seed_to_bound_vector(
 
     // The estimated q/pt in [GeV/c]^-1 (note that the pt is the
     // projection of momentum on the transverse plane of the new frame)
-    scalar qOverPt = rho / getter::norm(bfield);
+    scalar qOverPt = 1.f / (signed_R * getter::norm(bfield));
     // The estimated q/p in [GeV/c]^-1
     getter::element(params, e_bound_qoverp, 0) =
         qOverPt / getter::perp(vector2{1., invTanTheta});
