@@ -134,6 +134,7 @@ int main(int argc, char* argv[]) {
         traccc::track_candidate_container_types::host truth_track_candidates =
             evt_map2.generate_truth_candidates(sg, host_mr);
 
+        // For the first half of events
         if ((event - input_opts.skip) / (input_opts.events / 2) == 0) {
             // Run fitting
             auto track_states =
@@ -143,6 +144,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Number of fitted tracks (1st alignment): "
                       << n_fitted_tracks << std::endl;
         }
+        // For the second half of events
         else {
             // Change the alignment setting
 
