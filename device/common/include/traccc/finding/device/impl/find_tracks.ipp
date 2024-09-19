@@ -145,7 +145,7 @@ TRACCC_DEVICE inline void find_tracks(
                 n_candidates[in_param_id]);
             num_candidates.fetch_add(1);
 
-            out_params[l_pos] = trk_state.filtered();
+            out_params.at(l_pos) = trk_state.filtered();
         }
     }
 }
