@@ -10,12 +10,16 @@
 #include "../utils/utils.hpp"
 #include "traccc/cuda/fitting/fitting_algorithm.hpp"
 #include "traccc/fitting/device/fit.hpp"
+#include "traccc/fitting/device/get_sort_key_value.hpp"
 #include "traccc/fitting/kalman_filter/kalman_fitter.hpp"
 
 // detray include(s).
 #include "detray/core/detector_metadata.hpp"
 #include "detray/detectors/bfield.hpp"
 #include "detray/propagator/rk_stepper.hpp"
+
+// Thrust include(s).
+#include <thrust/sort.h>
 
 // System include(s).
 #include <vector>
@@ -24,17 +28,28 @@ namespace traccc::cuda {
 
 namespace kernels {
 
+__global__ void get_sort_key_value(
+    track_candidate_container_types::const_view track_candidates_view,
+    vecmem::data::vector_view<device::sort_key> keys_view,
+    vecmem::data::vector_view<unsigned int> ids_view) {
+
+    int gid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    device::get_sort_key_value(gid, track_candidates_view, keys_view, ids_view);
+}
+
 template <typename fitter_t, typename detector_view_t>
 __global__ void fit(
     detector_view_t det_data, const typename fitter_t::bfield_type field_data,
     const typename fitter_t::config_type cfg,
     track_candidate_container_types::const_view track_candidates_view,
+    vecmem::data::vector_view<const unsigned int> param_ids_view,
     track_state_container_types::view track_states_view) {
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
     device::fit<fitter_t>(gid, det_data, field_data, cfg, track_candidates_view,
-                          track_states_view);
+                          param_ids_view, track_states_view);
 }
 
 }  // namespace kernels
@@ -76,16 +91,33 @@ track_state_container_types::buffer fitting_algorithm<fitter_t>::operator()(
     m_copy.setup(track_states_buffer.headers);
     m_copy.setup(track_states_buffer.items);
 
+    vecmem::data::vector_buffer<device::sort_key> keys_buffer(n_tracks,
+                                                              m_mr.main);
+    vecmem::data::vector_buffer<unsigned int> param_ids_buffer(n_tracks,
+                                                               m_mr.main);
+
     // Calculate the number of threads and thread blocks to run the track
     // fitting
     if (n_tracks > 0) {
         const unsigned int nThreads = m_warp_size * 2;
         const unsigned int nBlocks = (n_tracks + nThreads - 1) / nThreads;
 
+        // Get key and value for sorting
+        kernels::get_sort_key_value<<<nBlocks, nThreads, 0, stream>>>(
+            track_candidates_view, keys_buffer, param_ids_buffer);
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+        
+        // Sort the key to get the sorted parameter ids
+        vecmem::device_vector<device::sort_key> keys_device(keys_buffer);
+        vecmem::device_vector<unsigned int> param_ids_device(param_ids_buffer);
+
+        thrust::sort_by_key(thrust::cuda::par.on(stream), keys_device.begin(),
+                            keys_device.end(), param_ids_device.begin());
+
         // Run the track fitting
         kernels::fit<fitter_t><<<nBlocks, nThreads, 0, stream>>>(
             det_view, field_view, m_cfg, track_candidates_view,
-            track_states_buffer);
+            param_ids_buffer, track_states_buffer);
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
     }
 
