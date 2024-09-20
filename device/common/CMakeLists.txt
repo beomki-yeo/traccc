@@ -26,6 +26,7 @@ traccc_add_library( traccc_device_common device_common TYPE SHARED
    "include/traccc/edm/device/triplet_counter.hpp"
    "include/traccc/edm/device/device_doublet.hpp"
    "include/traccc/edm/device/device_triplet.hpp"
+   "include/traccc/edm/device/sort_key.hpp"
    # Clusterization function(s).
    "include/traccc/clusterization/device/form_spacepoints.hpp"
    "include/traccc/clusterization/device/impl/form_spacepoints.ipp"
@@ -65,6 +66,7 @@ traccc_add_library( traccc_device_common device_common TYPE SHARED
    "include/traccc/finding/device/build_tracks.hpp"
    "include/traccc/finding/device/count_measurements.hpp"
    "include/traccc/finding/device/find_tracks.hpp"
+   "include/traccc/finding/device/get_sort_key_value.hpp"
    "include/traccc/finding/device/add_links_for_holes.hpp"
    "include/traccc/finding/device/make_barcode_sequence.hpp"
    "include/traccc/finding/device/propagate_to_next_surface.hpp"
@@ -73,6 +75,7 @@ traccc_add_library( traccc_device_common device_common TYPE SHARED
    "include/traccc/finding/device/impl/build_tracks.ipp"
    "include/traccc/finding/device/impl/count_measurements.ipp"
    "include/traccc/finding/device/impl/find_tracks.ipp"
+   "include/traccc/finding/device/impl/get_sort_key_value.ipp"
    "include/traccc/finding/device/impl/add_links_for_holes.ipp"
    "include/traccc/finding/device/impl/make_barcode_sequence.ipp"
    "include/traccc/finding/device/impl/propagate_to_next_surface.ipp"
