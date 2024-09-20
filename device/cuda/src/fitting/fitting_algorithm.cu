@@ -106,13 +106,14 @@ track_state_container_types::buffer fitting_algorithm<fitter_t>::operator()(
         kernels::get_sort_key_value<<<nBlocks, nThreads, 0, stream>>>(
             track_candidates_view, keys_buffer, param_ids_buffer);
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
-        
+
         // Sort the key to get the sorted parameter ids
         vecmem::device_vector<device::sort_key> keys_device(keys_buffer);
         vecmem::device_vector<unsigned int> param_ids_device(param_ids_buffer);
 
         thrust::sort_by_key(thrust::cuda::par.on(stream), keys_device.begin(),
-                            keys_device.end(), param_ids_device.begin());
+                            keys_device.end(), param_ids_device.begin(),
+                            device::sort_key_comp());
 
         // Run the track fitting
         kernels::fit<fitter_t><<<nBlocks, nThreads, 0, stream>>>(

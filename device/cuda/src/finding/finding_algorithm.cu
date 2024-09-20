@@ -493,7 +493,8 @@ finding_algorithm<stepper_t, navigator_t>::operator()(
         vecmem::device_vector<device::sort_key> keys_device(keys_buffer);
         vecmem::device_vector<unsigned int> param_ids_device(param_ids_buffer);
         thrust::sort_by_key(thrust::cuda::par.on(stream), keys_device.begin(),
-                            keys_device.end(), param_ids_device.begin());
+                            keys_device.end(), param_ids_device.begin(),
+                            device::sort_key_comp());
 
         /*****************************************************************
          * Kernel7: Propagate to the next surface

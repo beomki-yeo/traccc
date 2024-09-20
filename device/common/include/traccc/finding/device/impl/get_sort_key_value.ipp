@@ -17,15 +17,15 @@ TRACCC_HOST_DEVICE inline void get_sort_key_value(
 
     bound_track_parameters_collection_types::const_device params(params_view);
 
-    if (globalIndex >= params.size()) {
-        return;
-    }
-
     // Keys
-    vecmem::device_vector<traccc::scalar> keys_device(keys_view);
+    vecmem::device_vector<device::sort_key> keys_device(keys_view);
 
     // Param id
     vecmem::device_vector<unsigned int> ids_device(ids_view);
+
+    if (globalIndex >= keys_device.size()) {
+        return;
+    }
 
     keys_device.at(globalIndex) = device::get_sort_key(params.at(globalIndex));
     ids_device.at(globalIndex) = globalIndex;
