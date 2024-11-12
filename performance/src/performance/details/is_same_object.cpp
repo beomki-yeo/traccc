@@ -113,8 +113,8 @@ bool is_same_object<bound_track_parameters>::operator()(
 /// @{
 
 is_same_object<track_candidate_collection_types::host>::is_same_object(
-    const track_candidate_collection_types::host& ref, scalar)
-    : m_ref(ref) {}
+    const track_candidate_collection_types::host& ref, scalar unc)
+    : m_ref(ref), m_unc(unc) {}
 
 bool is_same_object<track_candidate_collection_types::host>::operator()(
     const track_candidate_collection_types::host& obj) const {
@@ -124,7 +124,9 @@ bool is_same_object<track_candidate_collection_types::host>::operator()(
     for (track_candidate_collection_types::host::size_type i = 0; i < n_cands;
          i++) {
 
-        const bool is_same = m_ref.get()[i] == obj[i];
+        is_same_object<track_candidate> iso(m_ref.get()[i], m_unc);
+
+        const bool is_same = iso(obj[i]);
 
         if (!is_same) {
             return false;
