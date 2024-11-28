@@ -17,7 +17,11 @@ namespace traccc {
 /// Configuration struct for track fitting
 struct fitting_config {
 
+    /// The maximum number of iterations for Kalman Fitter
     std::size_t n_iterations = 1;
+
+    /// Covariance inflation factor
+    traccc::scalar inflation_factor = 1e3f;
 
     /// Propagation configuration
     detray::propagation::config propagation{};

@@ -138,9 +138,11 @@ class kalman_fitter {
             // From the second iteration, seed parameter is the smoothed track
             // parameter at the first surface
             else {
-                const auto& new_seed_params =
+                auto new_seed_params =
                     fitter_state.m_fit_actor_state.m_track_states[0].smoothed();
 
+                // Inflate covariance to avoid bias from the previous fitting
+                inflate_covariance(new_seed_params, m_cfg.inflation_factor);
                 filter(new_seed_params, fitter_state);
             }
         }
@@ -177,6 +179,9 @@ class kalman_fitter {
         propagation._stepping
             .template set_constraint<detray::step::constraint::e_accuracy>(
                 m_cfg.propagation.stepping.step_constraint);
+
+        // Reset fitter statistics
+        fitter_state.m_fit_res.reset_statistics();
 
         // Run forward filtering
         propagator.propagate(propagation, fitter_state());

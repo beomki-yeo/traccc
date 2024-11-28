@@ -28,14 +28,22 @@ struct fitting_result {
     detray::bound_track_parameters<algebra_t> fit_params;
 
     /// Number of degree of freedoms of fitted track
-    scalar_type ndf{0};
+    scalar_type ndf{0.f};
 
     /// Chi square of fitted track
-    scalar_type chi2{0};
+    scalar_type chi2{0.f};
 
     // The number of holes (The number of sensitive surfaces which do not have a
     // measurement for the track pattern)
     unsigned int n_holes{0u};
+
+    // Reset the statistics
+    TRACCC_HOST_DEVICE
+    void reset_statistics() {
+        ndf = 0.f;
+        chi2 = 0.f;
+        n_holes = 0u;
+    }
 };
 
 /// Fitting result per measurement
