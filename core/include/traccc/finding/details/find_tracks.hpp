@@ -438,7 +438,6 @@ track_candidate_container_types::host find_tracks(
                     param_to_link[L.previous.first][L.previous.second];
 
                 L = links[L.previous.first][l_pos];
->>>>>>> a0cf3183f182cb61040350def903f6ab1e44250b
             }
         }
     }
