@@ -18,15 +18,15 @@
 #include "traccc/fitting/kalman_filter/kalman_step_aborter.hpp"
 #include "traccc/fitting/kalman_filter/statistics_updater.hpp"
 #include "traccc/fitting/kalman_filter/two_filters_smoother.hpp"
+#include "traccc/fitting/status_codes.hpp"
 #include "traccc/utils/particle.hpp"
 
 // detray include(s).
-#include "detray/propagator/actor_chain.hpp"
-#include "detray/propagator/actors/aborters.hpp"
-#include "detray/propagator/actors/parameter_resetter.hpp"
-#include "detray/propagator/actors/parameter_transporter.hpp"
-#include "detray/propagator/actors/pointwise_material_interactor.hpp"
-#include "detray/propagator/propagator.hpp"
+#include <detray/propagator/actors.hpp>
+#include <detray/propagator/propagator.hpp>
+
+// vecmem include(s)
+#include <vecmem/containers/device_vector.hpp>
 
 // System include(s).
 #include <limits>
@@ -47,10 +47,6 @@ class kalman_fitter {
     // scalar type
     using scalar_type = detray::dscalar<algebra_type>;
 
-    // vector type
-    template <typename T>
-    using vector_type = typename detector_type::template vector_type<T>;
-
     /// Configuration type
     using config_type = fitting_config;
 
@@ -61,16 +57,16 @@ class kalman_fitter {
     using aborter = detray::pathlimit_aborter<scalar_type>;
     using transporter = detray::parameter_transporter<algebra_type>;
     using interactor = detray::pointwise_material_interactor<algebra_type>;
-    using fit_actor = traccc::kalman_actor<algebra_type, vector_type>;
+    using fit_actor = traccc::kalman_actor<algebra_type>;
     using resetter = detray::parameter_resetter<algebra_type>;
 
     using actor_chain_type =
-        detray::actor_chain<detray::dtuple, aborter, transporter, interactor,
-                            fit_actor, resetter, kalman_step_aborter>;
+        detray::actor_chain<aborter, transporter, interactor, fit_actor,
+                            resetter, kalman_step_aborter>;
 
     using backward_actor_chain_type =
-        detray::actor_chain<detray::dtuple, aborter, transporter, fit_actor,
-                            interactor, resetter, kalman_step_aborter>;
+        detray::actor_chain<aborter, transporter, fit_actor, interactor,
+                            resetter, kalman_step_aborter>;
 
     // Propagator type
     using propagator_type =
@@ -94,14 +90,18 @@ class kalman_fitter {
         ///
         /// @param track_states the vector of track states
         TRACCC_HOST_DEVICE
-        state(vector_type<track_state<algebra_type>>&& track_states)
-            : m_fit_actor_state(std::move(track_states)) {}
+        explicit state(
+            vecmem::data::vector_view<track_state<algebra_type>> track_states)
+            : m_fit_actor_state(
+                  vecmem::device_vector<track_state<algebra_type>>(
+                      track_states)) {}
 
         /// State constructor
         ///
         /// @param track_states the vector of track states
         TRACCC_HOST_DEVICE
-        state(const vector_type<track_state<algebra_type>>& track_states)
+        explicit state(const vecmem::device_vector<track_state<algebra_type>>&
+                           track_states)
             : m_fit_actor_state(track_states) {}
 
         /// @return the actor chain state
@@ -139,8 +139,8 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param fitter_state the state of kalman fitter
     template <typename seed_parameters_t>
-    TRACCC_HOST_DEVICE void fit(const seed_parameters_t& seed_params,
-                                state& fitter_state) {
+    TRACCC_HOST_DEVICE [[nodiscard]] kalman_fitter_status fit(
+        const seed_parameters_t& seed_params, state& fitter_state) {
 
         // Run the kalman filtering for a given number of iterations
         for (std::size_t i = 0; i < m_cfg.n_iterations; i++) {
@@ -156,8 +156,14 @@ class kalman_fitter {
             inflate_covariance(seed_params_cpy,
                                m_cfg.covariance_inflation_factor);
 
-            filter(seed_params_cpy, fitter_state);
+            if (kalman_fitter_status res =
+                    filter(seed_params_cpy, fitter_state);
+                res != kalman_fitter_status::SUCCESS) {
+                return res;
+            }
         }
+
+        return kalman_fitter_status::SUCCESS;
     }
 
     /// Run the kalman fitter for an iteration
@@ -167,8 +173,8 @@ class kalman_fitter {
     /// @param seed_params seed track parameter
     /// @param fitter_state the state of kalman fitter
     template <typename seed_parameters_t>
-    TRACCC_HOST_DEVICE void filter(const seed_parameters_t& seed_params,
-                                   state& fitter_state) {
+    TRACCC_HOST_DEVICE [[nodiscard]] kalman_fitter_status filter(
+        const seed_parameters_t& seed_params, state& fitter_state) {
 
         // Create propagator
         propagator_type propagator(m_cfg.propagation);
@@ -199,10 +205,15 @@ class kalman_fitter {
         propagator.propagate(propagation, fitter_state());
 
         // Run smoothing
-        smooth(fitter_state);
+        if (kalman_fitter_status res = smooth(fitter_state);
+            res != kalman_fitter_status::SUCCESS) {
+            return res;
+        }
 
         // Update track fitting qualities
         update_statistics(fitter_state);
+
+        return kalman_fitter_status::SUCCESS;
     }
 
     /// Run smoothing after kalman filtering
@@ -211,14 +222,23 @@ class kalman_fitter {
     /// track and vertex fitting", R.Frühwirth, NIM A.
     ///
     /// @param fitter_state the state of kalman fitter
-    TRACCC_HOST_DEVICE void smooth(state& fitter_state) {
+    TRACCC_HOST_DEVICE [[nodiscard]] kalman_fitter_status smooth(
+        state& fitter_state) {
 
         auto& track_states = fitter_state.m_fit_actor_state.m_track_states;
 
         // Since the smoothed track parameter of the last surface can be
         // considered to be the filtered one, we can reversly iterate the
         // algorithm to obtain the smoothed parameter of other surfaces
-        auto& last = track_states.back();
+        for (auto it = track_states.rbegin(); it != track_states.rend(); ++it) {
+            if (!(*it).is_hole) {
+                fitter_state.m_fit_actor_state.m_it_rev = it;
+                break;
+            }
+            // TODO: Return false because there is no valid track state
+            // return false;
+        }
+        auto& last = *fitter_state.m_fit_actor_state.m_it_rev;
         last.smoothed().set_parameter_vector(last.filtered());
         last.smoothed().set_covariance(last.filtered().covariance());
         last.smoothed_chi2() = last.filtered_chi2();
@@ -244,6 +264,13 @@ class kalman_fitter {
                 detray::navigation::direction::e_backward);
             fitter_state.m_fit_actor_state.backward_mode = true;
 
+            const auto& dir = propagation._stepping().dir();
+            if (dir[0] == 0.f && dir[1] == 0.f) {
+                // Particle is exactly parallel to the beampipe, which we
+                // cannot represent.
+                return kalman_fitter_status::ERROR_THETA_ZERO;
+            }
+
             propagator.propagate(propagation,
                                  fitter_state.backward_actor_state());
 
@@ -252,17 +279,23 @@ class kalman_fitter {
 
         } else {
             // Run the Rauch–Tung–Striebel (RTS) smoother
-            for (typename vector_type<
+            for (typename vecmem::device_vector<
                      track_state<algebra_type>>::reverse_iterator it =
                      track_states.rbegin() + 1;
                  it != track_states.rend(); ++it) {
 
                 const detray::tracking_surface sf{m_detector,
                                                   it->surface_link()};
-                sf.template visit_mask<gain_matrix_smoother<algebra_type>>(
-                    *it, *(it - 1));
+                if (kalman_fitter_status res =
+                        sf.template visit_mask<
+                            gain_matrix_smoother<algebra_type>>(*it, *(it - 1));
+                    res != kalman_fitter_status::SUCCESS) {
+                    return res;
+                }
             }
         }
+
+        return kalman_fitter_status::SUCCESS;
     }
 
     TRACCC_HOST_DEVICE
