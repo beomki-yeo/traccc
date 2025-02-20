@@ -242,7 +242,7 @@ track_candidate_container_types::host find_tracks(
                         trk_state, in_param);
 
                 // The chi2 from Kalman update should be less than chi2_max
-                if (res == kalman_fitter_status::SUCCESS &&
+                if (res == kalman_fitter_status::PASS &&
                     trk_state.filtered_chi2() < config.chi2_max) {
                     n_branches++;
 

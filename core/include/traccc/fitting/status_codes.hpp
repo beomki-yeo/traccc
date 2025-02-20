@@ -10,7 +10,7 @@
 #include <cstdint>
 namespace traccc {
 enum class kalman_fitter_status : uint32_t {
-    SUCCESS,
+    PASS,
     ERROR_QOP_ZERO,
     ERROR_THETA_ZERO,
     ERROR_INVERSION,

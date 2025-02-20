@@ -158,12 +158,14 @@ class kalman_fitter {
 
             if (kalman_fitter_status res =
                     filter(seed_params_cpy, fitter_state);
-                res != kalman_fitter_status::SUCCESS) {
+                res != kalman_fitter_status::PASS) {
                 return res;
             }
-        }
 
-        return kalman_fitter_status::SUCCESS;
+            check_result(fitter_state);
+        }
+        
+        return kalman_fitter_status::PASS;
     }
 
     /// Run the kalman fitter for an iteration
@@ -206,14 +208,14 @@ class kalman_fitter {
 
         // Run smoothing
         if (kalman_fitter_status res = smooth(fitter_state);
-            res != kalman_fitter_status::SUCCESS) {
+            res != kalman_fitter_status::PASS) {
             return res;
         }
 
         // Update track fitting qualities
         update_statistics(fitter_state);
 
-        return kalman_fitter_status::SUCCESS;
+        return kalman_fitter_status::PASS;
     }
 
     /// Run smoothing after kalman filtering
@@ -289,13 +291,13 @@ class kalman_fitter {
                 if (kalman_fitter_status res =
                         sf.template visit_mask<
                             gain_matrix_smoother<algebra_type>>(*it, *(it - 1));
-                    res != kalman_fitter_status::SUCCESS) {
+                    res != kalman_fitter_status::PASS) {
                     return res;
                 }
             }
         }
 
-        return kalman_fitter_status::SUCCESS;
+        return kalman_fitter_status::PASS;
     }
 
     TRACCC_HOST_DEVICE
@@ -319,6 +321,31 @@ class kalman_fitter {
 
         // The number of holes
         fit_res.n_holes = fitter_state.m_fit_actor_state.n_holes;
+    }
+
+    TRACCC_HOST_DEVICE
+    void check_result(state& fitter_state) {
+        auto& fit_res = fitter_state.m_fit_res;
+        const auto& track_states =
+            fitter_state.m_fit_actor_state.m_track_states;
+
+        // NDF should always be positive for fitting
+        if (fit_res.ndf > 0) {
+            for (const auto& trk_state : track_states) {
+                // Fitting fails if any of non-hole track states is not smoothed
+                if (!trk_state.is_hole && !trk_state.is_smoothed) {
+                    fit_res.fit_outcome =
+                        fitter_outcome::FAILURE_NOT_ALL_SMOOTHED;
+                    return;
+                }
+            }
+
+            // Fitting succeeds if any of non-hole track states is not smoothed
+            fit_res.fit_outcome = fitter_outcome::SUCCESS;
+        }
+
+        fit_res.fit_outcome = fitter_outcome::FAILURE_NON_POSITIVE_NDF;
+        return;
     }
 
     private:

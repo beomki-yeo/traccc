@@ -212,7 +212,7 @@ TRACCC_DEVICE inline void find_tracks(
                 trk_state, in_par);
 
             // The chi2 from Kalman update should be less than chi2_max
-            if (res == kalman_fitter_status::SUCCESS &&
+            if (res == kalman_fitter_status::PASS &&
                 trk_state.filtered_chi2() < cfg.chi2_max) {
                 // Add measurement candidates to link
                 const unsigned int l_pos = num_total_candidates.fetch_add(1);

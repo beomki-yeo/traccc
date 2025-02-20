@@ -150,7 +150,7 @@ struct gain_matrix_updater {
         // Wrap the phi in the range of [-pi, pi]
         wrap_phi(trk_state.filtered());
 
-        return kalman_fitter_status::SUCCESS;
+        return kalman_fitter_status::PASS;
     }
 };
 

@@ -149,7 +149,7 @@ struct gain_matrix_smoother {
 
         cur_state.smoothed_chi2() = getter::element(chi2, 0, 0);
 
-        return kalman_fitter_status::SUCCESS;
+        return kalman_fitter_status::PASS;
     }
 };
 

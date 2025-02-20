@@ -58,7 +58,7 @@ TRACCC_HOST_DEVICE inline void fit(
     kalman_fitter_status fit_status = fitter.fit(seed_param, fitter_state);
 
     // TODO: Process fit failures more elegantly
-    assert(fit_status == kalman_fitter_status::SUCCESS);
+    assert(fit_status == kalman_fitter_status::PASS);
 
     // Get the final fitting information
     track_states.at(param_id).header = fitter_state.m_fit_res;

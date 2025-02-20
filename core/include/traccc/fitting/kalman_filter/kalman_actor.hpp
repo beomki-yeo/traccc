@@ -131,11 +131,14 @@ struct kalman_actor : detray::actor {
             if (!actor_state.backward_mode) {
                 trk_state.is_hole = false;
             }
+            else {
+                trk_state.is_smoothed = true;
+            }
 
             // Run Kalman Gain Updater
             const auto sf = navigation.get_surface();
 
-            kalman_fitter_status res = kalman_fitter_status::SUCCESS;
+            kalman_fitter_status res = kalman_fitter_status::PASS;
 
             if (!actor_state.backward_mode) {
                 // Forward filter
@@ -154,7 +157,7 @@ struct kalman_actor : detray::actor {
             }
 
             // Abort if the Kalman update fails
-            if (res != kalman_fitter_status::SUCCESS) {
+            if (res != kalman_fitter_status::PASS) {
                 propagation._heartbeat &= navigation.abort();
                 return;
             }

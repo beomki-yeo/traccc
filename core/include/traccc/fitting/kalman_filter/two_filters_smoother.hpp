@@ -169,7 +169,7 @@ struct two_filters_smoother {
         // Wrap the phi in the range of [-pi, pi]
         wrap_phi(bound_params);
 
-        return kalman_fitter_status::SUCCESS;
+        return kalman_fitter_status::PASS;
     }
 };
 

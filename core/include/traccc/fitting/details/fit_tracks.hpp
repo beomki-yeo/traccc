@@ -65,7 +65,7 @@ track_state_container_types::host fit_tracks(
         kalman_fitter_status fit_status =
             fitter.fit(track_candidates.get_headers()[i], fitter_state);
 
-        if (fit_status == kalman_fitter_status::SUCCESS) {
+        if (fit_status == kalman_fitter_status::PASS) {
             // Save the results into the output container.
             result.push_back(std::move(fitter_state.m_fit_res),
                              std::move(input_states));
