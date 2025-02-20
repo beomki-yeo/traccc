@@ -12,9 +12,6 @@
 #include "traccc/edm/track_parameters.hpp"
 #include "traccc/edm/track_quality.hpp"
 
-// Detray include(s).
-#include "detray/geometry/barcode.hpp"
-
 namespace traccc {
 
 /// Finding result per track

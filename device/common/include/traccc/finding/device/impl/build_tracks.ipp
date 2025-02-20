@@ -66,6 +66,8 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
     // Resize the candidates with the exact size
     cands_per_track.resize(n_cands);
 
+    bool success = true;
+
     // Track summary variables
     scalar ndf_sum = 0.f;
     scalar chi2_sum = 0.f;
@@ -74,7 +76,7 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
     for (auto it = cands_per_track.rbegin(); it != cands_per_track.rend();
          it++) {
 
-        while (L.meas_idx > n_meas &&
+        while (L.meas_idx >= n_meas &&
                L.previous.first !=
                    std::numeric_limits<
                        candidate_link::link_index_type::first_type>::max()) {
@@ -83,12 +85,19 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
         }
 
         // Break if the measurement is still invalid
-        if (L.meas_idx > measurements.size()) {
+        if (L.meas_idx >= measurements.size()) {
+            success = false;
             break;
         }
 
-        auto& cand = *it;
-        cand = {measurements.at(L.meas_idx)};
+        *it = {measurements.at(L.meas_idx)};
+
+        // Sanity check on chi2
+        assert(L.chi2 < std::numeric_limits<traccc::scalar>::max());
+        assert(L.chi2 >= 0.f);
+
+        ndf_sum += static_cast<scalar>(it->meas_dim);
+        chi2_sum += L.chi2;
 
         // Sanity check on chi2
         assert(L.chi2 < std::numeric_limits<traccc::scalar>::max());
@@ -104,15 +113,16 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
             trk_quality.ndf = ndf_sum - 5.f;
             trk_quality.chi2 = chi2_sum;
             trk_quality.n_holes = L.n_skipped;
-            break;
+        } else {
+            L = links[L.previous.first][L.previous.second];
         }
-
-        L = links[L.previous.first][L.previous.second];
     }
+
+    // NOTE: We may at some point want to assert that `success` is true
 
     // Criteria for valid tracks
     if (n_cands >= cfg.min_track_candidates_per_track &&
-        n_cands <= cfg.max_track_candidates_per_track) {
+        n_cands <= cfg.max_track_candidates_per_track && success) {
 
         vecmem::device_atomic_ref<unsigned int> num_valid_tracks(
             *payload.n_valid_tracks);
