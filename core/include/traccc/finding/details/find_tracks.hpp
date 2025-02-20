@@ -15,7 +15,6 @@
 #include "traccc/finding/candidate_link.hpp"
 #include "traccc/finding/finding_config.hpp"
 #include "traccc/fitting/kalman_filter/gain_matrix_updater.hpp"
-#include "traccc/fitting/status_codes.hpp"
 #include "traccc/sanity/contiguous_on.hpp"
 #include "traccc/utils/particle.hpp"
 #include "traccc/utils/projections.hpp"
@@ -237,15 +236,19 @@ track_candidate_container_types::host find_tracks(
                 track_state<algebra_type> trk_state(meas);
 
                 // Run the Kalman update on a copy of the track parameters
-                const kalman_fitter_status res =
+                const bool res =
                     sf.template visit_mask<gain_matrix_updater<algebra_type>>(
                         trk_state, in_param);
 
                 const traccc::scalar chi2 = trk_state.filtered_chi2();
 
                 // The chi2 from Kalman update should be less than chi2_max
+<<<<<<< HEAD
                 if (res == kalman_fitter_status::SUCCESS &&
                     chi2 < config.chi2_max) {
+=======
+                if (res && chi2 < config.chi2_max) {
+>>>>>>> main
                     n_branches++;
 
                     links[step].push_back({{previous_step, in_param_id},
@@ -418,7 +421,11 @@ track_candidate_container_types::host find_tracks(
             assert(L.chi2 < std::numeric_limits<traccc::scalar>::max());
             assert(L.chi2 >= 0.f);
 
+<<<<<<< HEAD
             ndf_sum += static_cast<scalar>(cand.meas_dim);
+=======
+            ndf_sum += static_cast<scalar>(it->meas_dim);
+>>>>>>> main
             chi2_sum += L.chi2;
 
             // Break the loop if the iterator is at the first candidate and
@@ -432,7 +439,11 @@ track_candidate_container_types::host find_tracks(
                     finding_result{
                         cand_seed,
                         track_quality{ndf_sum - 5.f, chi2_sum, L.n_skipped}},
+<<<<<<< HEAD
                     , cands_per_track);
+=======
+                    cands_per_track);
+>>>>>>> main
             } else {
                 const auto l_pos =
                     param_to_link[L.previous.first][L.previous.second];

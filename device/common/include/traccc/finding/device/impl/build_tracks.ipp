@@ -72,6 +72,10 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
 
     bool success = true;
 
+    // Track summary variables
+    scalar ndf_sum = 0.f;
+    scalar chi2_sum = 0.f;
+
     // Reversely iterate to fill the track candidates
     for (auto it = cands_per_track.rbegin(); it != cands_per_track.rend();
          it++) {
@@ -96,7 +100,7 @@ TRACCC_DEVICE inline void build_tracks(const global_index_t globalIndex,
         assert(L.chi2 < std::numeric_limits<traccc::scalar>::max());
         assert(L.chi2 >= 0.f);
 
-        ndf_sum += static_cast<scalar>(cand.meas_dim);
+        ndf_sum += static_cast<scalar>(it->meas_dim);
         chi2_sum += L.chi2;
 
         // Break the loop if the iterator is at the first candidate and fill the
