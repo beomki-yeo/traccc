@@ -40,7 +40,6 @@ traccc_add_test(
     test_copy.cu
     test_kalman_fitter_telescope.cpp
     test_clusterization.cpp
-    test_copy.cu
     test_spacepoint_formation.cpp
     test_thrust.cu
     test_sync.cu
@@ -50,6 +49,7 @@ traccc_add_test(
     test_sanity_contiguous_on.cu
     test_sanity_ordered_on.cu
     test_sort.cu
+    test_cub.cu
 
     LINK_LIBRARIES
     CUDA::cudart
