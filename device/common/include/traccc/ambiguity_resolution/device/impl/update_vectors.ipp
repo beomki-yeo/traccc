@@ -29,11 +29,15 @@ TRACCC_DEVICE inline void update_vectors(
     __shared__ unsigned int shared_per_warp[warps_per_block];
     __shared__ unsigned int tid_per_warp[warps_per_block];
     __shared__ unsigned int min_shared_changed;
+    __shared__ unsigned int possible_min_id_for_sorting[1024];
 
     if (globalIndex == 0) {
         (*payload.update_res).n_updated_tracks = 0;
         (*payload.update_res).max_shared = 0;
+        (*payload.update_res).min_id_for_sorting = 0;
     }
+
+    possible_min_id_for_sorting[globalIndex] = 0;
 
     barrier.blockBarrier();
 
@@ -103,72 +107,115 @@ TRACCC_DEVICE inline void update_vectors(
 
     const auto& meas_ids_of_track = meas_ids[worst_track];
 
-    if (globalIndex >= meas_ids_of_track.size()) {
-        return;
+    bool do_update = true;
+
+    if (globalIndex < meas_ids_of_track.size()) {
+
+        const auto id = meas_ids_of_track[globalIndex];
+
+        if (thrust::find(thrust::seq, meas_ids_of_track.begin(),
+                         meas_ids_of_track.begin() + globalIndex,
+                         id) != (meas_ids_of_track.begin() + globalIndex)) {
+            do_update = false;
+        }
+    } else {
+        do_update = false;
     }
 
-    const auto id = meas_ids_of_track[globalIndex];
+    if (do_update) {
+        const auto id = meas_ids_of_track[globalIndex];
 
-    if (thrust::find(thrust::seq, meas_ids_of_track.begin(),
-                     meas_ids_of_track.begin() + globalIndex,
-                     id) != (meas_ids_of_track.begin() + globalIndex)) {
-        return;
-    }
+        const auto it = thrust::lower_bound(thrust::seq, unique_meas.begin(),
+                                            unique_meas.end(), id);
+        const std::size_t unique_meas_idx =
+            static_cast<std::size_t>(thrust::distance(unique_meas.begin(), it));
 
-    const auto it = thrust::lower_bound(thrust::seq, unique_meas.begin(),
-                                        unique_meas.end(), id);
-    const std::size_t unique_meas_idx =
-        static_cast<std::size_t>(thrust::distance(unique_meas.begin(), it));
+        vecmem::device_atomic_ref<unsigned int> n_accepted(
+            n_accepted_tracks_per_measurement.at(
+                static_cast<unsigned int>(unique_meas_idx)));
+        const unsigned int N_A = n_accepted.fetch_add(-1u);
 
-    vecmem::device_atomic_ref<unsigned int> n_accepted(
-        n_accepted_tracks_per_measurement.at(
-            static_cast<unsigned int>(unique_meas_idx)));
-    const unsigned int N_A = n_accepted.fetch_add(-1u);
+        // If there is only one track associated with measurement, the
+        // number of shared measurement can be reduced by one
+        const auto& tracks = tracks_per_measurement[unique_meas_idx];
+        auto track_status = track_status_per_measurement[unique_meas_idx];
 
-    // If there is only one track associated with measurement, the
-    // number of shared measurement can be reduced by one
-    const auto& tracks = tracks_per_measurement[unique_meas_idx];
-    auto track_status = track_status_per_measurement[unique_meas_idx];
+        const auto it2 = thrust::find(thrust::seq, tracks.begin(), tracks.end(),
+                                      worst_track);
+        const unsigned int worst_idx =
+            static_cast<unsigned int>(thrust::distance(tracks.begin(), it2));
+        track_status[worst_idx] = 0;
 
-    const auto it2 =
-        thrust::find(thrust::seq, tracks.begin(), tracks.end(), worst_track);
-    const unsigned int worst_idx =
-        static_cast<unsigned int>(thrust::distance(tracks.begin(), it2));
-    track_status[worst_idx] = 0;
+        if (N_A == 2) {
+            const auto it3 = thrust::find(thrust::seq, track_status.begin(),
+                                          track_status.end(), 1);
+            const unsigned int alive_idx = static_cast<unsigned int>(
+                thrust::distance(track_status.begin(), it3));
+            const auto tid = static_cast<unsigned int>(tracks[alive_idx]);
 
-    if (N_A == 2) {
-        const auto it3 = thrust::find(thrust::seq, track_status.begin(),
-                                      track_status.end(), 1);
-        const unsigned int alive_idx = static_cast<unsigned int>(
-            thrust::distance(track_status.begin(), it3));
-        const auto tid = static_cast<unsigned int>(tracks[alive_idx]);
+            const unsigned int N_S =
+                vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
+                    .fetch_add(-static_cast<unsigned int>(
+                        thrust::count(thrust::seq, meas_ids.at(tid).begin(),
+                                      meas_ids.at(tid).end(), id)));
 
-        const unsigned int N_S =
-            vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
-                .fetch_add(-static_cast<unsigned int>(
-                    thrust::count(thrust::seq, meas_ids.at(tid).begin(),
-                                  meas_ids.at(tid).end(), id)));
+            atomicMin(&min_shared_changed, n_shared.at(tid));
 
-        atomicMin(&min_shared_changed, n_shared.at(tid));
+            rel_shared.at(tid) = static_cast<traccc::scalar>(n_shared.at(tid)) /
+                                 static_cast<traccc::scalar>(n_meas.at(tid));
 
-        rel_shared.at(tid) = static_cast<traccc::scalar>(n_shared.at(tid)) /
-                             static_cast<traccc::scalar>(n_meas.at(tid));
+            // Write updated track IDs
+            vecmem::device_atomic_ref<unsigned int> num_updated_tracks(
+                (*payload.update_res).n_updated_tracks);
 
-        // Write updated track IDs
-        vecmem::device_atomic_ref<unsigned int> num_updated_tracks(
-            (*payload.update_res).n_updated_tracks);
-
-        const unsigned int pos = num_updated_tracks.fetch_add(1);
-        updated_tracks.at(pos) = tid;
+            const unsigned int pos = num_updated_tracks.fetch_add(1);
+            updated_tracks.at(pos) = tid;
+        }
     }
 
     // Find range for sorting
     barrier.blockBarrier();
-    /*
+
+    if (min_shared_changed == 0) {
+        if (globalIndex == 0) {
+            (*payload.update_res).min_id_for_sorting = 0;
+        }
+        return;
+    }
+
+    barrier.blockBarrier();
+
     for (int i = 0; i < n_iter; i++) {
         const auto gid = globalIndex + i * blockDim.x;
+
+        if (gid < payload.n_accepted) {
+
+            auto tid = sorted_ids[gid];
+            auto shared = n_shared[tid];
+
+            if (shared < min_shared_changed) {
+                possible_min_id_for_sorting[globalIndex] = gid;
+            }
+        }
     }
-    */
+
+    barrier.blockBarrier();
+
+    // Reduction to find max of possible min ids
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+        if (globalIndex < s) {
+            possible_min_id_for_sorting[globalIndex] =
+                max(possible_min_id_for_sorting[globalIndex],
+                    possible_min_id_for_sorting[globalIndex + s]);
+        }
+
+        barrier.blockBarrier();
+    }
+
+    if (globalIndex == 0) {
+        (*payload.update_res).min_id_for_sorting =
+            possible_min_id_for_sorting[0];
+    }
 }
 
 }  // namespace traccc::device

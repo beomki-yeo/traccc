@@ -310,7 +310,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
     // Iterate over tracks
     for (unsigned int iter = 0; iter < m_config.max_iterations; iter++) {
 
-        const int shared_bytes = 32 * sizeof(unsigned int) * 2 + 1;
+        const int shared_bytes =
+            32 * sizeof(unsigned int) * 2 + 1 + 1024 * sizeof(unsigned int);
 
         // Do not change the thread-block dimension
         kernels::update_vectors<<<1, 1024, shared_bytes, stream>>>(
@@ -343,15 +344,20 @@ greedy_ambiguity_resolution_algorithm::operator()(
 
         n_accepted--;
 
+        //printf("iter %d min id %d \n", iter, update_res.min_id_for_sorting);
+
         // Terminate if there are no tracks to iterate
         if (n_accepted == 0) {
             break;
         }
 
-        if (update_res.n_updated_tracks > 0) {
+        if (update_res.n_updated_tracks > 0 &&
+            update_res.min_id_for_sorting < n_accepted) {
             // Keep the sorted ids vector sorted
-            thrust::sort(thrust_policy, sorted_ids_buffer.ptr(),
-                         sorted_ids_buffer.ptr() + n_accepted, trk_comp);
+            thrust::sort(
+                thrust_policy,
+                sorted_ids_buffer.ptr() + update_res.min_id_for_sorting,
+                sorted_ids_buffer.ptr() + n_accepted, trk_comp);
         }
     }
 
