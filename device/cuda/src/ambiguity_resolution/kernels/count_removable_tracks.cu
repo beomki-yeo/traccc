@@ -49,8 +49,7 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
 }
 
 __device__ void bitonic_sort_shared(
-    traccc::pair<std::size_t, unsigned int>* shared_data, int count,
-    bool compare_first = true) {
+    traccc::pair<std::size_t, unsigned int>* shared_data, int count) {
 
     // padding up to next power of 2
     int N = 1;
@@ -76,10 +75,7 @@ __device__ void bitonic_sort_shared(
                 auto elem_j = shared_data[ixj];
 
                 bool ascending = ((tid & k) == 0);
-                bool should_swap =
-                    compare_first
-                        ? (elem_i.first > elem_j.first) == ascending
-                        : (elem_i.second > elem_j.second) == ascending;
+                bool should_swap = (elem_i.first > elem_j.first) == ascending;
 
                 if (should_swap) {
                     shared_data[tid] = elem_j;
@@ -219,7 +215,6 @@ __global__ void count_removable_tracks(
     // Make measurement list to remove
     const auto tid = meas_to_thread[threadIndex].second;
     if ((tid < min_thread) || (min_thread == 0 && tid == 0)) {
-        // meas_to_remove[threadIndex] = meas_to_thread[threadIndex];
         atomicAdd(payload.n_meas_to_remove, 1);
     }
 
