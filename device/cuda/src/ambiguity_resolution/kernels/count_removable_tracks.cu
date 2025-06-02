@@ -49,7 +49,8 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
 }
 
 __device__ void bitonic_sort_shared(
-    traccc::pair<std::size_t, unsigned int>* shared_data, int count) {
+    const int tid, traccc::pair<std::size_t, unsigned int>* shared_data,
+    int count) {
 
     // padding up to next power of 2
     int N = 1;
@@ -58,7 +59,6 @@ __device__ void bitonic_sort_shared(
     }
 
     // pad unused elements with max value
-    int tid = threadIdx.x;
     if (tid >= count && tid < N) {
         shared_data[tid] = {std::numeric_limits<std::size_t>::max(),
                             std::numeric_limits<unsigned int>::max()};
@@ -74,10 +74,7 @@ __device__ void bitonic_sort_shared(
                 auto elem_i = shared_data[tid];
                 auto elem_j = shared_data[ixj];
 
-                bool ascending = ((tid & k) == 0);
-                bool should_swap = (elem_i.first > elem_j.first) == ascending;
-
-                if (should_swap) {
+                if ((elem_i.first > elem_j.first) == ((tid & k) == 0)) {
                     shared_data[tid] = elem_j;
                     shared_data[ixj] = elem_i;
                 }
@@ -179,7 +176,7 @@ __global__ void count_removable_tracks(
     __syncthreads();
 
     // Bitonic sort on meas_to_thread w.r.t. measurement id
-    bitonic_sort_shared(meas_to_thread, n_meas_total);
+    bitonic_sort_shared(threadIndex, meas_to_thread, n_meas_total);
 
     // Find starting point
     if (threadIndex < n_meas_total) {
