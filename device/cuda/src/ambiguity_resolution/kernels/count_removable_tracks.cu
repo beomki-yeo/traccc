@@ -150,13 +150,11 @@ __global__ void count_removable_tracks(
     */
 
     // @TODO: Improve the logic
-    vecmem::device_atomic_ref<unsigned int> num_meas_total(n_meas_total);
-
     if (threadIndex < n_tracks_to_iterate && gid >= 0) {
-        auto mids = meas_ids[sorted_ids[gid]];
+        const auto& mids = meas_ids[sorted_ids[gid]];
         for (const auto& id : mids) {
 
-            const unsigned int pos = num_meas_total.fetch_add(1);
+            const unsigned int pos = atomicAdd(&n_meas_total, 1);
 
             meas_to_thread[pos] = {id, threadIndex};
         }
