@@ -50,13 +50,7 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
 
 __device__ void bitonic_sort_shared(
     const int tid, traccc::pair<std::size_t, unsigned int>* shared_data,
-    int count) {
-
-    // padding up to next power of 2
-    int N = 1;
-    while (N < count) {
-        N <<= 1;
-    }
+    const int count, const int N) {
 
     // pad unused elements with max value
     if (tid >= count && tid < N) {
@@ -97,6 +91,7 @@ __global__ void count_removable_tracks(
     __shared__ unsigned int bound;
     __shared__ unsigned int n_tracks_to_iterate;
     __shared__ unsigned int min_thread;
+    __shared__ unsigned int N;
     __shared__ bool stop;
 
     vecmem::device_vector<const unsigned int> sorted_ids(
@@ -119,6 +114,7 @@ __global__ void count_removable_tracks(
         *(payload.n_meas_to_remove) = 0;
         n_meas_total = 0;
         bound = 512;
+        N = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
         stop = false;
@@ -127,8 +123,7 @@ __global__ void count_removable_tracks(
     __syncthreads();
 
     if (gid >= 0) {
-        const auto trk_id = sorted_ids[gid];
-        shared_n_meas[threadIndex] = n_meas[trk_id];
+        shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
     }
 
     __syncthreads();
@@ -154,12 +149,6 @@ __global__ void count_removable_tracks(
     }
     */
 
-    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
-        n_tracks_to_iterate = 1;
-    }
-
-    __syncthreads();
-
     // @TODO: Improve the logic
     vecmem::device_atomic_ref<unsigned int> num_meas_total(n_meas_total);
 
@@ -176,7 +165,12 @@ __global__ void count_removable_tracks(
     __syncthreads();
 
     // Bitonic sort on meas_to_thread w.r.t. measurement id
-    bitonic_sort_shared(threadIndex, meas_to_thread, n_meas_total);
+    if (threadIndex == 0) {
+        N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
+    }
+    __syncthreads();
+
+    bitonic_sort_shared(threadIndex, meas_to_thread, n_meas_total, N);
 
     // Find starting point
     if (threadIndex < n_meas_total) {
