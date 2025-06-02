@@ -174,15 +174,11 @@ __global__ void count_removable_tracks(
         bool is_start = (threadIndex == 0) ||
                         (meas_to_thread[threadIndex - 1].first != curr.first);
 
-        // Find min thread id
-        std::size_t id = curr.first;
-        auto tid = curr.second;
-
         if (is_start) {
 
             int i = threadIndex + 1;
-            while (i < n_meas_total && meas_to_thread[i].first == id) {
-                if (meas_to_thread[i].second != tid) {
+            while (i < n_meas_total && meas_to_thread[i].first == curr.first) {
+                if (meas_to_thread[i].second != curr.second) {
                     atomicMin(&min_thread, meas_to_thread[i].second);
                 }
                 i++;
