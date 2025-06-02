@@ -216,17 +216,16 @@ __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    // Bubble sort w.r.t thread index
-    bitonic_sort_shared(meas_to_thread, n_meas_total, false);
-
     // Make measurement list to remove
     const auto tid = meas_to_thread[threadIndex].second;
     if ((tid < min_thread) || (min_thread == 0 && tid == 0)) {
-        meas_to_remove[threadIndex] = meas_to_thread[threadIndex];
+        // meas_to_remove[threadIndex] = meas_to_thread[threadIndex];
         atomicAdd(payload.n_meas_to_remove, 1);
     }
 
     if (threadIndex == 0) {
+        n_meas_total = 0;
+
         if (min_thread == 0) {
             *(payload.n_removable_tracks) = 1;
         } else {
@@ -234,11 +233,16 @@ __global__ void count_removable_tracks(
         }
     }
 
-    /*
-    if (threadIndex == 0) {
-        printf("%d \n", *(payload.n_removable_tracks));
+    __syncthreads();
+
+    if (threadIndex < *(payload.n_removable_tracks) && gid >= 0) {
+        auto mids = meas_ids[sorted_ids[gid]];
+        for (const auto& id : mids) {
+
+            const unsigned int pos = atomicAdd(&n_meas_total, 1);
+            meas_to_remove[pos] = {id, threadIndex};
+        }
     }
-    */
 }
 
 }  // namespace traccc::cuda::kernels
