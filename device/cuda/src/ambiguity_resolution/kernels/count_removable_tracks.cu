@@ -227,13 +227,10 @@ __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    if (threadIndex < *(payload.n_removable_tracks) && gid >= 0) {
-        auto mids = meas_ids[sorted_ids[gid]];
-        for (const auto& id : mids) {
-
-            const unsigned int pos = atomicAdd(&n_meas_total, 1);
-            meas_to_remove[pos] = {id, threadIndex};
-        }
+    // Count n_meas_total again
+    if (meas_to_thread[threadIndex].second < *(payload.n_removable_tracks)) {
+        const unsigned int pos = atomicAdd(&n_meas_total, 1);
+        meas_to_remove[pos] = meas_to_thread[threadIndex];
     }
 }
 
