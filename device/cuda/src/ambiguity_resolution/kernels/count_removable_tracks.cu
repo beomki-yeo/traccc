@@ -202,17 +202,11 @@ __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    if (threadIndex == 0 &&
-        min_thread == std::numeric_limits<unsigned int>::max()) {
-        min_thread = 0;
-    }
-
-    __syncthreads();
-
     if (threadIndex == 0) {
         n_meas_total = 0;
 
-        if (min_thread == 0) {
+        if (min_thread == 0 ||
+            min_thread == std::numeric_limits<unsigned int>::max()) {
             *(payload.n_removable_tracks) = 1;
         } else {
             *(payload.n_removable_tracks) = min_thread;
@@ -229,7 +223,7 @@ __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    if (threadIndex == 0){
+    if (threadIndex == 0) {
         *(payload.n_meas_to_remove) = n_meas_total;
     }
 }
