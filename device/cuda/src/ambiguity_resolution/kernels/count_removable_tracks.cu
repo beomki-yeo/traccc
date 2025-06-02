@@ -209,12 +209,6 @@ __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    // Make measurement list to remove
-    const auto tid = meas_to_thread[threadIndex].second;
-    if ((tid < min_thread) || (min_thread == 0 && tid == 0)) {
-        atomicAdd(payload.n_meas_to_remove, 1);
-    }
-
     if (threadIndex == 0) {
         n_meas_total = 0;
 
@@ -231,6 +225,12 @@ __global__ void count_removable_tracks(
     if (meas_to_thread[threadIndex].second < *(payload.n_removable_tracks)) {
         const unsigned int pos = atomicAdd(&n_meas_total, 1);
         meas_to_remove[pos] = meas_to_thread[threadIndex];
+    }
+
+    __syncthreads();
+
+    if (threadIndex == 0){
+        *(payload.n_meas_to_remove) = n_meas_total;
     }
 }
 
