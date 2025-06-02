@@ -153,9 +153,7 @@ __global__ void count_removable_tracks(
     if (threadIndex < n_tracks_to_iterate && gid >= 0) {
         const auto& mids = meas_ids[sorted_ids[gid]];
         for (const auto& id : mids) {
-
             const unsigned int pos = atomicAdd(&n_meas_total, 1);
-
             meas_to_thread[pos] = {id, threadIndex};
         }
     }
