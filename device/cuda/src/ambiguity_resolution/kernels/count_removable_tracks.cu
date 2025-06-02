@@ -138,8 +138,9 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
+
     /*
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 2; i++) {
         count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                      n_tracks_to_iterate, stop);
 
