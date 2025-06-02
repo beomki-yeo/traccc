@@ -119,7 +119,7 @@ __global__ void count_removable_tracks(
         *(payload.n_removable_tracks) = 0;
         *(payload.n_meas_to_remove) = 0;
         n_meas_total = 0;
-        bound = 512;
+        bound = 1024;
         N = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
