@@ -92,7 +92,6 @@ __global__ void count_removable_tracks(
 
     __shared__ int shared_n_meas[1024];
     __shared__ traccc::pair<std::size_t, unsigned int> meas_to_thread[1024];
-    //__shared__ unsigned int n_sharing_tracks[1024];
     __shared__ unsigned int n_meas_total;
     __shared__ unsigned int bound;
     __shared__ unsigned int n_tracks_to_iterate;

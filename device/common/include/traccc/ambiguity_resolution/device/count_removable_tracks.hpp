@@ -46,12 +46,6 @@ struct count_removable_tracks_payload {
     vecmem::data::vector_view<const std::size_t> n_meas_view;
 
     /**
-     * @brief View object to the number of accepted tracks per measurement
-     */
-    vecmem::data::vector_view<const unsigned int>
-        n_accepted_tracks_per_measurement_view;
-
-    /**
      * @brief The number of worst tracks removable
      */
     unsigned int* n_removable_tracks;
