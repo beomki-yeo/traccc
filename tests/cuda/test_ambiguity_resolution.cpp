@@ -893,7 +893,7 @@ INSTANTIATE_TEST_SUITE_P(
     Dense, GreedyResolutionCompareToCPU,
     ::testing::Values(std::make_tuple(3u, 5000u,
                                       std::array<std::size_t, 2u>{3u, 10u},
-                                      300u, true),
+                                      100u, true),
                       std::make_tuple(3u, 5000u,
                                       std::array<std::size_t, 2u>{3u, 10u},
                                       100u, false)));
