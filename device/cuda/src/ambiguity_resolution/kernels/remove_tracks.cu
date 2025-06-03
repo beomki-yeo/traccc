@@ -26,41 +26,6 @@
 
 namespace traccc::cuda::kernels {
 
-__device__ void bitonic_sort_shared2(
-    const int tid, traccc::pair<std::size_t, unsigned int>* shared_data,
-    const int count, const int N) {
-
-    if (tid >= count && tid < N) {
-        shared_data[tid] = {std::numeric_limits<std::size_t>::max(),
-                            std::numeric_limits<unsigned int>::max()};
-    }
-
-    __syncthreads();
-
-    for (int k = 2; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > 0; j >>= 1) {
-            int ixj = tid ^ j;
-
-            if (ixj > tid && ixj < N && tid < N) {
-                auto elem_i = shared_data[tid];
-                auto elem_j = shared_data[ixj];
-
-                bool ascending = ((tid & k) == 0);
-                bool should_swap =
-                    (elem_i.first > elem_j.first ||
-                     (elem_i.first == elem_j.first &&
-                      elem_i.second > elem_j.second)) == ascending;
-
-                if (should_swap) {
-                    shared_data[tid] = elem_j;
-                    shared_data[ixj] = elem_i;
-                }
-            }
-            __syncthreads();
-        }
-    }
-}
-
 __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     __shared__ unsigned int shared_tids[1024];

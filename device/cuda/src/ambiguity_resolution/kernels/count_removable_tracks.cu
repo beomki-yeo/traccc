@@ -99,7 +99,7 @@ __global__ void count_removable_tracks(
         *(payload.n_removable_tracks) = 0;
         *(payload.n_meas_to_remove) = 0;
         n_meas_total = 0;
-        bound = 1024;
+        bound = 512;
         N = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
@@ -119,11 +119,7 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
-
-    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
-        n_tracks_to_iterate = 1;
-    }
-
+    
     /*
     for (int i = 0; i < 100; i++) {
         count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
@@ -142,6 +138,9 @@ __global__ void count_removable_tracks(
         __syncthreads();
     }
     */
+    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
+        n_tracks_to_iterate = 1;
+    }
 
     // @TODO: Improve the logic
     if (threadIndex < n_tracks_to_iterate && gid >= 0) {
@@ -189,43 +188,14 @@ __global__ void count_removable_tracks(
                 if (meas_to_thread[i].second != meas_to_thread[i - 1].second) {
                     n_sharing_tracks++;
 
-                    /*
-                    printf("%d %d %d \n", threadIndex, n_sharing_tracks,
-                           n_accepted_tracks_per_measurement.at(
-                               static_cast<unsigned int>(unique_meas_idx)));
-                    */
-
-                    /*
-                    printf(
-                        "thread index %d n sharing %d unique meas idx %lu curr "
-                        "first %lu\n",
-                        threadIndex, n_sharing_tracks, unique_meas_idx,
-                        curr.first);
-                    */
-
-                    // atomicMin(&min_thread, meas_to_thread[i].second);
-
                     if (n_sharing_tracks ==
                         n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
                         atomicMin(&min_thread, meas_to_thread[i - 1].second);
                         break;
                     }
                 }
-                /*
-                if (meas_to_thread[i].second != curr.second) {
-                    atomicMin(&min_thread, meas_to_thread[i].second);
-                }
-                */
                 i++;
             }
-
-            /*
-            if (n_sharing_tracks >= 2 &&
-                (n_sharing_tracks ==
-                 n_accepted_tracks_per_measurement.at(unique_meas_idx))) {
-                atomicMin(&min_thread, curr.second);
-            }
-            */
         }
     }
 
