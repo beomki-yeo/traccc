@@ -67,9 +67,6 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     if (globalIndex < *(payload.n_meas_to_remove)) {
         shared_meas_ids[globalIndex] = meas_to_remove[globalIndex];
-        int gid = static_cast<int>(*payload.n_accepted) - 1 -
-                  meas_to_remove[globalIndex].second;
-        // worst_track = sorted_ids[gid];
     }
 
     __syncthreads();
@@ -94,7 +91,6 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     }
 
     const auto id = shared_meas_ids[globalIndex].first;
-    // const auto thread_id = shared_meas_ids[globalIndex].second;
 
     bool is_duplicate = false;
     int n_sharing_tracks = 1;
@@ -130,10 +126,6 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     for (unsigned int i = globalIndex + 1; i < *(payload.n_meas_to_remove);
          ++i) {
 
-        /*
-        printf("(%d %lu %d) \n", globalIndex, shared_meas_ids[i].first,
-               shared_meas_ids[i].second);
-        */
         if (shared_meas_ids[i].first == id &&
             shared_meas_ids[i].second != shared_meas_ids[i - 1].second) {
             n_sharing_tracks++;
@@ -151,31 +143,12 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
             break;
         }
     }
-    /*
-    printf("n sharing tracks %d meas id %lu thread id %d \n", n_sharing_tracks,
-           id, thread_id);
-    */
 
     vecmem::device_atomic_ref<unsigned int> n_accepted_per_meas(
         n_accepted_tracks_per_measurement.at(
             static_cast<unsigned int>(unique_meas_idx)));
     const unsigned int N_A = n_accepted_per_meas.fetch_add(-n_sharing_tracks);
 
-    // printf("meas id %lu N_A %d \n", id, N_A);
-
-    /*
-    const unsigned int worst_idx =
-        thrust::find(thrust::seq, tracks.begin(), tracks.end(), worst_track) -
-        tracks.begin();
-
-    track_status[worst_idx] = 0;
-    */
-
-    /*
-    if (N_A != 2) {
-        return;
-    }
-    */
     if (N_A != 1 + n_sharing_tracks) {
         return;
     }
@@ -192,8 +165,6 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     const auto m_count = static_cast<unsigned int>(thrust::count(
         thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));
-
-    // printf("meas id %lu tid %d m_count %d \n", id, tid, m_count);
 
     const unsigned int N_S =
         vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))

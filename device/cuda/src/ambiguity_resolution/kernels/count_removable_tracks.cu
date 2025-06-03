@@ -119,25 +119,7 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
-    
-    /*
-    for (int i = 0; i < 100; i++) {
-        count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
-                     n_tracks_to_iterate, stop);
-        __syncthreads();
 
-        if (stop)
-            break;
-
-        if (gid >= 0 && static_cast<unsigned int>(gid) < sorted_ids.size()) {
-            const auto trk_id = sorted_ids[gid];
-            if (trk_id < n_meas.size()) {
-                shared_n_meas[threadIndex] = n_meas[trk_id];
-            }
-        }
-        __syncthreads();
-    }
-    */
     if (threadIndex == 0 && n_tracks_to_iterate == 0) {
         n_tracks_to_iterate = 1;
     }
@@ -160,14 +142,7 @@ __global__ void count_removable_tracks(
     __syncthreads();
 
     device::bitonic_sort_shared(threadIndex, meas_to_thread, n_meas_total, N);
-    /*
-    if (threadIndex == 0) {
-        for (const auto& e: unique_meas){
-            printf("%lu ", e);
-        }
-        printf("\n");
-    }
-    */
+
     // Find starting point
     if (threadIndex < n_meas_total) {
         auto curr = meas_to_thread[threadIndex];
@@ -225,32 +200,7 @@ __global__ void count_removable_tracks(
 
     if (threadIndex == 0) {
         *(payload.n_meas_to_remove) = n_meas_total;
-
-        // printf("n_removable_tracks %d \n", *(payload.n_removable_tracks));
     }
-
-    /*
-    if (threadIndex == 0) {
-        printf(
-            "min thread %d removable tracks %d max shared %d n meas to remove "
-            "%d\n",
-            min_thread, *(payload.n_removable_tracks), *(payload.max_shared),
-            *(payload.n_meas_to_remove));
-
-        for (int i = 0; i < *(payload.n_meas_to_remove); i++) {
-            printf("(%lu %d) ", meas_to_remove[i].first,
-                   meas_to_remove[i].second);
-        }
-        printf("\n");
-
-        printf("n accepted track per meas \n");
-        for (int i = 0; i < unique_meas.size(); i++) {
-            printf("(%lu %d) ", unique_meas.at(i),
-                   n_accepted_tracks_per_measurement.at(i));
-        }
-        printf("\n");
-    }
-    */
 }
 
 }  // namespace traccc::cuda::kernels

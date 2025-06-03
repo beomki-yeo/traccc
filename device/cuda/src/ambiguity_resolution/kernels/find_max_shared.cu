@@ -28,22 +28,6 @@ __global__ void find_max_shared(device::find_max_shared_payload payload) {
     vecmem::device_vector<const unsigned int> n_shared(payload.n_shared_view);
     vecmem::device_vector<int> is_updated(payload.is_updated_view);
 
-    /*
-    if (threadIdx.x == 0) {
-
-        printf("\n\n");
-        printf("n accepted %d \n", *payload.n_accepted);
-
-        if (globalIndex < *payload.n_accepted) {
-            for (int i = 0; i < *payload.n_accepted; i++) {
-                auto tid = sorted_ids[i];
-                printf("(%d %d),", tid, n_shared[tid]);
-            }
-            printf("\n");
-        }
-    }
-    */
-   
     if (globalIndex < is_updated.size()) {
         is_updated[globalIndex] = 0;
     }
