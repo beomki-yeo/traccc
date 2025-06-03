@@ -11,6 +11,7 @@
 // Local include(s).
 #include "../../utils/barrier.hpp"
 #include "../../utils/global_index.hpp"
+#include "count_removable_tracks.cuh"
 #include "remove_tracks.cuh"
 
 // VecMem include(s).
@@ -116,8 +117,8 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     }
     __syncthreads();
 
-    bitonic_sort_shared2(threadIndex, shared_meas_ids,
-                         *(payload.n_meas_to_remove), N);
+    device::bitonic_sort_shared(threadIndex, shared_meas_ids,
+                                *(payload.n_meas_to_remove), N);
 
     if (globalIndex == 0) {
         (*payload.n_accepted) -= *(payload.n_removable_tracks);
