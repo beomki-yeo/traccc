@@ -171,7 +171,6 @@ __global__ void count_removable_tracks(
     // Bitonic sort on meas_to_thread w.r.t. measurement id
     if (threadIndex == 0) {
         N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
-        //printf("n meas total %d \n", n_meas_total);
     }
     __syncthreads();
 
