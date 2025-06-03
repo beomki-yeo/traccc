@@ -13,6 +13,10 @@
 #include <vecmem/containers/device_vector.hpp>
 #include <vecmem/containers/jagged_device_vector.hpp>
 
+// Thrust include(s).
+#include <thrust/binary_search.h>
+#include <thrust/execution_policy.h>
+
 namespace traccc::cuda::kernels {
 
 __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
@@ -114,6 +118,10 @@ __global__ void count_removable_tracks(
     vecmem::device_vector<const std::size_t> n_meas(payload.n_meas_view);
     vecmem::device_vector<traccc::pair<std::size_t, unsigned int>>
         meas_to_remove(payload.meas_to_remove_view);
+    vecmem::device_vector<const std::size_t> unique_meas(
+        payload.unique_meas_view);
+    vecmem::device_vector<const unsigned int> n_accepted_tracks_per_measurement(
+        payload.n_accepted_tracks_per_measurement_view);
 
     auto threadIndex = threadIdx.x;
 
@@ -188,7 +196,14 @@ __global__ void count_removable_tracks(
     __syncthreads();
 
     bitonic_sort_shared(threadIndex, meas_to_thread, n_meas_total, N);
-
+    /*
+    if (threadIndex == 0) {
+        for (const auto& e: unique_meas){
+            printf("%lu ", e);
+        }
+        printf("\n");
+    }
+    */
     // Find starting point
     if (threadIndex < n_meas_total) {
         auto curr = meas_to_thread[threadIndex];
@@ -198,12 +213,54 @@ __global__ void count_removable_tracks(
         if (is_start) {
 
             int i = threadIndex + 1;
+            int n_sharing_tracks = 1;
+
+            const std::size_t unique_meas_idx =
+                thrust::lower_bound(thrust::seq, unique_meas.begin(),
+                                    unique_meas.end(), curr.first) -
+                unique_meas.begin();
+
             while (i < n_meas_total && meas_to_thread[i].first == curr.first) {
+                if (meas_to_thread[i].second != meas_to_thread[i - 1].second) {
+                    n_sharing_tracks++;
+
+                    /*
+                    printf("%d %d %d \n", threadIndex, n_sharing_tracks,
+                           n_accepted_tracks_per_measurement.at(
+                               static_cast<unsigned int>(unique_meas_idx)));
+                    */
+
+                    /*
+                    printf(
+                        "thread index %d n sharing %d unique meas idx %lu curr "
+                        "first %lu\n",
+                        threadIndex, n_sharing_tracks, unique_meas_idx,
+                        curr.first);
+                    */
+
+                    // atomicMin(&min_thread, meas_to_thread[i].second);
+
+                    if (n_sharing_tracks ==
+                        n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
+                        atomicMin(&min_thread, meas_to_thread[i - 1].second);
+                        break;
+                    }
+                }
+                /*
                 if (meas_to_thread[i].second != curr.second) {
                     atomicMin(&min_thread, meas_to_thread[i].second);
                 }
+                */
                 i++;
             }
+
+            /*
+            if (n_sharing_tracks >= 2 &&
+                (n_sharing_tracks ==
+                 n_accepted_tracks_per_measurement.at(unique_meas_idx))) {
+                atomicMin(&min_thread, curr.second);
+            }
+            */
         }
     }
 
@@ -233,6 +290,27 @@ __global__ void count_removable_tracks(
 
     if (threadIndex == 0) {
         *(payload.n_meas_to_remove) = n_meas_total;
+    }
+
+    if (threadIndex == 0) {
+        printf(
+            "min thread %d removable tracks %d max shared %d n meas to remove "
+            "%d\n",
+            min_thread, *(payload.n_removable_tracks), *(payload.max_shared),
+            *(payload.n_meas_to_remove));
+
+        for (int i = 0; i < *(payload.n_meas_to_remove); i++) {
+            printf("(%lu %d) ", meas_to_remove[i].first,
+                   meas_to_remove[i].second);
+        }
+        printf("\n");
+
+        printf("n accepted track per meas \n");
+        for (int i = 0; i < unique_meas.size(); i++) {
+            printf("(%lu %d) ", unique_meas.at(i),
+                   n_accepted_tracks_per_measurement.at(i));
+        }
+        printf("\n");
     }
 }
 

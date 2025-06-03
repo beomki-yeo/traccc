@@ -419,13 +419,19 @@ greedy_ambiguity_resolution_algorithm::operator()(
             .n_accepted = n_accepted_device.get(),
             .meas_ids_view = meas_ids_buffer,
             .n_meas_view = n_meas_buffer,
+            .unique_meas_view = unique_meas_buffer,
+            .n_accepted_tracks_per_measurement_view =
+                n_accepted_tracks_per_measurement_buffer,
             .n_removable_tracks = n_removable_tracks_device.get(),
             .n_meas_to_remove = n_meas_to_remove_device.get(),
             .meas_to_remove_view = meas_to_remove_buffer,
         });
 
         kernels::remove_tracks<<<
-            1, 1024, 1024 * (sizeof(unsigned int) + sizeof(std::size_t)),
+            1, 1024,
+            1024 * (sizeof(unsigned int) +
+                    sizeof(traccc::pair<std::size_t, unsigned int>) +
+                    sizeof(unsigned int)),
             stream>>>(device::remove_tracks_payload{
             .sorted_ids_view = sorted_ids_buffer,
             .n_accepted = n_accepted_device.get(),
@@ -552,7 +558,6 @@ greedy_ambiguity_resolution_algorithm::operator()(
 
     cudaMemcpyAsync(&n_accepted, n_accepted_device.get(), sizeof(unsigned int),
                     cudaMemcpyDeviceToHost, stream);
-    // n_accepted++;
 
     auto max_it =
         std::max_element(candidate_sizes.begin(), candidate_sizes.end());

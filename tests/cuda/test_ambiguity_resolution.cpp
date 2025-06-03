@@ -730,6 +730,41 @@ TEST(CudaAmbiguitySolverTests, GreedyResolverTest16) {
         find_pattern(res_trk_cands, std::vector<std::size_t>({4, 9, 5, 10})));
 }
 
+TEST(CudaAmbiguitySolverTests, GreedyResolverTest17) {
+
+    // Memory resource used by the EDM.
+    vecmem::cuda::managed_memory_resource mng_mr;
+    vecmem::host_memory_resource host_mr;
+    traccc::memory_resource mr{mng_mr, &host_mr};
+
+    // Cuda stream
+    traccc::cuda::stream stream;
+
+    // Cuda copy objects
+    vecmem::cuda::async_copy copy{stream.cudaStream()};
+
+    track_candidate_container_types::host trk_cands{&mr.main};
+
+    trk_cands.resize(4u);
+    fill_pattern(trk_cands, 0, 0.17975f, {7, 4, 10, 3, 0});
+    fill_pattern(trk_cands, 1, 0.924326f, {0, 0, 9});
+    fill_pattern(trk_cands, 2, 0.0832954f, {0, 2, 0});
+    fill_pattern(trk_cands, 3, 0.303148f, {0, 6, 4, 5, 5});
+
+    traccc::cuda::greedy_ambiguity_resolution_algorithm::config_type
+        resolution_config;
+    traccc::cuda::greedy_ambiguity_resolution_algorithm resolution_alg_cuda(
+        resolution_config, mr, copy, stream);
+
+    auto res_trk_cands_buffer =
+        resolution_alg_cuda(traccc::get_data(trk_cands));
+    track_candidate_container_types::device res_trk_cands(res_trk_cands_buffer);
+    ASSERT_EQ(res_trk_cands.size(), 1u);
+
+    ASSERT_TRUE(
+        find_pattern(res_trk_cands, std::vector<std::size_t>({0, 6, 4, 5, 5})));
+}
+
 // Test class for the ambiguity resolution comparison with CPU implementation
 // Input tuple: < n_event, n_tracks, track_length_range , max_meas_id,
 // allow_duplicate >
@@ -789,7 +824,7 @@ TEST_P(GreedyResolutionCompareToCPU, Comparison) {
             const std::size_t track_length = track_length_dist(gen);
             const traccc::scalar pval = pval_dist(gen);
             std::vector<std::size_t> pattern;
-            // std::cout << pval << std::endl;
+            std::cout << pval << std::endl;
             while (pattern.size() < track_length) {
 
                 auto mid = meas_id_dist(gen);
@@ -800,10 +835,10 @@ TEST_P(GreedyResolutionCompareToCPU, Comparison) {
                         mid = meas_id_dist(gen);
                     }
                 }
-                //std::cout << mid << ", ";
+                std::cout << mid << ", ";
                 pattern.push_back(mid);
             }
-            //std::cout << std::endl;
+            std::cout << std::endl;
 
             // Make sure that partern size is eqaul to the track length
             ASSERT_EQ(pattern.size(), track_length);

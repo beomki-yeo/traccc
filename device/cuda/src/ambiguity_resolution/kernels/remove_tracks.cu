@@ -5,6 +5,9 @@
  * Mozilla Public License Version 2.0
  */
 
+// Project include(s).
+#include "traccc/utils/pair.hpp"
+
 // Local include(s).
 #include "../../utils/barrier.hpp"
 #include "../../utils/global_index.hpp"
@@ -22,10 +25,46 @@
 
 namespace traccc::cuda::kernels {
 
+__device__ void bitonic_sort_shared2(
+    const int tid, traccc::pair<std::size_t, unsigned int>* shared_data,
+    const int count, const int N) {
+
+    if (tid >= count && tid < N) {
+        shared_data[tid] = {std::numeric_limits<std::size_t>::max(),
+                            std::numeric_limits<unsigned int>::max()};
+    }
+
+    __syncthreads();
+
+    for (int k = 2; k <= N; k <<= 1) {
+        for (int j = k >> 1; j > 0; j >>= 1) {
+            int ixj = tid ^ j;
+
+            if (ixj > tid && ixj < N && tid < N) {
+                auto elem_i = shared_data[tid];
+                auto elem_j = shared_data[ixj];
+
+                bool ascending = ((tid & k) == 0);
+                bool should_swap =
+                    (elem_i.first > elem_j.first ||
+                     (elem_i.first == elem_j.first &&
+                      elem_i.second > elem_j.second)) == ascending;
+
+                if (should_swap) {
+                    shared_data[tid] = elem_j;
+                    shared_data[ixj] = elem_i;
+                }
+            }
+            __syncthreads();
+        }
+    }
+}
+
 __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     __shared__ unsigned int shared_tids[1024];
-    __shared__ std::size_t shared_meas_ids[1024];
+    __shared__ traccc::pair<std::size_t, unsigned int> shared_meas_ids[1024];
+    __shared__ unsigned int N;
 
     if (*(payload.terminate) == 1) {
         return;
@@ -57,16 +96,28 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     vecmem::device_vector<const traccc::pair<std::size_t, unsigned int>>
         meas_to_remove(payload.meas_to_remove_view);
 
-    unsigned int worst_track;
+    //unsigned int worst_track;
+    auto n_accepted_prev = (*payload.n_accepted);
 
     if (globalIndex < *(payload.n_meas_to_remove)) {
-        shared_meas_ids[globalIndex] = meas_to_remove[globalIndex].first;
+        shared_meas_ids[globalIndex] = meas_to_remove[globalIndex];
         int gid = static_cast<int>(*payload.n_accepted) - 1 -
                   meas_to_remove[globalIndex].second;
-        worst_track = sorted_ids[gid];
+        //worst_track = sorted_ids[gid];
     }
 
     __syncthreads();
+
+    // Bitonic sort on meas_to_thread w.r.t. measurement id
+    if (threadIndex == 0) {
+        N = (*(payload.n_meas_to_remove) == 0)
+                ? 1
+                : 1 << (32 - __clz(*(payload.n_meas_to_remove) - 1));
+    }
+    __syncthreads();
+
+    bitonic_sort_shared2(threadIndex, shared_meas_ids,
+                         *(payload.n_meas_to_remove), N);
 
     if (globalIndex == 0) {
         (*payload.n_accepted) -= *(payload.n_removable_tracks);
@@ -76,11 +127,13 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
         return;
     }
 
-    const auto id = shared_meas_ids[globalIndex];
+    const auto id = shared_meas_ids[globalIndex].first;
+    // const auto thread_id = shared_meas_ids[globalIndex].second;
 
     bool is_duplicate = false;
+    int n_sharing_tracks = 1;
     for (unsigned int i = 0; i < globalIndex; ++i) {
-        if (shared_meas_ids[i] == id) {
+        if (shared_meas_ids[i].first == id) {
             is_duplicate = true;
             break;
         }
@@ -94,21 +147,63 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
                             id) -
         unique_meas.begin();
 
-    vecmem::device_atomic_ref<unsigned int> n_accepted_per_meas(
-        n_accepted_tracks_per_measurement.at(
-            static_cast<unsigned int>(unique_meas_idx)));
-    const unsigned int N_A = n_accepted_per_meas.fetch_add(-1u);
-
     // If there is only one track associated with measurement, the
     // number of shared measurement can be reduced by one
     const auto& tracks = tracks_per_measurement[unique_meas_idx];
     auto track_status = track_status_per_measurement[unique_meas_idx];
 
+    auto trk_id =
+        sorted_ids[n_accepted_prev - 1 - shared_meas_ids[globalIndex].second];
+
+    unsigned int worst_idx =
+        thrust::find(thrust::seq, tracks.begin(), tracks.end(), trk_id) -
+        tracks.begin();
+
+    track_status[worst_idx] = 0;
+
+    for (unsigned int i = globalIndex + 1; i < *(payload.n_meas_to_remove);
+         ++i) {
+
+        /*
+        printf("(%d %lu %d) \n", globalIndex, shared_meas_ids[i].first,
+               shared_meas_ids[i].second);
+        */
+        if (shared_meas_ids[i].first == id &&
+            shared_meas_ids[i].second != shared_meas_ids[i - 1].second) {
+            n_sharing_tracks++;
+
+            trk_id =
+                sorted_ids[n_accepted_prev - 1 - shared_meas_ids[i].second];
+
+            worst_idx = thrust::find(thrust::seq, tracks.begin(), tracks.end(),
+                                     trk_id) -
+                        tracks.begin();
+
+            track_status[worst_idx] = 0;
+
+        } else if (shared_meas_ids[i].first != id) {
+            break;
+        }
+    }
+    /*
+    printf("n sharing tracks %d meas id %lu thread id %d \n", n_sharing_tracks,
+           id, thread_id);
+    */
+
+    vecmem::device_atomic_ref<unsigned int> n_accepted_per_meas(
+        n_accepted_tracks_per_measurement.at(
+            static_cast<unsigned int>(unique_meas_idx)));
+    const unsigned int N_A = n_accepted_per_meas.fetch_add(-n_sharing_tracks);
+
+    printf("meas id %lu N_A %d \n", id, N_A);
+
+    /*
     const unsigned int worst_idx =
         thrust::find(thrust::seq, tracks.begin(), tracks.end(), worst_track) -
         tracks.begin();
 
     track_status[worst_idx] = 0;
+    */
 
     if (N_A != 2) {
         return;
@@ -126,6 +221,8 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     const auto m_count = static_cast<unsigned int>(thrust::count(
         thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));
+
+    printf("meas id %lu tid %d m_count %d \n", id, tid, m_count);
 
     const unsigned int N_S =
         vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
