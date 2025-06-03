@@ -414,6 +414,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
                 sizeof(unsigned int) * 6 + sizeof(bool),
             stream>>>(device::count_removable_tracks_payload{
             .terminate = terminate_device.get(),
+            .max_shared = max_shared_device.get(),
             .sorted_ids_view = sorted_ids_buffer,
             .n_accepted = n_accepted_device.get(),
             .meas_ids_view = meas_ids_buffer,
@@ -551,7 +552,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
 
     cudaMemcpyAsync(&n_accepted, n_accepted_device.get(), sizeof(unsigned int),
                     cudaMemcpyDeviceToHost, stream);
-    n_accepted++;
+    // n_accepted++;
 
     auto max_it =
         std::max_element(candidate_sizes.begin(), candidate_sizes.end());

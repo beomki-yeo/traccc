@@ -86,6 +86,14 @@ __device__ void bitonic_sort_shared(
 __global__ void count_removable_tracks(
     device::count_removable_tracks_payload payload) {
 
+    if (threadIdx.x == 0) {
+        if (*(payload.max_shared) == 0) {
+            *(payload.terminate) = 1;
+        }
+    }
+
+    __syncthreads();
+
     if (*(payload.terminate) == 1) {
         return;
     }
@@ -138,6 +146,11 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
+
+    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
+        n_tracks_to_iterate = 1;
+    }
+
     /*
     for (int i = 0; i < 100; i++) {
         count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
@@ -199,9 +212,10 @@ __global__ void count_removable_tracks(
     if (threadIndex == 0) {
         n_meas_total = 0;
 
-        if (min_thread == 0 ||
-            min_thread == std::numeric_limits<unsigned int>::max()) {
+        if (min_thread == 0) {
             *(payload.n_removable_tracks) = 1;
+        } else if (min_thread == std::numeric_limits<unsigned int>::max()) {
+            *(payload.n_removable_tracks) = n_tracks_to_iterate;
         } else {
             *(payload.n_removable_tracks) = min_thread;
         }
