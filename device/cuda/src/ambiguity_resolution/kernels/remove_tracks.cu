@@ -28,18 +28,17 @@ namespace traccc::cuda::kernels {
 
 __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
-    __shared__ unsigned int shared_tids[1024];
-    __shared__ traccc::pair<std::size_t, unsigned int> shared_meas_ids[1024];
-    __shared__ unsigned int N;
-
     if (*(payload.terminate) == 1) {
         return;
     }
 
-    auto globalIndex = threadIdx.x + blockIdx.x * blockDim.x;
+    __shared__ unsigned int shared_tids[1024];
+    __shared__ traccc::pair<std::size_t, unsigned int> shared_meas_ids[1024];
+    __shared__ unsigned int N;
+
     auto threadIndex = threadIdx.x;
 
-    shared_tids[globalIndex] = std::numeric_limits<unsigned int>::max();
+    shared_tids[threadIndex] = std::numeric_limits<unsigned int>::max();
 
     vecmem::device_vector<const unsigned int> sorted_ids(
         payload.sorted_ids_view);
@@ -62,11 +61,13 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     vecmem::device_vector<const traccc::pair<std::size_t, unsigned int>>
         meas_to_remove(payload.meas_to_remove_view);
 
-    // unsigned int worst_track;
     auto n_accepted_prev = (*payload.n_accepted);
+    if (threadIndex == 0) {
+        (*payload.n_accepted) -= *(payload.n_removable_tracks);
+    }
 
-    if (globalIndex < *(payload.n_meas_to_remove)) {
-        shared_meas_ids[globalIndex] = meas_to_remove[globalIndex];
+    if (threadIndex < *(payload.n_meas_to_remove)) {
+        shared_meas_ids[threadIndex] = meas_to_remove[threadIndex];
     }
 
     __syncthreads();
@@ -82,19 +83,14 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     device::bitonic_sort_shared(threadIndex, shared_meas_ids,
                                 *(payload.n_meas_to_remove), N);
 
-    if (globalIndex == 0) {
-        (*payload.n_accepted) -= *(payload.n_removable_tracks);
-    }
-
-    if (globalIndex >= *(payload.n_meas_to_remove)) {
+    if (threadIndex >= *(payload.n_meas_to_remove)) {
         return;
     }
 
-    const auto id = shared_meas_ids[globalIndex].first;
+    const auto id = shared_meas_ids[threadIndex].first;
 
     bool is_duplicate = false;
-    int n_sharing_tracks = 1;
-    for (unsigned int i = 0; i < globalIndex; ++i) {
+    for (unsigned int i = 0; i < threadIndex; ++i) {
         if (shared_meas_ids[i].first == id) {
             is_duplicate = true;
             break;
@@ -115,7 +111,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     auto track_status = track_status_per_measurement[unique_meas_idx];
 
     auto trk_id =
-        sorted_ids[n_accepted_prev - 1 - shared_meas_ids[globalIndex].second];
+        sorted_ids[n_accepted_prev - 1 - shared_meas_ids[threadIndex].second];
 
     unsigned int worst_idx =
         thrust::find(thrust::seq, tracks.begin(), tracks.end(), trk_id) -
@@ -123,7 +119,8 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
 
     track_status[worst_idx] = 0;
 
-    for (unsigned int i = globalIndex + 1; i < *(payload.n_meas_to_remove);
+    int n_sharing_tracks = 1;
+    for (unsigned int i = threadIndex + 1; i < *(payload.n_meas_to_remove);
          ++i) {
 
         if (shared_meas_ids[i].first == id &&
@@ -147,7 +144,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     vecmem::device_atomic_ref<unsigned int> n_accepted_per_meas(
         n_accepted_tracks_per_measurement.at(
             static_cast<unsigned int>(unique_meas_idx)));
-    const unsigned int N_A = n_accepted_per_meas.fetch_add(-n_sharing_tracks);
+    const unsigned int N_A = n_accepted_per_meas.fetch_sub(n_sharing_tracks);
 
     if (N_A != 1 + n_sharing_tracks) {
         return;

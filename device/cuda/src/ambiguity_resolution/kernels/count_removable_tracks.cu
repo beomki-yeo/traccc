@@ -149,15 +149,15 @@ __global__ void count_removable_tracks(
         bool is_start = (threadIndex == 0) ||
                         (meas_to_thread[threadIndex - 1].first != curr.first);
 
+        const std::size_t unique_meas_idx =
+            thrust::lower_bound(thrust::seq, unique_meas.begin(),
+                                unique_meas.end(), curr.first) -
+            unique_meas.begin();
+
         if (is_start) {
 
             int i = threadIndex + 1;
             int n_sharing_tracks = 1;
-
-            const std::size_t unique_meas_idx =
-                thrust::lower_bound(thrust::seq, unique_meas.begin(),
-                                    unique_meas.end(), curr.first) -
-                unique_meas.begin();
 
             while (i < n_meas_total && meas_to_thread[i].first == curr.first) {
                 if (meas_to_thread[i].second != meas_to_thread[i - 1].second) {
