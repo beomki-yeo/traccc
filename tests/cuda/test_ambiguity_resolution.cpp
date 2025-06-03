@@ -794,16 +794,16 @@ TEST_P(GreedyResolutionCompareToCPU, Comparison) {
 
                 auto mid = meas_id_dist(gen);
                 if (!allow_duplicate) {
-                    if (std::find(pattern.begin(), pattern.end(), mid) !=
-                        pattern.end()) {
+                    while (std::find(pattern.begin(), pattern.end(), mid) !=
+                           pattern.end()) {
 
                         mid = meas_id_dist(gen);
                     }
                 }
-                // std::cout << mid << ", ";
+                //std::cout << mid << ", ";
                 pattern.push_back(mid);
             }
-            // std::cout << std::endl;
+            //std::cout << std::endl;
 
             // Make sure that partern size is eqaul to the track length
             ASSERT_EQ(pattern.size(), track_length);
@@ -894,6 +894,13 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(std::make_tuple(3u, 5000u,
                                       std::array<std::size_t, 2u>{3u, 10u},
                                       300u, true),
-                      std::make_tuple(5u, 5000u,
+                      std::make_tuple(3u, 5000u,
                                       std::array<std::size_t, 2u>{3u, 10u},
                                       100u, false)));
+
+INSTANTIATE_TEST_SUITE_P(
+    Simple, GreedyResolutionCompareToCPU,
+    ::testing::Values(
+        std::make_tuple(3u, 5u, std::array<std::size_t, 2u>{3u, 5u}, 10u, true),
+        std::make_tuple(3u, 5u, std::array<std::size_t, 2u>{3u, 5u}, 10u,
+                        false)));
