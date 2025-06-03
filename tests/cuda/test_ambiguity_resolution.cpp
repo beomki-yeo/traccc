@@ -824,7 +824,7 @@ TEST_P(GreedyResolutionCompareToCPU, Comparison) {
             const std::size_t track_length = track_length_dist(gen);
             const traccc::scalar pval = pval_dist(gen);
             std::vector<std::size_t> pattern;
-            std::cout << pval << std::endl;
+            // std::cout << pval << std::endl;
             while (pattern.size() < track_length) {
 
                 auto mid = meas_id_dist(gen);
@@ -835,10 +835,10 @@ TEST_P(GreedyResolutionCompareToCPU, Comparison) {
                         mid = meas_id_dist(gen);
                     }
                 }
-                std::cout << mid << ", ";
+                // std::cout << mid << ", ";
                 pattern.push_back(mid);
             }
-            std::cout << std::endl;
+            // std::cout << std::endl;
 
             // Make sure that partern size is eqaul to the track length
             ASSERT_EQ(pattern.size(), track_length);

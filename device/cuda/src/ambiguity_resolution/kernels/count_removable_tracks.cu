@@ -290,8 +290,11 @@ __global__ void count_removable_tracks(
 
     if (threadIndex == 0) {
         *(payload.n_meas_to_remove) = n_meas_total;
+
+        //printf("n_removable_tracks %d \n", *(payload.n_removable_tracks));
     }
 
+    /*
     if (threadIndex == 0) {
         printf(
             "min thread %d removable tracks %d max shared %d n meas to remove "
@@ -312,6 +315,7 @@ __global__ void count_removable_tracks(
         }
         printf("\n");
     }
+    */
 }
 
 }  // namespace traccc::cuda::kernels

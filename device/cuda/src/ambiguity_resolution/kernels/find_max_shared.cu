@@ -28,6 +28,7 @@ __global__ void find_max_shared(device::find_max_shared_payload payload) {
     vecmem::device_vector<const unsigned int> n_shared(payload.n_shared_view);
     vecmem::device_vector<int> is_updated(payload.is_updated_view);
 
+    /*
     if (threadIdx.x == 0) {
 
         printf("\n\n");
@@ -41,7 +42,8 @@ __global__ void find_max_shared(device::find_max_shared_payload payload) {
             printf("\n");
         }
     }
-
+    */
+   
     if (globalIndex < is_updated.size()) {
         is_updated[globalIndex] = 0;
     }

@@ -96,14 +96,14 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     vecmem::device_vector<const traccc::pair<std::size_t, unsigned int>>
         meas_to_remove(payload.meas_to_remove_view);
 
-    //unsigned int worst_track;
+    // unsigned int worst_track;
     auto n_accepted_prev = (*payload.n_accepted);
 
     if (globalIndex < *(payload.n_meas_to_remove)) {
         shared_meas_ids[globalIndex] = meas_to_remove[globalIndex];
         int gid = static_cast<int>(*payload.n_accepted) - 1 -
                   meas_to_remove[globalIndex].second;
-        //worst_track = sorted_ids[gid];
+        // worst_track = sorted_ids[gid];
     }
 
     __syncthreads();
@@ -195,7 +195,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
             static_cast<unsigned int>(unique_meas_idx)));
     const unsigned int N_A = n_accepted_per_meas.fetch_add(-n_sharing_tracks);
 
-    printf("meas id %lu N_A %d \n", id, N_A);
+    // printf("meas id %lu N_A %d \n", id, N_A);
 
     /*
     const unsigned int worst_idx =
@@ -205,7 +205,12 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     track_status[worst_idx] = 0;
     */
 
+    /*
     if (N_A != 2) {
+        return;
+    }
+    */
+    if (N_A != 1 + n_sharing_tracks) {
         return;
     }
 
@@ -222,7 +227,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     const auto m_count = static_cast<unsigned int>(thrust::count(
         thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));
 
-    printf("meas id %lu tid %d m_count %d \n", id, tid, m_count);
+    // printf("meas id %lu tid %d m_count %d \n", id, tid, m_count);
 
     const unsigned int N_S =
         vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
