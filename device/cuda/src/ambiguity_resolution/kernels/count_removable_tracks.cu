@@ -70,8 +70,8 @@ __device__ void bitonic_sort_shared(
                 bool ascending = ((tid & k) == 0);
                 bool should_swap =
                     (elem_i.first > elem_j.first ||
-                    (elem_i.first == elem_j.first &&
-                     elem_i.second > elem_j.second)) == ascending;
+                     (elem_i.first == elem_j.first &&
+                      elem_i.second > elem_j.second)) == ascending;
 
                 if (should_swap) {
                     shared_data[tid] = elem_j;
@@ -138,20 +138,22 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
-
     /*
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 100; i++) {
         count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                      n_tracks_to_iterate, stop);
+        __syncthreads();
 
-        if (stop) {
+        if (stop)
             break;
-        }
 
-        if (gid >= 0) {
+        if (gid >= 0 && static_cast<unsigned int>(gid) < sorted_ids.size()) {
             const auto trk_id = sorted_ids[gid];
-            shared_n_meas[threadIndex] = n_meas[trk_id];
+            if (trk_id < n_meas.size()) {
+                shared_n_meas[threadIndex] = n_meas[trk_id];
+            }
         }
+        __syncthreads();
     }
     */
 
@@ -169,6 +171,7 @@ __global__ void count_removable_tracks(
     // Bitonic sort on meas_to_thread w.r.t. measurement id
     if (threadIndex == 0) {
         N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
+        //printf("n meas total %d \n", n_meas_total);
     }
     __syncthreads();
 
