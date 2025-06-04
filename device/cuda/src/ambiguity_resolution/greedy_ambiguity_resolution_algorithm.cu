@@ -545,6 +545,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
         cudaStreamEndCapture(stream, &graph);
         cudaGraphInstantiate(&graphExec, graph, nullptr, nullptr, 0);
 
+        // TODO: Make n_it adaptive based on the average track length, bound
+        // value in count_removable_tracks, etc.
         unsigned int n_it = (n_tracks + 9) / 10;
         for (unsigned int iter = 0; iter < n_it; iter++) {
             cudaGraphLaunch(graphExec, stream);

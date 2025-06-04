@@ -99,7 +99,7 @@ __global__ void count_removable_tracks(
         *(payload.n_removable_tracks) = 0;
         *(payload.n_meas_to_remove) = 0;
         n_meas_total = 0;
-        bound = 512;
+        bound = 256;
         N = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
@@ -119,6 +119,23 @@ __global__ void count_removable_tracks(
     // @TODO: Improve the logic
     count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
+    /*
+    for (int i = 0; i < 100; i++) {
+        count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
+                     n_tracks_to_iterate, stop);
+        __syncthreads();
+        if (stop)
+            break;
+
+        if (gid >= 0 && static_cast<unsigned int>(gid) < sorted_ids.size()) {
+            const auto trk_id = sorted_ids[gid];
+            if (trk_id < n_meas.size()) {
+                shared_n_meas[threadIndex] = n_meas[trk_id];
+            }
+        }
+        __syncthreads();
+    }
+    */
 
     if (threadIndex == 0 && n_tracks_to_iterate == 0) {
         n_tracks_to_iterate = 1;
