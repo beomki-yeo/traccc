@@ -12,6 +12,7 @@
 #include "./kernels/block_inclusive_scan.cuh"
 #include "./kernels/count_removable_tracks.cuh"
 #include "./kernels/count_shared_measurements.cuh"
+#include "./kernels/exclusive_scan.cuh"
 #include "./kernels/fill_inverted_ids.cuh"
 #include "./kernels/fill_track_candidates.cuh"
 #include "./kernels/fill_tracks_per_measurement.cuh"
@@ -426,6 +427,13 @@ greedy_ambiguity_resolution_algorithm::operator()(
             .n_meas_to_remove = n_meas_to_remove_device.get(),
             .meas_to_remove_view = meas_to_remove_buffer,
         });
+
+        kernels::exclusive_scan<<<1, 1024, sizeof(int) * 2048, stream>>>(
+            device::exclusive_scan_payload{
+                .terminate = terminate_device.get(),
+                .n_meas_to_remove = n_meas_to_remove_device.get(),
+                .meas_to_remove_view = meas_to_remove_buffer,
+            });
 
         kernels::remove_tracks<<<
             1, 1024,
