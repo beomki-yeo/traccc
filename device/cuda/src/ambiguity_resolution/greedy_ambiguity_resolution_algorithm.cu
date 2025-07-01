@@ -465,7 +465,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
         // when the number of updated tracks <= 1024) and might be faster
         // with large number of updated tracks
 
-        kernels::sort_updated_tracks<<<1, 1024, 1024 * sizeof(unsigned int),
+        kernels::sort_updated_tracks<<<1, 1024, 1025 * sizeof(unsigned int),
                                        stream>>>(
             device::sort_updated_tracks_payload{
                 .rel_shared_view = rel_shared_buffer,
