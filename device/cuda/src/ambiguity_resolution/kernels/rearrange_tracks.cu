@@ -58,6 +58,7 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
         payload.sorted_ids_view);
     vecmem::device_vector<const unsigned int> inverted_ids(
         payload.inverted_ids_view);
+    vecmem::device_vector<const unsigned int> n_shared(payload.n_shared_view);
     vecmem::device_vector<const traccc::scalar> rel_shared(
         payload.rel_shared_view);
     vecmem::device_vector<const traccc::scalar> pvals(payload.pvals_view);
@@ -73,6 +74,10 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
     auto pval_ref = pvals[tid];
     int shifted_idx = static_cast<int>(gid);
     auto N = *(payload.n_updated_tracks);
+
+    if (n_shared[tid] == *(payload.max_shared)) {
+        *(payload.update_max_shared) = 0;
+    }
 
     if (is_updated[tid]) {
 

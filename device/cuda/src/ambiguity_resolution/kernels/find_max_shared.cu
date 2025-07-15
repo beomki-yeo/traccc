@@ -19,7 +19,7 @@ __global__ void find_max_shared(device::find_max_shared_payload payload) {
 
     auto globalIndex = details::global_index1();
 
-    if (*(payload.terminate) == 1) {
+    if (*(payload.terminate) == 1 || *(payload.update_max_shared) == 0) {
         return;
     }
 

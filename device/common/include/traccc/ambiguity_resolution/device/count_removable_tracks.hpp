@@ -86,6 +86,11 @@ struct count_removable_tracks_payload {
      * @brief View object to thread id of measurements to remove
      */
     vecmem::data::vector_view<unsigned int> threads_view;
+
+    /**
+     * @brief Whether to update the max shared in the next iteration
+     */
+    int* update_max_shared;
 };
 
 }  // namespace traccc::device

@@ -385,6 +385,12 @@ greedy_ambiguity_resolution_algorithm::operator()(
     int terminate = 0;
     vecmem::unique_alloc_ptr<int> terminate_device =
         vecmem::make_unique_alloc<int>(m_mr.main);
+    int update_max_shared = 1;
+    vecmem::unique_alloc_ptr<int> update_max_shared_device =
+        vecmem::make_unique_alloc<int>(m_mr.main);
+    cudaMemcpyAsync(update_max_shared_device.get(), &update_max_shared,
+                    sizeof(int), cudaMemcpyHostToDevice, stream);
+
     vecmem::unique_alloc_ptr<unsigned int> max_shared_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
     vecmem::unique_alloc_ptr<unsigned int> n_updated_tracks_device =
@@ -443,7 +449,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
                 .n_shared_view = n_shared_buffer,
                 .terminate = terminate_device.get(),
                 .max_shared = max_shared_device.get(),
-                .is_updated_view = is_updated_buffer});
+                .is_updated_view = is_updated_buffer,
+                .update_max_shared = update_max_shared_device.get()});
 
         kernels::count_removable_tracks<<<1, 512, 0, stream>>>(
             device::count_removable_tracks_payload{
@@ -459,7 +466,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
                 .n_removable_tracks = n_removable_tracks_device.get(),
                 .n_meas_to_remove = n_meas_to_remove_device.get(),
                 .meas_to_remove_view = meas_to_remove_buffer,
-                .threads_view = threads_buffer});
+                .threads_view = threads_buffer,
+                .update_max_shared = update_max_shared_device.get()});
 
         kernels::remove_tracks<<<1, 1024, 0, stream>>>(
             device::remove_tracks_payload{
@@ -552,6 +560,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
                                     stream>>>(device::rearrange_tracks_payload{
             .sorted_ids_view = sorted_ids_buffer,
             .inverted_ids_view = inverted_ids_buffer,
+            .n_shared_view = n_shared_buffer,
             .rel_shared_view = rel_shared_buffer,
             .pvals_view = pvals_buffer,
             .terminate = terminate_device.get(),
@@ -561,7 +570,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
             .is_updated_view = is_updated_buffer,
             .prefix_sums_view = prefix_sums_buffer,
             .temp_sorted_ids_view = temp_sorted_ids_buffer,
-        });
+            .max_shared = max_shared_device.get(),
+            .update_max_shared = update_max_shared_device.get()});
 
         kernels::gather_tracks<<<nBlocks_full, nThreads_full, 0, stream>>>(
             device::gather_tracks_payload{

@@ -31,6 +31,12 @@ struct rearrange_tracks_payload {
     vecmem::data::vector_view<const unsigned int> inverted_ids_view;
 
     /**
+     * @brief View object to the vector of number of shared
+     * measurements
+     */
+    vecmem::data::vector_view<const unsigned int> n_shared_view;
+
+    /**
      * @brief View object to the vector of relative number of shared
      * measurements
      */
@@ -75,6 +81,16 @@ struct rearrange_tracks_payload {
      * @brief View object to the temporary sorted track
      */
     vecmem::data::vector_view<unsigned int> temp_sorted_ids_view;
+
+    /**
+     * @brief Max number of shared measurements
+     */
+    unsigned* max_shared;
+
+    /**
+     * @brief Whether to update the max shared in the next iteration
+     */
+    int* update_max_shared;
 };
 
 }  // namespace traccc::device

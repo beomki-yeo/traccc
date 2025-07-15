@@ -45,6 +45,11 @@ struct find_max_shared_payload {
      * @brief View object to the whether track id is updated
      */
     vecmem::data::vector_view<int> is_updated_view;
+
+    /**
+     * @brief Whether to update the max shared in the next iteration
+     */
+    int* update_max_shared;
 };
 
 }  // namespace traccc::device
