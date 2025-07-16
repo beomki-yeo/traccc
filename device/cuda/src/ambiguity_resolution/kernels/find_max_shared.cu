@@ -17,24 +17,26 @@ namespace traccc::cuda::kernels {
 
 __global__ void find_max_shared(device::find_max_shared_payload payload) {
 
-    auto globalIndex = details::global_index1();
-
-    if (*(payload.terminate) == 1 || *(payload.update_max_shared) == 0) {
+    if (*(payload.terminate) == 1) {
         return;
     }
 
-    vecmem::device_vector<const unsigned int> sorted_ids(
-        payload.sorted_ids_view);
-    vecmem::device_vector<const unsigned int> n_shared(payload.n_shared_view);
+    auto globalIndex = details::global_index1();
+
     vecmem::device_vector<int> is_updated(payload.is_updated_view);
 
     if (globalIndex < is_updated.size()) {
         is_updated[globalIndex] = 0;
     }
 
-    if (globalIndex >= *payload.n_accepted) {
+    if (*(payload.update_max_shared) == 0 ||
+        globalIndex >= *payload.n_accepted) {
         return;
     }
+
+    vecmem::device_vector<const unsigned int> sorted_ids(
+        payload.sorted_ids_view);
+    vecmem::device_vector<const unsigned int> n_shared(payload.n_shared_view);
 
     auto tid = sorted_ids[globalIndex];
     auto shared = n_shared[tid];

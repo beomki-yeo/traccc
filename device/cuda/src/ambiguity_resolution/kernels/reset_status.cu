@@ -23,7 +23,9 @@ __global__ void reset_status(device::reset_status_payload payload) {
     }
 
     if (*(payload.terminate) == 0) {
-        *(payload.max_shared) = 0;
+        if (*(payload.update_max_shared) == 1){
+            *(payload.max_shared) = 0;
+        }
         *(payload.n_updated_tracks) = 0;
     }
 }

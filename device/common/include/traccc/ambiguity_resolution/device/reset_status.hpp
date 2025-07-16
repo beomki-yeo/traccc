@@ -40,6 +40,11 @@ struct reset_status_payload {
      * @brief The number of updated tracks
      */
     unsigned int* n_updated_tracks;
+
+    /**
+     * @brief Whether to update the max shared in the next iteration
+     */
+    int* update_max_shared;    
 };
 
 }  // namespace traccc::device

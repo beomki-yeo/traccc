@@ -440,7 +440,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
             .terminate = terminate_device.get(),
             .n_accepted = n_accepted_device.get(),
             .max_shared = max_shared_device.get(),
-            .n_updated_tracks = n_updated_tracks_device.get()});
+            .n_updated_tracks = n_updated_tracks_device.get(),
+            .update_max_shared = update_max_shared_device.get()});
 
         kernels::find_max_shared<<<nBlocks_warp, nThreads_warp, 0, stream>>>(
             device::find_max_shared_payload{
