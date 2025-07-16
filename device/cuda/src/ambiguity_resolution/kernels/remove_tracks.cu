@@ -65,6 +65,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     auto n_accepted_prev = (*payload.n_accepted);
     if (threadIndex == 0) {
         (*payload.n_accepted) -= *(payload.n_removable_tracks);
+        *(payload.n_updated_tracks) = 0;
     }
 
     if (threadIndex < *(payload.n_meas_to_remove)) {

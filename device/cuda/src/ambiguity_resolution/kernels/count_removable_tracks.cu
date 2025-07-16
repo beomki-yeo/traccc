@@ -59,6 +59,9 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         if (*(payload.max_shared) == 0) {
             *(payload.terminate) = 1;
         }
+
+        // Reset max shared
+        *(payload.max_shared) = 0;
     }
 
     __syncthreads();
