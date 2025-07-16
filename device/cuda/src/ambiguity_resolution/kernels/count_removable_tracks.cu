@@ -52,6 +52,40 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
     __syncthreads();
 }
 
+__device__ void bitonic_sort_shared(
+    measurement_id_type* sh_meas_ids,
+    unsigned int* sh_threads,
+    unsigned int N) {
+
+    const unsigned int tid = threadIdx.x;
+
+    for (unsigned int k = 2; k <= N; k <<= 1) {
+        for (unsigned int j = k >> 1; j > 0; j >>= 1) {
+            unsigned int ixj = tid ^ j;
+
+            if (ixj > tid && ixj < N && tid < N) {
+                auto meas_i = sh_meas_ids[tid];
+                auto meas_j = sh_meas_ids[ixj];
+                auto thread_i = sh_threads[tid];
+                auto thread_j = sh_threads[ixj];
+
+                bool ascending = ((tid & k) == 0);
+                bool should_swap =
+                    (meas_i > meas_j ||
+                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
+
+                if (should_swap) {
+                    sh_meas_ids[tid] = meas_j;
+                    sh_meas_ids[ixj] = meas_i;
+                    sh_threads[tid] = thread_j;
+                    sh_threads[ixj] = thread_i;
+                }
+            }
+            __syncthreads();
+        }
+    }
+}
+
 __launch_bounds__(512) __global__ void count_removable_tracks(
     device::count_removable_tracks_payload payload) {
 
@@ -162,32 +196,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     }
     __syncthreads();
 
-    const auto tid = threadIndex;
-    for (int k = 2; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > 0; j >>= 1) {
-            int ixj = tid ^ j;
-
-            if (ixj > tid && ixj < N && tid < N) {
-                auto meas_i = sh_meas_ids[tid];
-                auto meas_j = sh_meas_ids[ixj];
-                auto thread_i = sh_threads[tid];
-                auto thread_j = sh_threads[ixj];
-
-                bool ascending = ((tid & k) == 0);
-                bool should_swap =
-                    (meas_i > meas_j ||
-                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
-
-                if (should_swap) {
-                    sh_meas_ids[tid] = meas_j;
-                    sh_meas_ids[ixj] = meas_i;
-                    sh_threads[tid] = thread_j;
-                    sh_threads[ixj] = thread_i;
-                }
-            }
-            __syncthreads();
-        }
-    }
+    bitonic_sort_shared(sh_meas_ids, sh_threads, N);
 
     // Find starting point
     if (threadIndex < n_meas_total) {
