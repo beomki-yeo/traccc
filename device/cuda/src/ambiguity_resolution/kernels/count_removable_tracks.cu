@@ -63,20 +63,21 @@ __device__ void process_tracks_and_measurements(
     vecmem::device_vector<const unsigned int>&
         n_accepted_tracks_per_measurement,
     vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
-    unsigned int n_accepted) {
-    // 1) 초기화
+    unsigned int n_accepted, bool& detect_overlap) {
+
+    // Reset
     shared_n_meas[threadIndex] = 0;
     sh_meas_ids[threadIndex] = std::numeric_limits<measurement_id_type>::max();
     sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
     __syncthreads();
 
-    // 2) gid가 유효하면 shared_n_meas 채움
+    // Fill shared_n_meas if gid is valid
     if (gid >= 0) {
         shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
     }
     __syncthreads();
 
-    // 3) 트랙 수 결정
+    // Determine the number of tracks to count
     auto n_tracks_total = min(bound, n_accepted);
     count_tracks(threadIndex, shared_n_meas, n_tracks_total, bound,
                  n_tracks_to_iterate, stop);
@@ -85,7 +86,7 @@ __device__ void process_tracks_and_measurements(
         n_tracks_to_iterate = 1;
     }
 
-    // 4) n_tracks_to_iterate만큼 측정 ID 로드
+    // Load the measurements ids and corresponding thread id
     if (threadIndex < n_tracks_to_iterate && gid >= 0) {
         const auto& mids = meas_ids[sorted_ids[gid]];
         for (const auto& id : mids) {
@@ -96,13 +97,12 @@ __device__ void process_tracks_and_measurements(
     }
     __syncthreads();
 
-    // 5) Bitonic sort 준비
     if (threadIndex == 0) {
         N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
     }
     __syncthreads();
 
-    // 6) Bitonic sort 실행
+    // Do the bitonic sort
     const auto tid = threadIndex;
     for (int k = 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
@@ -130,7 +130,8 @@ __device__ void process_tracks_and_measurements(
         }
     }
 
-    // 7) 시작점 탐색 및 min_thread 결정
+    // Search the staring point and find the minimum thread index of track where
+    // we can remove safely
     if (threadIndex < n_meas_total) {
         auto mid = sh_meas_ids[threadIndex];
         bool is_start =
@@ -147,6 +148,7 @@ __device__ void process_tracks_and_measurements(
 
                     if (n_sharing_tracks ==
                         n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
+                        detect_overlap = true;
                         atomicMin(&min_thread, sh_threads[i - 1]);
                         break;
                     }
@@ -182,6 +184,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     __shared__ unsigned int min_thread;
     __shared__ unsigned int N;
     __shared__ bool stop;
+    __shared__ bool detect_overlap;
 
     vecmem::device_vector<const unsigned int> sorted_ids(
         payload.sorted_ids_view);
@@ -216,6 +219,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             n_tracks_to_iterate = 0;
             min_thread = std::numeric_limits<unsigned int>::max();
             stop = false;
+            detect_overlap = false;
         }
 
         __syncthreads();
@@ -224,13 +228,13 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             threadIndex, gid, bound, n_tracks_to_iterate, stop, n_meas_total, N,
             min_thread, shared_n_meas, sh_meas_ids, sh_threads, sorted_ids,
             meas_ids, n_meas, n_accepted_tracks_per_measurement,
-            meas_id_to_unique_id, *payload.n_accepted);
+            meas_id_to_unique_id, *payload.n_accepted, detect_overlap);
 
         __syncthreads();
 
         if (threadIndex == 0) {
             bound = bound * 2;
-            //printf("bound %d n_accepted %d \n", bound, *payload.n_accepted);
+            // printf("bound %d n_accepted %d \n", bound, *payload.n_accepted);
         }
 
         __syncthreads();
