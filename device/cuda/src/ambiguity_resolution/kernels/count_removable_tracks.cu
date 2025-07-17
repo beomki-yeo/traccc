@@ -198,12 +198,12 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     int gid = static_cast<int>(*payload.n_accepted) - 1 - threadIndex;
 
     if (threadIndex == 0) {
-        bound = 8;
+        bound = 32;
     }
 
     __syncthreads();
 
-    while (bound <= 512) {
+    while (true) {
 
         // Reset
         shared_n_meas[threadIndex] = 0;
@@ -233,26 +233,22 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
         __syncthreads();
 
-        if (threadIndex == 0) {
-            bound = bound * 2;
-
-            /*
-            if (detect_overlap) {
-                printf("min thread %d \n", min_thread);
-                break;
-            } else {
-                bound = bound * 2;
-                printf("bound %d \n", bound);
-            }
-            */
-            // printf("bound %d \n", bound);
+        if (bound == 512){
+            break;
         }
 
         __syncthreads();
 
-        if (detect_overlap){
+        if (detect_overlap) {
             break;
         }
+        else {
+            if (threadIndex == 0) {
+                bound = 512;
+            }
+        }
+
+        __syncthreads();
     }
 
     if (threadIndex == 0) {
@@ -266,8 +262,9 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     }
     /*
     if (threadIndex == 0) {
-        printf("min thread %d n removables %d n_accepted %d \n", min_thread,
-               *(payload.n_removable_tracks), *payload.n_accepted);
+        printf("min thread %d n removables %d n_accepted %d bound %d \n",
+               min_thread, *(payload.n_removable_tracks), *payload.n_accepted,
+               bound);
     }
     */
     __syncthreads();
