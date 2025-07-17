@@ -236,7 +236,8 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     __syncthreads();
 
     if (threadIndex == 0) {
-        printf("N %d N_max %d n_meas_total %d\n", N, N_max, n_meas_total);
+        printf("N %d N_max %d n_meas_total %d n tracks to iterate %d n accepted %d \n", N,
+               N_max, n_meas_total, n_tracks_to_iterate, *payload.n_accepted);
     }
     __syncthreads();
 
@@ -246,12 +247,6 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             break;
         }
         __syncthreads();
-        /*
-        if (threadIndex == 0) {
-            printf("N %d N_max %d n_meas_total %d\n", N, N_max, n_meas_total);
-        }
-        __syncthreads();
-        */
 
         bitonic_sort_shared(sh_meas_ids, sh_threads, N);
 
@@ -265,24 +260,24 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         if (threadIndex == 0) {
             if (detect_overlap) {
                 printf(
-                    "Detected overlap. min thread %d n tracks to iterate %d \n",
-                    min_thread, n_tracks_to_iterate);
+                    "Detected overlap. min thread %d n tracks to iterate %d N %d N_max %d \n",
+                    min_thread, n_tracks_to_iterate, N, N_max);
             } else {
                 printf(
                     "Did not detect overlap. min thread %d n tracks to iterate "
-                    "%d  \n",
-                    min_thread, n_tracks_to_iterate);
+                    "%d  N %d N_max %d  \n",
+                    min_thread, n_tracks_to_iterate, N, N_max);
             }
         }
 
         __syncthreads();
+        
+        //if (detect_overlap) {
+        //    break;
+        //}
 
-        if (detect_overlap) {
-            break;
-        }
-
-        __syncthreads();
-
+        //__syncthreads();
+        
         if (threadIndex == 0) {
             N = N << 1;
         }
@@ -299,7 +294,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             *(payload.n_removable_tracks) = min_thread;
         }
 
-        printf(" \n Removable tracks: %d \n", *(payload.n_removable_tracks));
+        printf(" \n Removable tracks: %d \n\n", *(payload.n_removable_tracks));
     }
 
     __syncthreads();
