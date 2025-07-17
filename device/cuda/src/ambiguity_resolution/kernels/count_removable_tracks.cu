@@ -243,6 +243,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     }
     __syncthreads();
 
+    /*
     bitonic_sort_shared(sh_meas_ids, sh_threads, N_max);
 
     find_starting_point_and_update_min(threadIndex, n_meas_total, sh_meas_ids,
@@ -259,8 +260,8 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             min_thread, n_tracks_to_iterate, N, N_max);
     }
     __syncthreads();
+    */
 
-    /*
     while (N <= N_max) {
 
         if (n_meas_total == 0) {
@@ -268,33 +269,35 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         }
         __syncthreads();
 
-        bitonic_sort_shared(sh_meas_ids, sh_threads, N);
+        bitonic_sort_shared(sh_meas_ids, sh_threads, N_max);
 
         find_starting_point_and_update_min(
-            threadIndex, min(N, n_meas_total), sh_meas_ids, sh_threads,
-            &min_thread, n_accepted_tracks_per_measurement,
-            meas_id_to_unique_id, detect_overlap);
+            threadIndex, n_meas_total, sh_meas_ids, sh_threads, &min_thread,
+            n_accepted_tracks_per_measurement, meas_id_to_unique_id,
+            detect_overlap);
 
         __syncthreads();
 
         if (threadIndex == 0) {
             if (detect_overlap) {
                 printf(
-                    "Detected overlap. min thread %d n tracks to iterate %d N %d
-    N_max %d \n", min_thread, n_tracks_to_iterate, N, N_max); } else { printf(
+                    "Detected overlap. min thread %d n tracks to iterate %d N "
+                    "%d N_max %d \n",
+                    min_thread, n_tracks_to_iterate, N, N_max);
+            } else {
+                printf(
                     "Did not detect overlap. min thread %d n tracks to iterate "
                     "%d  N %d N_max %d  \n",
                     min_thread, n_tracks_to_iterate, N, N_max);
             }
         }
-
         __syncthreads();
 
-        //if (detect_overlap) {
-        //    break;
-        //}
+        if (detect_overlap) {
+            break;
+        }
 
-        //__syncthreads();
+        __syncthreads();
 
         if (threadIndex == 0) {
             N = N << 1;
@@ -302,7 +305,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
         __syncthreads();
     }
-    */
+
     if (threadIndex == 0) {
         if (min_thread == 0) {
             *(payload.n_removable_tracks) = 1;
