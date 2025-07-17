@@ -65,12 +65,6 @@ __device__ void process_tracks_and_measurements(
     vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
     unsigned int n_accepted, bool& detect_overlap) {
 
-    // Reset
-    shared_n_meas[threadIndex] = 0;
-    sh_meas_ids[threadIndex] = std::numeric_limits<measurement_id_type>::max();
-    sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
-    __syncthreads();
-
     // Fill shared_n_meas if gid is valid
     if (gid >= 0) {
         shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
@@ -174,10 +168,10 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         return;
     }
 
-    __shared__ int shared_n_meas[512];
-    __shared__ measurement_id_type sh_meas_ids[512];
-    __shared__ unsigned int sh_threads[512];
-    __shared__ int prefix[512];
+    __shared__ int shared_n_meas[1024];
+    __shared__ measurement_id_type sh_meas_ids[1024];
+    __shared__ unsigned int sh_threads[1024];
+    __shared__ int prefix[1024];
     __shared__ unsigned int n_meas_total;
     __shared__ unsigned int bound;
     __shared__ unsigned int n_tracks_to_iterate;
@@ -204,12 +198,19 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     int gid = static_cast<int>(*payload.n_accepted) - 1 - threadIndex;
 
     if (threadIndex == 0) {
-        bound = 64;
+        bound = 8;
     }
 
     __syncthreads();
 
     while (bound <= 512) {
+
+        // Reset
+        shared_n_meas[threadIndex] = 0;
+        sh_meas_ids[threadIndex] =
+            std::numeric_limits<measurement_id_type>::max();
+        sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
+        __syncthreads();
 
         if (threadIndex == 0) {
             *(payload.n_removable_tracks) = 0;
@@ -234,10 +235,24 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
         if (threadIndex == 0) {
             bound = bound * 2;
-            // printf("bound %d n_accepted %d \n", bound, *payload.n_accepted);
+
+            /*
+            if (detect_overlap) {
+                printf("min thread %d \n", min_thread);
+                break;
+            } else {
+                bound = bound * 2;
+                printf("bound %d \n", bound);
+            }
+            */
+            // printf("bound %d \n", bound);
         }
 
         __syncthreads();
+
+        if (detect_overlap){
+            break;
+        }
     }
 
     if (threadIndex == 0) {
@@ -249,7 +264,12 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
             *(payload.n_removable_tracks) = min_thread;
         }
     }
-
+    /*
+    if (threadIndex == 0) {
+        printf("min thread %d n removables %d n_accepted %d \n", min_thread,
+               *(payload.n_removable_tracks), *payload.n_accepted);
+    }
+    */
     __syncthreads();
 
     meas_to_remove[threadIndex] = sh_meas_ids[threadIndex];
