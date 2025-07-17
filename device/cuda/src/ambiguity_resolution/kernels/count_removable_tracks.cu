@@ -133,6 +133,7 @@ __device__ void process_tracks_and_find_min_thread(
         n_accepted_tracks_per_measurement,
     const vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
     const unsigned int* n_accepted) {
+
     // Step 1: 각 thread가 n_meas를 shared memory로 로드
     if (gid >= 0) {
         shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
@@ -146,6 +147,7 @@ __device__ void process_tracks_and_find_min_thread(
 
     // 최소 1개는 보장
     if (threadIndex == 0 && n_tracks_to_iterate == 0) {
+        n_meas_total = 0;
         n_tracks_to_iterate = 1;
     }
     __syncthreads();
@@ -230,7 +232,7 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         *(payload.n_removable_tracks) = 0;
         *(payload.n_meas_to_remove) = 0;
         n_meas_total = 0;
-        bound = 512;
+        bound = 128;
         N = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
@@ -240,11 +242,20 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    process_tracks_and_find_min_thread(
-        gid, threadIndex, shared_n_meas, n_tracks_to_iterate, n_meas_total,
-        bound, stop, sh_meas_ids, sh_threads, N, min_thread, detect_overlap,
-        n_meas, sorted_ids, meas_ids, n_accepted_tracks_per_measurement,
-        meas_id_to_unique_id, payload.n_accepted);
+    while (bound <= 512) {
+
+        process_tracks_and_find_min_thread(
+            gid, threadIndex, shared_n_meas, n_tracks_to_iterate, n_meas_total,
+            bound, stop, sh_meas_ids, sh_threads, N, min_thread, detect_overlap,
+            n_meas, sorted_ids, meas_ids, n_accepted_tracks_per_measurement,
+            meas_id_to_unique_id, payload.n_accepted);
+
+        if (detect_overlap) {
+            break;
+        }
+
+        bound = bound << 1;
+    }
 
     if (threadIndex == 0) {
         if (min_thread == 0) {
