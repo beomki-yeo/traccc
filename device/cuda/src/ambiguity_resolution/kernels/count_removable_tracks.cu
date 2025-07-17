@@ -52,6 +52,111 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
     __syncthreads();
 }
 
+__device__ void process_tracks_and_measurements(
+    int threadIndex, int gid, unsigned int bound,
+    unsigned int& n_tracks_to_iterate, bool& stop, unsigned int& n_meas_total,
+    unsigned int& N, unsigned int& min_thread, int* shared_n_meas,
+    measurement_id_type* sh_meas_ids, unsigned int* sh_threads,
+    vecmem::device_vector<const unsigned int>& sorted_ids,
+    vecmem::jagged_device_vector<const measurement_id_type>& meas_ids,
+    vecmem::device_vector<const unsigned int>& n_meas,
+    vecmem::device_vector<const unsigned int>&
+        n_accepted_tracks_per_measurement,
+    vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
+    unsigned int n_accepted) {
+    // 1) 초기화
+    shared_n_meas[threadIndex] = 0;
+    sh_meas_ids[threadIndex] = std::numeric_limits<measurement_id_type>::max();
+    sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
+    __syncthreads();
+
+    // 2) gid가 유효하면 shared_n_meas 채움
+    if (gid >= 0) {
+        shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
+    }
+    __syncthreads();
+
+    // 3) 트랙 수 결정
+    auto n_tracks_total = min(bound, n_accepted);
+    count_tracks(threadIndex, shared_n_meas, n_tracks_total, bound,
+                 n_tracks_to_iterate, stop);
+
+    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
+        n_tracks_to_iterate = 1;
+    }
+
+    // 4) n_tracks_to_iterate만큼 측정 ID 로드
+    if (threadIndex < n_tracks_to_iterate && gid >= 0) {
+        const auto& mids = meas_ids[sorted_ids[gid]];
+        for (const auto& id : mids) {
+            const unsigned int pos = atomicAdd(&n_meas_total, 1);
+            sh_meas_ids[pos] = id;
+            sh_threads[pos] = threadIndex;
+        }
+    }
+    __syncthreads();
+
+    // 5) Bitonic sort 준비
+    if (threadIndex == 0) {
+        N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
+    }
+    __syncthreads();
+
+    // 6) Bitonic sort 실행
+    const auto tid = threadIndex;
+    for (int k = 2; k <= N; k <<= 1) {
+        for (int j = k >> 1; j > 0; j >>= 1) {
+            int ixj = tid ^ j;
+
+            if (ixj > tid && ixj < N && tid < N) {
+                auto meas_i = sh_meas_ids[tid];
+                auto meas_j = sh_meas_ids[ixj];
+                auto thread_i = sh_threads[tid];
+                auto thread_j = sh_threads[ixj];
+
+                bool ascending = ((tid & k) == 0);
+                bool should_swap =
+                    (meas_i > meas_j ||
+                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
+
+                if (should_swap) {
+                    sh_meas_ids[tid] = meas_j;
+                    sh_meas_ids[ixj] = meas_i;
+                    sh_threads[tid] = thread_j;
+                    sh_threads[ixj] = thread_i;
+                }
+            }
+            __syncthreads();
+        }
+    }
+
+    // 7) 시작점 탐색 및 min_thread 결정
+    if (threadIndex < n_meas_total) {
+        auto mid = sh_meas_ids[threadIndex];
+        bool is_start =
+            (threadIndex == 0) || (sh_meas_ids[threadIndex - 1] != mid);
+        const auto unique_meas_idx = meas_id_to_unique_id.at(mid);
+
+        if (is_start) {
+            int i = threadIndex + 1;
+            int n_sharing_tracks = 1;
+
+            while (i < n_meas_total && sh_meas_ids[i] == mid) {
+                if (sh_threads[i] != sh_threads[i - 1]) {
+                    n_sharing_tracks++;
+
+                    if (n_sharing_tracks ==
+                        n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
+                        atomicMin(&min_thread, sh_threads[i - 1]);
+                        break;
+                    }
+                }
+                i++;
+            }
+        }
+    }
+}
+
 __launch_bounds__(512) __global__ void count_removable_tracks(
     device::count_removable_tracks_payload payload) {
 
@@ -94,129 +199,42 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     auto threadIndex = threadIdx.x;
 
     int gid = static_cast<int>(*payload.n_accepted) - 1 - threadIndex;
-    shared_n_meas[threadIndex] = 0;
-    sh_meas_ids[threadIndex] = std::numeric_limits<measurement_id_type>::max();
-    sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
 
     if (threadIndex == 0) {
-        *(payload.n_removable_tracks) = 0;
-        *(payload.n_meas_to_remove) = 0;
-        n_meas_total = 0;
-        bound = 512;
-        N = 1;
-        n_tracks_to_iterate = 0;
-        min_thread = std::numeric_limits<unsigned int>::max();
-        stop = false;
+        bound = 64;
     }
 
     __syncthreads();
 
-    if (gid >= 0) {
-        shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
-    }
+    while (bound <= 512) {
 
-    __syncthreads();
-
-    auto n_tracks_total = min(bound, *payload.n_accepted);
-
-    // @TODO: Improve the logic
-    count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
-                 n_tracks_to_iterate, stop);
-    /*
-    for (int i = 0; i < 100; i++) {
-        count_tracks(threadIdx.x, shared_n_meas, n_tracks_total, bound,
-                     n_tracks_to_iterate, stop);
-        __syncthreads();
-        if (stop)
-            break;
-
-        if (gid >= 0 && static_cast<unsigned int>(gid) < sorted_ids.size()) {
-            const auto trk_id = sorted_ids[gid];
-            if (trk_id < n_meas.size()) {
-                shared_n_meas[threadIndex] = n_meas[trk_id];
-            }
+        if (threadIndex == 0) {
+            *(payload.n_removable_tracks) = 0;
+            *(payload.n_meas_to_remove) = 0;
+            n_meas_total = 0;
+            N = 1;
+            n_tracks_to_iterate = 0;
+            min_thread = std::numeric_limits<unsigned int>::max();
+            stop = false;
         }
+
+        __syncthreads();
+
+        process_tracks_and_measurements(
+            threadIndex, gid, bound, n_tracks_to_iterate, stop, n_meas_total, N,
+            min_thread, shared_n_meas, sh_meas_ids, sh_threads, sorted_ids,
+            meas_ids, n_meas, n_accepted_tracks_per_measurement,
+            meas_id_to_unique_id, *payload.n_accepted);
+
+        __syncthreads();
+
+        if (threadIndex == 0) {
+            bound = bound * 2;
+            //printf("bound %d n_accepted %d \n", bound, *payload.n_accepted);
+        }
+
         __syncthreads();
     }
-    */
-
-    if (threadIndex == 0 && n_tracks_to_iterate == 0) {
-        n_tracks_to_iterate = 1;
-    }
-
-    // @TODO: Improve the logic
-    if (threadIndex < n_tracks_to_iterate && gid >= 0) {
-        const auto& mids = meas_ids[sorted_ids[gid]];
-        for (const auto& id : mids) {
-            const unsigned int pos = atomicAdd(&n_meas_total, 1);
-            sh_meas_ids[pos] = id;
-            sh_threads[pos] = threadIndex;
-        }
-    }
-
-    __syncthreads();
-
-    // Bitonic sort on meas_to_thread w.r.t. measurement id
-    if (threadIndex == 0) {
-        N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
-    }
-    __syncthreads();
-
-    const auto tid = threadIndex;
-    for (int k = 2; k <= N; k <<= 1) {
-        for (int j = k >> 1; j > 0; j >>= 1) {
-            int ixj = tid ^ j;
-
-            if (ixj > tid && ixj < N && tid < N) {
-                auto meas_i = sh_meas_ids[tid];
-                auto meas_j = sh_meas_ids[ixj];
-                auto thread_i = sh_threads[tid];
-                auto thread_j = sh_threads[ixj];
-
-                bool ascending = ((tid & k) == 0);
-                bool should_swap =
-                    (meas_i > meas_j ||
-                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
-
-                if (should_swap) {
-                    sh_meas_ids[tid] = meas_j;
-                    sh_meas_ids[ixj] = meas_i;
-                    sh_threads[tid] = thread_j;
-                    sh_threads[ixj] = thread_i;
-                }
-            }
-            __syncthreads();
-        }
-    }
-
-    // Find starting point
-    if (threadIndex < n_meas_total) {
-        auto mid = sh_meas_ids[threadIndex];
-        bool is_start =
-            (threadIndex == 0) || (sh_meas_ids[threadIndex - 1] != mid);
-        const auto unique_meas_idx = meas_id_to_unique_id.at(mid);
-
-        if (is_start) {
-
-            int i = threadIndex + 1;
-            int n_sharing_tracks = 1;
-
-            while (i < n_meas_total && sh_meas_ids[i] == mid) {
-                if (sh_threads[i] != sh_threads[i - 1]) {
-                    n_sharing_tracks++;
-
-                    if (n_sharing_tracks ==
-                        n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
-                        atomicMin(&min_thread, sh_threads[i - 1]);
-                        break;
-                    }
-                }
-                i++;
-            }
-        }
-    }
-
-    __syncthreads();
 
     if (threadIndex == 0) {
         if (min_thread == 0) {
