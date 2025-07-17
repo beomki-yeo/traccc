@@ -65,12 +65,6 @@ __device__ void process_tracks_and_measurements(
     vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
     unsigned int n_accepted, bool& detect_overlap) {
 
-    // Fill shared_n_meas if gid is valid
-    if (gid >= 0) {
-        shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
-    }
-    __syncthreads();
-
     // Determine the number of tracks to count
     auto n_tracks_total = min(bound, n_accepted);
     count_tracks(threadIndex, shared_n_meas, n_tracks_total, bound,
@@ -205,12 +199,16 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
     while (true) {
 
-        // Reset
+        // Fill shared_n_meas if gid is valid
         shared_n_meas[threadIndex] = 0;
+        if (gid >= 0) {
+            shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
+        }
+
+        // Reset
         sh_meas_ids[threadIndex] =
             std::numeric_limits<measurement_id_type>::max();
         sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
-        __syncthreads();
 
         if (threadIndex == 0) {
             *(payload.n_removable_tracks) = 0;
@@ -233,22 +231,17 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
         __syncthreads();
 
-        if (bound == 512){
+        if (bound == 512) {
             break;
         }
-
-        __syncthreads();
 
         if (detect_overlap) {
             break;
-        }
-        else {
+        } else {
             if (threadIndex == 0) {
                 bound = 512;
             }
         }
-
-        __syncthreads();
     }
 
     if (threadIndex == 0) {
