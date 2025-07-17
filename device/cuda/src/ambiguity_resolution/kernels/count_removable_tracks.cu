@@ -90,7 +90,8 @@ __device__ void find_starting_point_and_update_min(
     unsigned int* min_thread,
     const vecmem::device_vector<const unsigned int>&
         n_accepted_tracks_per_measurement,
-    const vecmem::device_vector<const unsigned int>& meas_id_to_unique_id) {
+    const vecmem::device_vector<const unsigned int>& meas_id_to_unique_id,
+    bool& detect_overlap) {
 
     if (threadIndex < n_meas_total) {
         auto mid = sh_meas_ids[threadIndex];
@@ -108,6 +109,7 @@ __device__ void find_starting_point_and_update_min(
 
                     if (n_sharing_tracks ==
                         n_accepted_tracks_per_measurement.at(unique_meas_idx)) {
+                        detect_overlap = 1;
                         atomicMin(min_thread, sh_threads[i - 1]);
                         break;
                     }
@@ -141,7 +143,9 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
     __shared__ unsigned int bound;
     __shared__ unsigned int n_tracks_to_iterate;
     __shared__ unsigned int min_thread;
+    __shared__ unsigned int N_max;
     __shared__ unsigned int N;
+    __shared__ bool detect_overlap;
     __shared__ bool stop;
 
     vecmem::device_vector<const unsigned int> sorted_ids(
@@ -170,8 +174,10 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         n_meas_total = 0;
         bound = 512;
         N = 1;
+        N_max = 1;
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
+        detect_overlap = 0;
         stop = false;
     }
 
@@ -224,17 +230,65 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
     // Bitonic sort on meas_to_thread w.r.t. measurement id
     if (threadIndex == 0) {
-        N = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
+        N_max = (n_meas_total == 0) ? 1 : 1 << (32 - __clz(n_meas_total - 1));
+        N = 1;
     }
     __syncthreads();
 
-    bitonic_sort_shared(sh_meas_ids, sh_threads, N);
-
-    find_starting_point_and_update_min(
-        threadIndex, n_meas_total, sh_meas_ids, sh_threads, &min_thread,
-        n_accepted_tracks_per_measurement, meas_id_to_unique_id);
-
+    if (threadIndex == 0) {
+        printf("N %d N_max %d n_meas_total %d\n", N, N_max, n_meas_total);
+    }
     __syncthreads();
+
+    while (N <= N_max) {
+
+        if (n_meas_total == 0) {
+            break;
+        }
+        __syncthreads();
+        /*
+        if (threadIndex == 0) {
+            printf("N %d N_max %d n_meas_total %d\n", N, N_max, n_meas_total);
+        }
+        __syncthreads();
+        */
+
+        bitonic_sort_shared(sh_meas_ids, sh_threads, N);
+
+        find_starting_point_and_update_min(
+            threadIndex, min(N, n_meas_total), sh_meas_ids, sh_threads,
+            &min_thread, n_accepted_tracks_per_measurement,
+            meas_id_to_unique_id, detect_overlap);
+
+        __syncthreads();
+
+        if (threadIndex == 0) {
+            if (detect_overlap) {
+                printf(
+                    "Detected overlap. min thread %d n tracks to iterate %d \n",
+                    min_thread, n_tracks_to_iterate);
+            } else {
+                printf(
+                    "Did not detect overlap. min thread %d n tracks to iterate "
+                    "%d  \n",
+                    min_thread, n_tracks_to_iterate);
+            }
+        }
+
+        __syncthreads();
+
+        if (detect_overlap) {
+            break;
+        }
+
+        __syncthreads();
+
+        if (threadIndex == 0) {
+            N = N << 1;
+        }
+
+        __syncthreads();
+    }
 
     if (threadIndex == 0) {
         if (min_thread == 0) {
@@ -244,6 +298,8 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         } else {
             *(payload.n_removable_tracks) = min_thread;
         }
+
+        printf(" \n Removable tracks: %d \n", *(payload.n_removable_tracks));
     }
 
     __syncthreads();
