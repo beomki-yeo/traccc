@@ -74,6 +74,11 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
     int shifted_idx = static_cast<int>(gid);
     auto N = *(payload.n_updated_tracks);
 
+    if (shifted_idx >= temp_sorted_ids.size()) {
+        printf("hi0 %lu %d \n", static_cast<std::size_t>(shifted_idx),
+               temp_sorted_ids.size());
+    }
+
     if (is_updated[tid]) {
 
         if (gid > 0) {
@@ -140,7 +145,16 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
             }
 
             shifted_idx -= delta;
+
+            if (shifted_idx >= temp_sorted_ids.size()) {
+                printf("hi1 %lu %d %d \n",
+                       static_cast<std::size_t>(shifted_idx),
+                       temp_sorted_ids.size(), delta);
+            }
         }
+
+        printf("hi4 %lu %d gid %d N %d \n", static_cast<std::size_t>(shifted_idx),
+               temp_sorted_ids.size(), gid, N);
 
         for (int i = 0; i < N; i++) {
 
@@ -153,6 +167,12 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
             }
         }
 
+        if (shifted_idx >= temp_sorted_ids.size()) {
+            printf("hi5 %lu %d gid %d \n",
+                   static_cast<std::size_t>(shifted_idx),
+                   temp_sorted_ids.size(), gid);
+        }
+
         int offset = 0;
         for (int i = 0; i < N; i++) {
             if (updated_tracks[i] == tid) {
@@ -161,6 +181,11 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
             }
         }
         shifted_idx += offset;
+
+        if (shifted_idx >= temp_sorted_ids.size()) {
+            printf("hi6 %lu %d gid %d offset %d \n", static_cast<std::size_t>(shifted_idx),
+                   temp_sorted_ids.size(), gid, offset);
+        }
 
     } else {
         for (int i = 0; i < N; i++) {
@@ -177,6 +202,11 @@ __global__ void rearrange_tracks(device::rearrange_tracks_payload payload) {
                 }
             }
         }
+    }
+
+    if (shifted_idx >= temp_sorted_ids.size()) {
+        printf("hi7 %lu %d gid %d \n", static_cast<std::size_t>(shifted_idx),
+               temp_sorted_ids.size(), gid);
     }
 
     temp_sorted_ids.at(shifted_idx) = tid;

@@ -30,6 +30,12 @@ __global__ void fill_unique_meas_id_map(
         payload.meas_id_to_unique_id_view);
 
     auto meas_id = unique_meas.at(globalIndex);
+
+
+    if (meas_id >= meas_id_to_unique_id.size()){
+        printf("%d %d \n", meas_id, meas_id_to_unique_id.size());
+    }
+        
     meas_id_to_unique_id.at(meas_id) = globalIndex;
 }
 
