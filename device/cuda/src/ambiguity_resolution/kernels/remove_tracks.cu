@@ -35,6 +35,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
     __shared__ unsigned int shared_tids[1024];
     __shared__ measurement_id_type sh_meas_ids[1024];
     __shared__ unsigned int sh_threads[1024];
+    __shared__ unsigned int n_accepted_prev;
 
     auto threadIndex = threadIdx.x;
 
@@ -62,8 +63,8 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
         payload.meas_to_remove_view);
     vecmem::device_vector<unsigned int> threads(payload.threads_view);
 
-    auto n_accepted_prev = (*payload.n_accepted);
     if (threadIndex == 0) {
+        n_accepted_prev = (*payload.n_accepted);
         (*payload.n_accepted) -= *(payload.n_removable_tracks);
     }
 
