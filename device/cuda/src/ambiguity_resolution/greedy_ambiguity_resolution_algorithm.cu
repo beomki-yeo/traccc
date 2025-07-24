@@ -296,6 +296,21 @@ greedy_ambiguity_resolution_algorithm::operator()(
         m_stream.get().synchronize();
     }
 
+    // Sort tracks per measurement
+    for (unsigned int i = 0; i < meas_count; i++) {
+        // No need to sort if the number of tracks is 1)
+        if (unique_meas_counts[i] == 1) {
+            continue;
+        } else if (unique_meas_counts[i] > 1) {
+            
+
+        } else {
+            throw std::runtime_error(
+                "The count of unique measurements in the flat id vector should "
+                "always be larger than or equal to 1");
+        }
+    }
+
     // Make shared number of measurements vector
     vecmem::data::vector_buffer<unsigned int> n_shared_buffer{n_tracks,
                                                               m_mr.main};
