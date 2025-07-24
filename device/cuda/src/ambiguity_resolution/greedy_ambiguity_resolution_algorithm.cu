@@ -478,7 +478,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
                 .threads_view = threads_buffer,
                 .n_valid_threads = n_valid_threads_device.get()});
 
-        kernels::remove_tracks<<<1, 1024, 0, stream>>>(
+        kernels::remove_tracks<<<1, 512, 0, stream>>>(
             device::remove_tracks_payload{
                 .sorted_ids_view = sorted_ids_buffer,
                 .n_accepted = n_accepted_device.get(),

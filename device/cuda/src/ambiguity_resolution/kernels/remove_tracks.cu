@@ -26,15 +26,16 @@
 
 namespace traccc::cuda::kernels {
 
-__global__ void remove_tracks(device::remove_tracks_payload payload) {
+__launch_bounds__(512) __global__
+    void remove_tracks(device::remove_tracks_payload payload) {
 
     if (*(payload.terminate) == 1) {
         return;
     }
 
-    __shared__ unsigned int shared_tids[1024];
-    __shared__ measurement_id_type sh_meas_ids[1024];
-    __shared__ unsigned int sh_threads[1024];
+    __shared__ unsigned int shared_tids[512];
+    __shared__ measurement_id_type sh_meas_ids[512];
+    __shared__ unsigned int sh_threads[512];
 
     auto threadIndex = threadIdx.x;
 
