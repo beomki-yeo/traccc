@@ -73,7 +73,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
         (*payload.n_accepted) -= *(payload.n_removable_tracks);
     }
 
-    if (threadIndex < *(payload.n_meas_to_remove)) {
+    if (threadIndex < *(payload.n_valid_threads)) {
         sh_meas_ids[threadIndex] = meas_to_remove[threadIndex];
         sh_threads[threadIndex] = threads[threadIndex];
         is_valid_thread = true;
@@ -115,7 +115,7 @@ __global__ void remove_tracks(device::remove_tracks_payload payload) {
         track_status[worst_idx] = 0;
 
         int n_sharing_tracks = 1;
-        for (unsigned int i = threadIndex + 1; i < *(payload.n_meas_to_remove);
+        for (unsigned int i = threadIndex + 1; i < *(payload.n_valid_threads);
              ++i) {
 
             if (sh_meas_ids[i] == id && sh_threads[i] != sh_threads[i - 1]) {
