@@ -83,16 +83,8 @@ __launch_bounds__(512) __global__
     __syncthreads();
 
     if (is_valid_thread) {
-
         const auto id = sh_meas_ids[threadIndex];
-        is_duplicate = false;
-
-        for (unsigned int i = 0; i < threadIndex; ++i) {
-            if (sh_meas_ids[i] == id) {
-                is_duplicate = true;
-                break;
-            }
-        }
+        is_duplicate = (threadIndex > 0 && sh_meas_ids[threadIndex - 1] == id);
     }
 
     bool active = false;
