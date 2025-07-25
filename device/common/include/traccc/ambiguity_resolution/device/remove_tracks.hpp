@@ -112,7 +112,7 @@ struct remove_tracks_payload {
     /**
      * @brief The number of threads that can remove its corresponding track
      */
-    unsigned int* n_valid_threads;    
+    unsigned int* n_valid_threads;
 };
 
 }  // namespace traccc::device
