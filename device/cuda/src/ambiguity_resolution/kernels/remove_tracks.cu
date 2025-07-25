@@ -33,16 +33,17 @@ __launch_bounds__(512) __global__
         return;
     }
 
-    __shared__ unsigned int shared_tids[512];
+    __shared__ unsigned int shared_trk_ids[512];
     __shared__ measurement_id_type sh_meas_ids[512];
     __shared__ unsigned int sh_threads[512];
+    __shared__ unsigned int N
 
-    auto threadIndex = threadIdx.x;
+        auto threadIndex = threadIdx.x;
 
     bool is_valid_thread = false;
     bool is_duplicate = true;
 
-    shared_tids[threadIndex] = std::numeric_limits<unsigned int>::max();
+    shared_trk_ids[threadIndex] = std::numeric_limits<unsigned int>::max();
 
     vecmem::device_vector<const unsigned int> sorted_ids(
         payload.sorted_ids_view);
@@ -141,13 +142,14 @@ __launch_bounds__(512) __global__
                              track_status.end(), 1) -
                 track_status.begin();
 
-            shared_tids[threadIndex] =
+            shared_trk_ids[threadIndex] =
                 static_cast<unsigned int>(tracks[alive_idx]);
 
-            auto tid = shared_tids[threadIndex];
+            auto trk_id = shared_trk_ids[threadIndex];
 
-            const auto m_count = static_cast<unsigned int>(thrust::count(
-                thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));
+            const auto m_count = static_cast<unsigned int>(
+                thrust::count(thrust::seq, meas_ids[trk_id].begin(),
+                              meas_ids[trk_id].end(), id));
 
             const unsigned int N_S =
                 vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
@@ -156,6 +158,38 @@ __launch_bounds__(512) __global__
     }
 
     __syncthreads();
+
+    // Bitonic sort on track id
+    if (threadIndex == 0) {
+        N = 1 << (32 - __clz(*(payload.n_valid_threads) - 1));
+    }
+    __syncthreads();
+
+    const auto tid = threadIndex;
+    for (int k = 2; k <= N; k <<= 1) {
+        for (int j = k >> 1; j > 0; j >>= 1) {
+            int ixj = tid ^ j;
+
+            if (ixj > tid && ixj < N && tid < N) {
+                auto trk_id_i = shared_trk_ids[tid];
+                auto trk_id_j = shared_trk_ids[ixj];
+                /*
+                bool ascending = ((tid & k) == 0);
+                bool should_swap =
+                    (meas_i > meas_j ||
+                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
+
+                if (should_swap) {
+                    sh_meas_ids[tid] = meas_j;
+                    sh_meas_ids[ixj] = meas_i;
+                    sh_threads[tid] = thread_j;
+                    sh_threads[ixj] = thread_i;
+                }
+                */
+            }
+            __syncthreads();
+        }
+    }
 
     if (active) {
         auto tid = shared_tids[threadIndex];
