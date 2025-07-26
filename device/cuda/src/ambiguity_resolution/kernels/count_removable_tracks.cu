@@ -243,15 +243,6 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
     __syncthreads();
 
-    /*
-    auto n_meas_to_remove_temp = *(payload.n_meas_to_remove);
-
-    if (threadIndex == 0) {
-        *(payload.n_meas_to_remove) = 0;
-    }
-
-    __syncthreads();
-    */
     int is_valid =
         (threads[threadIndex] < *(payload.n_removable_tracks)) ? 1 : 0;
 

@@ -36,9 +36,9 @@ __launch_bounds__(512) __global__
     __shared__ unsigned int shared_trk_ids[512];
     __shared__ measurement_id_type sh_meas_ids[512];
     __shared__ unsigned int sh_threads[512];
-    __shared__ unsigned int N
+    __shared__ unsigned int N;
 
-        auto threadIndex = threadIdx.x;
+    auto threadIndex = threadIdx.x;
 
     bool is_valid_thread = false;
     bool is_duplicate = true;
@@ -152,7 +152,7 @@ __launch_bounds__(512) __global__
                               meas_ids[trk_id].end(), id));
 
             const unsigned int N_S =
-                vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
+                vecmem::device_atomic_ref<unsigned int>(n_shared.at(trk_id))
                     .fetch_sub(m_count);
         }
     }
@@ -173,33 +173,24 @@ __launch_bounds__(512) __global__
             if (ixj > tid && ixj < N && tid < N) {
                 auto trk_id_i = shared_trk_ids[tid];
                 auto trk_id_j = shared_trk_ids[ixj];
-                /*
+
                 bool ascending = ((tid & k) == 0);
-                bool should_swap =
-                    (meas_i > meas_j ||
-                     (meas_i == meas_j && thread_i > thread_j)) == ascending;
+                bool should_swap = (trk_id_i > trk_id_j) == ascending;
 
                 if (should_swap) {
-                    sh_meas_ids[tid] = meas_j;
-                    sh_meas_ids[ixj] = meas_i;
-                    sh_threads[tid] = thread_j;
-                    sh_threads[ixj] = thread_i;
+                    shared_trk_ids[tid] = trk_id_j;
+                    shared_trk_ids[ixj] = trk_id_i;
                 }
-                */
             }
             __syncthreads();
         }
     }
 
     if (active) {
-        auto tid = shared_tids[threadIndex];
-        bool already_pushed = false;
-        for (unsigned int i = 0; i < threadIndex; ++i) {
-            if (shared_tids[i] == tid) {
-                already_pushed = true;
-                break;
-            }
-        }
+        auto trk_id = shared_trk_ids[threadIndex];
+        bool already_pushed =
+            (threadIndex > 0 && shared_trk_ids[threadIndex - 1] == trk_id);
+
         if (!already_pushed) {
 
             // Write updated track IDs
@@ -208,11 +199,12 @@ __launch_bounds__(512) __global__
 
             const unsigned int pos = num_updated_tracks.fetch_add(1);
 
-            updated_tracks[pos] = tid;
-            is_updated[tid] = 1;
+            updated_tracks[pos] = trk_id;
+            is_updated[trk_id] = 1;
 
-            rel_shared.at(tid) = static_cast<traccc::scalar>(n_shared.at(tid)) /
-                                 static_cast<traccc::scalar>(n_meas.at(tid));
+            rel_shared.at(trk_id) =
+                static_cast<traccc::scalar>(n_shared.at(trk_id)) /
+                static_cast<traccc::scalar>(n_meas.at(trk_id));
         }
     }
 }
