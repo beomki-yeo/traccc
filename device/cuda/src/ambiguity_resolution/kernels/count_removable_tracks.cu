@@ -37,8 +37,6 @@ __device__ void count_tracks(int tid, int* sh_n_meas, int n_tracks,
                 add = stride * 2;
             }
         }
-
-        __syncthreads();
     }
 
     if (tid == 0) {
@@ -110,8 +108,6 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
         min_thread = std::numeric_limits<unsigned int>::max();
         stop = false;
     }
-
-    __syncthreads();
 
     if (gid >= 0) {
         shared_n_meas[threadIndex] = n_meas[sorted_ids[gid]];
@@ -234,8 +230,6 @@ __launch_bounds__(512) __global__ void count_removable_tracks(
 
     meas_to_remove[threadIndex] = sh_meas_ids[threadIndex];
     threads[threadIndex] = sh_threads[threadIndex];
-
-    __syncthreads();
 
     if (threadIndex == 0) {
         *(payload.n_meas_to_remove) = n_meas_total;
