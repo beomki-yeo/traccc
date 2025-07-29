@@ -20,6 +20,11 @@ namespace traccc::device {
 struct block_bitonic_sort_payload {
 
     /**
+     * @brief Whether to terminate the calculation
+     */
+    int* terminate;
+
+    /**
      * @brief The number of measurements to remove
      */
     unsigned int* n_meas_to_remove;
