@@ -393,6 +393,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
     vecmem::unique_alloc_ptr<unsigned int> n_updated_tracks_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
+    vecmem::unique_alloc_ptr<unsigned int> n_tracks_to_iterate_device =
+        vecmem::make_unique_alloc<unsigned int>(m_mr.main);
 
     // Thread block size
     unsigned int nThreads_adaptive = m_warp_size * 4;
@@ -453,6 +455,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
             device::count_removable_tracks_payload{
                 .terminate = terminate_device.get(),
                 .max_shared = max_shared_device.get(),
+                .n_tracks_to_iterate = n_tracks_to_iterate_device.get(),
                 .sorted_ids_view = sorted_ids_buffer,
                 .n_accepted = n_accepted_device.get(),
                 .meas_ids_view = meas_ids_buffer,
@@ -465,6 +468,26 @@ greedy_ambiguity_resolution_algorithm::operator()(
                 .meas_to_remove_view = meas_to_remove_buffer,
                 .threads_view = threads_buffer,
                 .n_valid_threads = n_valid_threads_device.get()});
+
+        kernels::block_bitonic_sort<<<1, 512, 0, stream>>>(
+            device::block_bitonic_sort_payload{
+                .terminate = terminate_device.get(),
+                .n_meas_to_remove = n_meas_to_remove_device.get(),
+                .meas_to_remove_view = meas_to_remove_buffer,
+                .threads_view = threads_buffer});
+
+        kernels::prune_measurements_to_remove<<<1, 512, 0, stream>>>(
+            device::prune_measurements_to_remove_payload{
+                .terminate = terminate_device.get(),
+                .n_removable_tracks = n_removable_tracks_device.get(),
+                .n_meas_to_remove = n_meas_to_remove_device.get(),
+                .n_valid_threads = n_valid_threads_device.get(),
+                .n_tracks_to_iterate = n_tracks_to_iterate_device.get(),
+                .meas_id_to_unique_id_view = meas_id_to_unique_id_buffer,
+                .n_accepted_tracks_per_measurement_view =
+                    n_accepted_tracks_per_measurement_buffer,
+                .meas_to_remove_view = meas_to_remove_buffer,
+                .threads_view = threads_buffer});
 
         kernels::remove_tracks<<<1, 512, 0, stream>>>(
             device::remove_tracks_payload{

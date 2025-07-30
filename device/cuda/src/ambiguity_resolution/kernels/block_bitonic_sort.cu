@@ -16,7 +16,7 @@ namespace traccc::cuda::kernels {
 
 __global__ void block_bitonic_sort(device::block_bitonic_sort_payload payload) {
 
-    if (*(payload.terminate) == 1 || *(payload.n_meas_to_remove) <= 1) {
+    if (*(payload.terminate) == 1) {
         return;
     }
 
@@ -33,20 +33,24 @@ __global__ void block_bitonic_sort(device::block_bitonic_sort_payload payload) {
     sh_meas_ids[threadIndex] = std::numeric_limits<measurement_id_type>::max();
     sh_threads[threadIndex] = std::numeric_limits<unsigned int>::max();
 
-    if (threadIndex <= *(payload.n_meas_to_remove)){
+    if (threadIndex < *(payload.n_meas_to_remove)) {
         sh_meas_ids[threadIndex] = meas_to_remove[threadIndex];
         sh_threads[threadIndex] = threads[threadIndex];
     }
 
+
     if (threadIndex == 0) {
 
         // Padding N to the power of 2
-        N = 1 << (32 - __clz(*(payload.n_meas_to_remove) - 1));
+        N = (*(payload.n_meas_to_remove) == 0)
+                ? 1
+                : 1 << (32 - __clz(*(payload.n_meas_to_remove) - 1));
     }
+
     __syncthreads();
 
     // Bitonic sort on meas_to_thread w.r.t. measurement id
-    const auto tid = threadIdx.x;
+    const auto& tid = threadIndex;
     for (int k = 2; k <= N; k <<= 1) {
         for (int j = k >> 1; j > 0; j >>= 1) {
             int ixj = tid ^ j;
@@ -72,6 +76,9 @@ __global__ void block_bitonic_sort(device::block_bitonic_sort_payload payload) {
             __syncthreads();
         }
     }
+
+    meas_to_remove.at(tid) = sh_meas_ids[tid];
+    threads.at(tid) = sh_threads[tid];
 }
 
 }  // namespace traccc::cuda::kernels

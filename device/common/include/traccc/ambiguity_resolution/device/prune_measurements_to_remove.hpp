@@ -20,6 +20,11 @@ namespace traccc::device {
 struct prune_measurements_to_remove_payload {
 
     /**
+     * @brief Whether to terminate the calculation
+     */
+    int* terminate;
+
+    /**
      * @brief The number of worst tracks removable
      */
     unsigned int* n_removable_tracks;
@@ -33,6 +38,22 @@ struct prune_measurements_to_remove_payload {
      * @brief The number of threads that can remove its corresponding track
      */
     unsigned int* n_valid_threads;
+
+    /**
+     * @brief The number of tracks to iterate
+     */
+    unsigned int* n_tracks_to_iterate;
+
+    /**
+     * @brief View object to the meas id to unique id map
+     */
+    vecmem::data::vector_view<const unsigned int> meas_id_to_unique_id_view;
+
+    /**
+     * @brief View object to the number of accepted tracks per measurement
+     */
+    vecmem::data::vector_view<const unsigned int>
+        n_accepted_tracks_per_measurement_view;
 
     /**
      * @brief View object to measurements to remove

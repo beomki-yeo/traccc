@@ -32,6 +32,11 @@ struct count_removable_tracks_payload {
     unsigned int* max_shared;
 
     /**
+     * @brief The number of tracks to iterate
+     */
+    unsigned int* n_tracks_to_iterate;
+
+    /**
      * @brief View object to the sorted track
      */
     vecmem::data::vector_view<const unsigned int> sorted_ids_view;
