@@ -52,6 +52,8 @@ __global__ void block_bitonic_sort(device::block_bitonic_sort_payload payload) {
     // Bitonic sort on meas_to_thread w.r.t. measurement id
     const auto& tid = threadIndex;
     for (int k = 2; k <= N; k <<= 1) {
+        bool ascending = ((tid & k) == 0);
+        
         for (int j = k >> 1; j > 0; j >>= 1) {
             int ixj = tid ^ j;
 
@@ -61,7 +63,6 @@ __global__ void block_bitonic_sort(device::block_bitonic_sort_payload payload) {
                 auto thread_i = sh_threads[tid];
                 auto thread_j = sh_threads[ixj];
 
-                bool ascending = ((tid & k) == 0);
                 bool should_swap =
                     (meas_i > meas_j ||
                      (meas_i == meas_j && thread_i > thread_j)) == ascending;
