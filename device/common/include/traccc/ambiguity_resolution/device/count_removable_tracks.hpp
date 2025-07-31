@@ -91,6 +91,11 @@ struct count_removable_tracks_payload {
      * @brief Whether to update the max shared in the next iteration
      */
     int* update_max_shared;
+
+    /**
+     * @brief The number of threads that can remove its corresponding track
+     */
+    unsigned int* n_valid_threads;
 };
 
 }  // namespace traccc::device
