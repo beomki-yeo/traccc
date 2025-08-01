@@ -300,7 +300,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
     // Fill tracks per measurement vector
     {
         const unsigned int nThreads = m_warp_size * 2;
-        const unsigned int nBlocks = (meas_count + nThreads - 1) / nThreads;
+        const unsigned int nBlocks = meas_count;
 
         kernels::sort_tracks_per_measurement<<<nBlocks, nThreads, 0, stream>>>(
             device::sort_tracks_per_measurement_payload{

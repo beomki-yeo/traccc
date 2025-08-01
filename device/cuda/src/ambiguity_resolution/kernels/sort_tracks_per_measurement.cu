@@ -19,5 +19,16 @@ __global__ void sort_tracks_per_measurement(
 
     vecmem::jagged_device_vector<unsigned int> tracks_per_measurement(
         payload.tracks_per_measurement_view);
+
+    auto tracks = tracks_per_measurement.at(blockIdx.x);
+    //const unsigned int tid = threadIdx.x;
+
+    //const unsigned int N = 1 << (32 - __clz(tracks.size() - 1));
+
+    /*
+    if (tid == 0) {
+        printf("%d %d %d\n", blockIdx.x, tracks.size(), N);
+    }
+    */
 }
 }  // namespace traccc::cuda::kernels
