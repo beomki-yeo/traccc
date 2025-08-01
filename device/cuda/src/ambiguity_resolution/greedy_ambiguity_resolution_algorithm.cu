@@ -23,6 +23,7 @@
 #include "./kernels/remove_tracks.cuh"
 #include "./kernels/reset_status.cuh"
 #include "./kernels/scan_block_offsets.cuh"
+#include "./kernels/sort_tracks_per_measurement.cuh"
 #include "./kernels/sort_updated_tracks.cuh"
 #include "traccc/cuda/ambiguity_resolution/greedy_ambiguity_resolution_algorithm.hpp"
 
@@ -291,6 +292,20 @@ greedy_ambiguity_resolution_algorithm::operator()(
                     track_status_per_measurement_buffer,
                 .n_accepted_tracks_per_measurement_view =
                     n_accepted_tracks_per_measurement_buffer});
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+
+        m_stream.get().synchronize();
+    }
+
+    // Fill tracks per measurement vector
+    {
+        const unsigned int nThreads = m_warp_size * 2;
+        const unsigned int nBlocks = (meas_count + nThreads - 1) / nThreads;
+
+        kernels::sort_tracks_per_measurement<<<nBlocks, nThreads, 0, stream>>>(
+            device::sort_tracks_per_measurement_payload{
+                .tracks_per_measurement_view = tracks_per_measurement_buffer,
+            });
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
 
         m_stream.get().synchronize();
