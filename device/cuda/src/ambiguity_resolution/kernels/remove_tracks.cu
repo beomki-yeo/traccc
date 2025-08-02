@@ -69,17 +69,6 @@ __launch_bounds__(512) __global__
 
     const unsigned n_accepted_prev = *(payload.n_accepted);
 
-    /*
-    if (threadIdx.x == 0) {
-        for (int i = 0; i < tracks_per_measurement.size(); i++) {
-            for (int j = 0; j < tracks_per_measurement[i].size(); j++) {
-                printf("%d ", tracks_per_measurement[j]);
-            }
-            printf("\n");
-        }
-    }
-    */
-
     __syncthreads();
 
     if (threadIndex == 0) {
