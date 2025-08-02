@@ -23,6 +23,7 @@
 #include "./kernels/remove_tracks.cuh"
 #include "./kernels/reset_status.cuh"
 #include "./kernels/scan_block_offsets.cuh"
+#include "./kernels/sort_measurement_ids.cuh"
 #include "./kernels/sort_tracks_per_measurement.cuh"
 #include "./kernels/sort_updated_tracks.cuh"
 #include "traccc/cuda/ambiguity_resolution/greedy_ambiguity_resolution_algorithm.hpp"
@@ -174,6 +175,19 @@ greedy_ambiguity_resolution_algorithm::operator()(
         m_stream.get().synchronize();
     }
 
+    {
+        const unsigned int nThreads = m_warp_size * 2;
+        const unsigned int nBlocks = n_tracks;
+
+        // Sort measurement ids
+        kernels::sort_measurement_ids<<<nBlocks, nThreads, 0, stream>>>(
+            device::sort_measurement_ids_payload{.meas_ids_view =
+                                                     meas_ids_buffer});
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+
+        m_stream.get().synchronize();
+    }
+
     unsigned int n_accepted = static_cast<unsigned int>(thrust::count(
         thrust_policy, status_buffer.ptr(), status_buffer.ptr() + n_tracks, 1));
 
@@ -299,7 +313,7 @@ greedy_ambiguity_resolution_algorithm::operator()(
 
     // Fill tracks per measurement vector
     {
-        //const unsigned int nThreads = m_warp_size * 2;
+        // const unsigned int nThreads = m_warp_size * 2;
         const unsigned int nThreads = 1024;
         const unsigned int nBlocks = meas_count;
 
