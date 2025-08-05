@@ -83,7 +83,8 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
 
     // Performance writer
     traccc::seeding_performance_writer sd_performance_writer(
-        traccc::seeding_performance_writer::config{},
+        traccc::seeding_performance_writer::config{.truth_config =
+                                                       truth_finding_opts},
         logger().clone("SeedingPerformanceWriter"));
     traccc::finding_performance_writer find_performance_writer(
         traccc::finding_performance_writer::config{.truth_config =
@@ -117,6 +118,7 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
      *****************************/
 
     // B field value
+    const traccc::vector3 field_vec(seeding_opts);
     const auto host_field = traccc::details::make_magnetic_field(bfield_opts);
     const auto device_field = traccc::cuda::make_magnetic_field(
         host_field,
@@ -141,9 +143,12 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
         track_state_d2h{mr, copy, logger().clone("TrackStateD2HCopyAlg")};
 
     // Seeding algorithm
+    const traccc::seedfinder_config seedfinder_config(seeding_opts);
+    const traccc::seedfilter_config seedfilter_config(seeding_opts);
+    const traccc::spacepoint_grid_config spacepoint_grid_config(seeding_opts);
     traccc::host::seeding_algorithm sa(
-        seeding_opts.seedfinder, {seeding_opts.seedfinder},
-        seeding_opts.seedfilter, host_mr, logger().clone("HostSeedingAlg"));
+        seedfinder_config, spacepoint_grid_config, seedfilter_config, host_mr,
+        logger().clone("HostSeedingAlg"));
     traccc::host::track_params_estimation tp(
         host_mr, logger().clone("HostTrackParEstAlg"));
 
@@ -151,9 +156,9 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
 
     vecmem::cuda::async_copy async_copy{stream.cudaStream()};
 
-    traccc::cuda::seeding_algorithm sa_cuda{seeding_opts.seedfinder,
-                                            {seeding_opts.seedfinder},
-                                            seeding_opts.seedfilter,
+    traccc::cuda::seeding_algorithm sa_cuda{seedfinder_config,
+                                            spacepoint_grid_config,
+                                            seedfilter_config,
                                             mr,
                                             async_copy,
                                             stream,
@@ -278,8 +283,7 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
                                              elapsedTimes);
                 params_cuda_buffer =
                     tp_cuda(measurements_cuda_buffer, spacepoints_cuda_buffer,
-                            seeds_cuda_buffer,
-                            {0.f, 0.f, seeding_opts.seedfinder.bFieldInZ});
+                            seeds_cuda_buffer, field_vec);
                 stream.synchronize();
             }  // stop measuring track params cuda timer
 
@@ -289,8 +293,7 @@ int seq_run(const traccc::opts::track_seeding& seeding_opts,
                                              elapsedTimes);
                 params = tp(vecmem::get_data(measurements_per_event),
                             vecmem::get_data(spacepoints_per_event),
-                            vecmem::get_data(seeds),
-                            {0.f, 0.f, seeding_opts.seedfinder.bFieldInZ});
+                            vecmem::get_data(seeds), field_vec);
             }  // stop measuring track params cpu timer
 
             /*------------------------
