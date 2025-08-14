@@ -22,6 +22,7 @@
 #include "./kernels/remove_tracks.cuh"
 #include "./kernels/reset_status.cuh"
 #include "./kernels/scan_block_offsets.cuh"
+#include "./kernels/sort_measurement_ids.cuh"
 #include "./kernels/sort_tracks_per_measurement.cuh"
 #include "./kernels/sort_updated_tracks.cuh"
 #include "traccc/cuda/ambiguity_resolution/greedy_ambiguity_resolution_algorithm.hpp"
@@ -306,6 +307,22 @@ greedy_ambiguity_resolution_algorithm::operator()(
         kernels::sort_tracks_per_measurement<<<nBlocks, nThreads, 0, stream>>>(
             device::sort_tracks_per_measurement_payload{
                 .tracks_per_measurement_view = tracks_per_measurement_buffer,
+            });
+        TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+
+        m_stream.get().synchronize();
+    }
+
+    // Sort measurement ids
+    // @TODO: For the case where the track length is higher than 1024, the
+    // measurement ids need to be sorted again using thrust::sort
+    {
+        const unsigned int nThreads = 1024;
+        const unsigned int nBlocks = n_tracks;
+
+        kernels::sort_measurement_ids<<<nBlocks, nThreads, 0, stream>>>(
+            device::sort_measurement_ids_payload{
+                .meas_ids_view = meas_ids_buffer,
             });
         TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
 

@@ -401,8 +401,15 @@ __launch_bounds__(512) __global__
 
             auto tid = sh_buffer[pos1];
 
+            /*    
             const auto m_count = static_cast<unsigned int>(thrust::count(
-                thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));
+                thrust::seq, meas_ids[tid].begin(), meas_ids[tid].end(), id));            
+            */
+           
+            auto range = thrust::equal_range(thrust::seq, meas_ids[tid].begin(),
+                                             meas_ids[tid].end(), id);
+            unsigned int m_count =
+                static_cast<unsigned int>(range.second - range.first);
 
             const unsigned int N_S =
                 vecmem::device_atomic_ref<unsigned int>(n_shared.at(tid))
