@@ -88,6 +88,8 @@ __launch_bounds__(512) __global__
     __shared__ unsigned int N;
     __shared__ bool stop;
     __shared__ unsigned int n_updating_threads;
+    __shared__ unsigned int n_active;
+    __shared__ traccc::pair<measurement_id_type, unsigned int> sh_pairs[512];
 
     auto threadIndex = threadIdx.x;
 
@@ -126,6 +128,7 @@ __launch_bounds__(512) __global__
         n_tracks_to_iterate = 0;
         min_thread = std::numeric_limits<unsigned int>::max();
         stop = false;
+        n_active = 0;
     }
 
     __syncthreads();
@@ -192,7 +195,7 @@ __launch_bounds__(512) __global__
     }
     __syncthreads();
 
-    const auto tid = threadIndex;
+    auto tid = threadIndex;
     for (int k = 2; k <= N; k <<= 1) {
 
         bool ascending = ((tid & k) == 0);
@@ -344,14 +347,13 @@ __launch_bounds__(512) __global__
     // Buffer for the track ids
     sh_buffer[threadIndex] = std::numeric_limits<int>::max();
 
-    bool active = false;
-    unsigned int pos1;
+    unsigned int unique_meas_idx;
     int alive_trk_id = 0;
 
     if (!is_duplicate && is_valid_thread) {
 
         const auto id = sh_meas_ids[threadIndex];
-        const auto unique_meas_idx = meas_id_to_unique_id.at(id);
+        unique_meas_idx = meas_id_to_unique_id.at(id);
 
         // If there is only one track associated with measurement, the
         // number of shared measurement can be reduced by one
@@ -395,31 +397,87 @@ __launch_bounds__(512) __global__
             n_accepted_per_meas.fetch_sub(n_sharing_tracks);
 
         if (N_A == 1 + n_sharing_tracks) {
-            active = true;
-            const unsigned int alive_idx =
-                thrust::find(thrust::seq, track_status.begin(),
-                             track_status.end(), 1) -
-                track_status.begin();
-
-            pos1 = atomicAdd(&n_updating_threads, 1);
-            alive_trk_id = static_cast<int>(tracks[alive_idx]);
-
-            sh_buffer[pos1] = alive_trk_id;
-            atomicAdd(&track_count[alive_trk_id], 1);
-
-            const auto m_count = static_cast<unsigned int>(
-                thrust::count(thrust::seq, meas_ids[alive_trk_id].begin(),
-                              meas_ids[alive_trk_id].end(), id));
-
-            const unsigned int N_S = vecmem::device_atomic_ref<unsigned int>(
-                                         n_shared.at(alive_trk_id))
-                                         .fetch_sub(m_count);
+            unsigned int pos0 = atomicAdd(&n_active, 1);
+            sh_pairs[pos0] = {id, unique_meas_idx};
         }
     }
 
     __syncthreads();
 
-    if (active) {
+    int n_threads_per_active = 0;
+    unsigned int pos1 = 0;
+
+    if (n_active > 0) {
+        n_threads_per_active = blockDim.x / n_active;
+        pos1 = threadIdx.x / n_threads_per_active;
+    }
+
+    if (pos1 < n_active) {
+        unique_meas_idx = sh_pairs[pos1].second;
+
+        const auto& tracks = tracks_per_measurement[unique_meas_idx];
+        const auto n_tracks = tracks.size();
+
+        const auto n_tracks_per_thread =
+            (n_tracks + n_threads_per_active - 1) / n_threads_per_active;
+
+        for (int i = 0; i < n_tracks_per_thread; i++) {
+            auto idx =
+                i + (threadIdx.x % n_threads_per_active) * n_tracks_per_thread;
+            if (idx < n_tracks) {
+                auto track_status =
+                    track_status_per_measurement[unique_meas_idx];
+
+                if (track_status[idx]) {
+                    unsigned int pos2 = atomicAdd(&n_updating_threads, 1);
+                    sh_buffer[pos2] = static_cast<int>(tracks[idx]);
+                    sh_meas_ids[pos2] = sh_pairs[pos1].first;
+                    break;
+                }
+            }
+        }
+    }
+
+    __syncthreads();
+
+    int n_threads_per_update = 0;
+    unsigned int pos3 = 0;
+
+    if (n_updating_threads > 0) {
+        n_threads_per_update = blockDim.x / n_updating_threads;
+        pos3 = threadIdx.x / n_threads_per_update;
+    }
+
+    if (pos3 < n_updating_threads) {
+        const auto id = sh_meas_ids[pos3];
+        tid = sh_buffer[pos3];
+
+        if (threadIdx.x % n_threads_per_update == 0) {
+            atomicAdd(&track_count[tid], 1);
+        }
+
+        const auto& measurements = meas_ids[tid];
+        const auto n_meas = measurements.size();
+        const auto n_meas_per_thread =
+            (n_meas + n_threads_per_update - 1) / n_threads_per_update;
+
+        for (int i = 0; i < n_meas_per_thread; i++) {
+            auto idx =
+                i + (threadIdx.x % n_threads_per_update) * n_meas_per_thread;
+            if (idx < n_meas) {
+                if (measurements[idx] == id) {
+                    const unsigned int delta = 1;
+                    atomicAdd(&n_shared.at(tid), -delta);
+                }
+            }
+        }
+    }
+
+    __syncthreads();
+
+    if (threadIdx.x < n_updating_threads) {
+
+        alive_trk_id = sh_buffer[threadIdx.x];
 
         auto count = atomicAdd(&track_count[alive_trk_id], -1);
         if (count == 1) {
@@ -428,9 +486,9 @@ __launch_bounds__(512) __global__
             vecmem::device_atomic_ref<unsigned int> num_updated_tracks(
                 *(payload.n_updated_tracks));
 
-            const unsigned int pos2 = num_updated_tracks.fetch_add(1);
+            const unsigned int pos4 = num_updated_tracks.fetch_add(1);
 
-            updated_tracks[pos2] = alive_trk_id;
+            updated_tracks[pos4] = alive_trk_id;
             is_updated[alive_trk_id] = 1;
 
             rel_shared.at(alive_trk_id) = math::div_ieee754(
