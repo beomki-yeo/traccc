@@ -110,6 +110,8 @@ greedy_ambiguity_resolution_algorithm::operator()(
     cudaMemcpy(&max_meas, thrust::raw_pointer_cast(&(*max_meas_it)),
                sizeof(measurement), cudaMemcpyDeviceToHost);
 
+    std::cout << max_meas.measurement_id << " " << n_meas_total << std::endl;
+
     if (max_meas.measurement_id != n_meas_total - 1) {
         throw std::runtime_error(
             "max measurement id should be equal to (the number of measurements "
